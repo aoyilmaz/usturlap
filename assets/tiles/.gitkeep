@@ -1,0 +1,3 @@
+# Çevrimdışı karo dosyaları (.mbtiles / .pmtiles) buraya konur.
+# Bunlar repoya dahil DEĞİLDİR (büyük binary); pusula-tiler ile üretilir.
+# base_layer.dart'taki assetPath'lere uygun adlarla bu klasöre kopyalayın.
