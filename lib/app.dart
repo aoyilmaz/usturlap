@@ -7,8 +7,8 @@ import 'features/map/map_screen.dart';
 ///
 /// Gece modu teması Adım 8'de gelecek; şimdilik koyu bir tema kullanıyoruz
 /// (saha kullanımı için göz yormayan, taktik harita görünümüne yakın).
-class PusulaApp extends StatelessWidget {
-  const PusulaApp({super.key});
+class KerterizApp extends StatelessWidget {
+  const KerterizApp({super.key});
 
   @override
   Widget build(BuildContext context) {

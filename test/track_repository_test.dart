@@ -2,8 +2,8 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 
-import 'package:pusula/data/db/app_database.dart';
-import 'package:pusula/data/db/track_repository.dart';
+import 'package:kerteriz/data/db/app_database.dart';
+import 'package:kerteriz/data/db/track_repository.dart';
 
 void main() {
   late AppDatabase db;

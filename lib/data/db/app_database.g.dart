@@ -73,8 +73,49 @@ class $WaypointsTable extends Waypoints
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _affiliationMeta = const VerificationMeta(
+    'affiliation',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, name, lat, lon, createdAt, note];
+  late final GeneratedColumn<String> affiliation = GeneratedColumn<String>(
+    'affiliation',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _echelonMeta = const VerificationMeta(
+    'echelon',
+  );
+  @override
+  late final GeneratedColumn<String> echelon = GeneratedColumn<String>(
+    'echelon',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _roleMeta = const VerificationMeta('role');
+  @override
+  late final GeneratedColumn<String> role = GeneratedColumn<String>(
+    'role',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    lat,
+    lon,
+    createdAt,
+    note,
+    affiliation,
+    echelon,
+    role,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -128,6 +169,27 @@ class $WaypointsTable extends Waypoints
         note.isAcceptableOrUnknown(data['note']!, _noteMeta),
       );
     }
+    if (data.containsKey('affiliation')) {
+      context.handle(
+        _affiliationMeta,
+        affiliation.isAcceptableOrUnknown(
+          data['affiliation']!,
+          _affiliationMeta,
+        ),
+      );
+    }
+    if (data.containsKey('echelon')) {
+      context.handle(
+        _echelonMeta,
+        echelon.isAcceptableOrUnknown(data['echelon']!, _echelonMeta),
+      );
+    }
+    if (data.containsKey('role')) {
+      context.handle(
+        _roleMeta,
+        role.isAcceptableOrUnknown(data['role']!, _roleMeta),
+      );
+    }
     return context;
   }
 
@@ -161,6 +223,18 @@ class $WaypointsTable extends Waypoints
         DriftSqlType.string,
         data['${effectivePrefix}note'],
       ),
+      affiliation: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}affiliation'],
+      ),
+      echelon: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}echelon'],
+      ),
+      role: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}role'],
+      ),
     );
   }
 
@@ -177,6 +251,9 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
   final double lon;
   final DateTime createdAt;
   final String? note;
+  final String? affiliation;
+  final String? echelon;
+  final String? role;
   const WaypointRow({
     required this.id,
     required this.name,
@@ -184,6 +261,9 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
     required this.lon,
     required this.createdAt,
     this.note,
+    this.affiliation,
+    this.echelon,
+    this.role,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -196,6 +276,15 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
     if (!nullToAbsent || note != null) {
       map['note'] = Variable<String>(note);
     }
+    if (!nullToAbsent || affiliation != null) {
+      map['affiliation'] = Variable<String>(affiliation);
+    }
+    if (!nullToAbsent || echelon != null) {
+      map['echelon'] = Variable<String>(echelon);
+    }
+    if (!nullToAbsent || role != null) {
+      map['role'] = Variable<String>(role);
+    }
     return map;
   }
 
@@ -207,6 +296,13 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
       lon: Value(lon),
       createdAt: Value(createdAt),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      affiliation: affiliation == null && nullToAbsent
+          ? const Value.absent()
+          : Value(affiliation),
+      echelon: echelon == null && nullToAbsent
+          ? const Value.absent()
+          : Value(echelon),
+      role: role == null && nullToAbsent ? const Value.absent() : Value(role),
     );
   }
 
@@ -222,6 +318,9 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
       lon: serializer.fromJson<double>(json['lon']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       note: serializer.fromJson<String?>(json['note']),
+      affiliation: serializer.fromJson<String?>(json['affiliation']),
+      echelon: serializer.fromJson<String?>(json['echelon']),
+      role: serializer.fromJson<String?>(json['role']),
     );
   }
   @override
@@ -234,6 +333,9 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
       'lon': serializer.toJson<double>(lon),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'note': serializer.toJson<String?>(note),
+      'affiliation': serializer.toJson<String?>(affiliation),
+      'echelon': serializer.toJson<String?>(echelon),
+      'role': serializer.toJson<String?>(role),
     };
   }
 
@@ -244,6 +346,9 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
     double? lon,
     DateTime? createdAt,
     Value<String?> note = const Value.absent(),
+    Value<String?> affiliation = const Value.absent(),
+    Value<String?> echelon = const Value.absent(),
+    Value<String?> role = const Value.absent(),
   }) => WaypointRow(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -251,6 +356,9 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
     lon: lon ?? this.lon,
     createdAt: createdAt ?? this.createdAt,
     note: note.present ? note.value : this.note,
+    affiliation: affiliation.present ? affiliation.value : this.affiliation,
+    echelon: echelon.present ? echelon.value : this.echelon,
+    role: role.present ? role.value : this.role,
   );
   WaypointRow copyWithCompanion(WaypointsCompanion data) {
     return WaypointRow(
@@ -260,6 +368,11 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
       lon: data.lon.present ? data.lon.value : this.lon,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       note: data.note.present ? data.note.value : this.note,
+      affiliation: data.affiliation.present
+          ? data.affiliation.value
+          : this.affiliation,
+      echelon: data.echelon.present ? data.echelon.value : this.echelon,
+      role: data.role.present ? data.role.value : this.role,
     );
   }
 
@@ -271,13 +384,26 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
           ..write('lat: $lat, ')
           ..write('lon: $lon, ')
           ..write('createdAt: $createdAt, ')
-          ..write('note: $note')
+          ..write('note: $note, ')
+          ..write('affiliation: $affiliation, ')
+          ..write('echelon: $echelon, ')
+          ..write('role: $role')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, lat, lon, createdAt, note);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    lat,
+    lon,
+    createdAt,
+    note,
+    affiliation,
+    echelon,
+    role,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -287,7 +413,10 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
           other.lat == this.lat &&
           other.lon == this.lon &&
           other.createdAt == this.createdAt &&
-          other.note == this.note);
+          other.note == this.note &&
+          other.affiliation == this.affiliation &&
+          other.echelon == this.echelon &&
+          other.role == this.role);
 }
 
 class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
@@ -297,6 +426,9 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
   final Value<double> lon;
   final Value<DateTime> createdAt;
   final Value<String?> note;
+  final Value<String?> affiliation;
+  final Value<String?> echelon;
+  final Value<String?> role;
   const WaypointsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -304,6 +436,9 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
     this.lon = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.note = const Value.absent(),
+    this.affiliation = const Value.absent(),
+    this.echelon = const Value.absent(),
+    this.role = const Value.absent(),
   });
   WaypointsCompanion.insert({
     this.id = const Value.absent(),
@@ -312,6 +447,9 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
     required double lon,
     required DateTime createdAt,
     this.note = const Value.absent(),
+    this.affiliation = const Value.absent(),
+    this.echelon = const Value.absent(),
+    this.role = const Value.absent(),
   }) : name = Value(name),
        lat = Value(lat),
        lon = Value(lon),
@@ -323,6 +461,9 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
     Expression<double>? lon,
     Expression<DateTime>? createdAt,
     Expression<String>? note,
+    Expression<String>? affiliation,
+    Expression<String>? echelon,
+    Expression<String>? role,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -331,6 +472,9 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
       if (lon != null) 'lon': lon,
       if (createdAt != null) 'created_at': createdAt,
       if (note != null) 'note': note,
+      if (affiliation != null) 'affiliation': affiliation,
+      if (echelon != null) 'echelon': echelon,
+      if (role != null) 'role': role,
     });
   }
 
@@ -341,6 +485,9 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
     Value<double>? lon,
     Value<DateTime>? createdAt,
     Value<String?>? note,
+    Value<String?>? affiliation,
+    Value<String?>? echelon,
+    Value<String?>? role,
   }) {
     return WaypointsCompanion(
       id: id ?? this.id,
@@ -349,6 +496,9 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
       lon: lon ?? this.lon,
       createdAt: createdAt ?? this.createdAt,
       note: note ?? this.note,
+      affiliation: affiliation ?? this.affiliation,
+      echelon: echelon ?? this.echelon,
+      role: role ?? this.role,
     );
   }
 
@@ -373,6 +523,15 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
     if (note.present) {
       map['note'] = Variable<String>(note.value);
     }
+    if (affiliation.present) {
+      map['affiliation'] = Variable<String>(affiliation.value);
+    }
+    if (echelon.present) {
+      map['echelon'] = Variable<String>(echelon.value);
+    }
+    if (role.present) {
+      map['role'] = Variable<String>(role.value);
+    }
     return map;
   }
 
@@ -384,7 +543,10 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
           ..write('lat: $lat, ')
           ..write('lon: $lon, ')
           ..write('createdAt: $createdAt, ')
-          ..write('note: $note')
+          ..write('note: $note, ')
+          ..write('affiliation: $affiliation, ')
+          ..write('echelon: $echelon, ')
+          ..write('role: $role')
           ..write(')'))
         .toString();
   }
@@ -1340,6 +1502,1023 @@ class TrackPointsCompanion extends UpdateCompanion<TrackPointRow> {
   }
 }
 
+class $MapGraphicsTable extends MapGraphics
+    with TableInfo<$MapGraphicsTable, MapGraphicRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MapGraphicsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 80,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _pointsJsonMeta = const VerificationMeta(
+    'pointsJson',
+  );
+  @override
+  late final GeneratedColumn<String> pointsJson = GeneratedColumn<String>(
+    'points_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<int> color = GeneratedColumn<int>(
+    'color',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    type,
+    pointsJson,
+    color,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'map_graphics';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MapGraphicRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+        _typeMeta,
+        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    if (data.containsKey('points_json')) {
+      context.handle(
+        _pointsJsonMeta,
+        pointsJson.isAcceptableOrUnknown(data['points_json']!, _pointsJsonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pointsJsonMeta);
+    }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_colorMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  MapGraphicRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MapGraphicRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      type: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type'],
+      )!,
+      pointsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}points_json'],
+      )!,
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}color'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $MapGraphicsTable createAlias(String alias) {
+    return $MapGraphicsTable(attachedDatabase, alias);
+  }
+}
+
+class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
+  final int id;
+  final String name;
+  final String type;
+  final String pointsJson;
+  final int color;
+  final DateTime createdAt;
+  const MapGraphicRow({
+    required this.id,
+    required this.name,
+    required this.type,
+    required this.pointsJson,
+    required this.color,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    map['type'] = Variable<String>(type);
+    map['points_json'] = Variable<String>(pointsJson);
+    map['color'] = Variable<int>(color);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  MapGraphicsCompanion toCompanion(bool nullToAbsent) {
+    return MapGraphicsCompanion(
+      id: Value(id),
+      name: Value(name),
+      type: Value(type),
+      pointsJson: Value(pointsJson),
+      color: Value(color),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory MapGraphicRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MapGraphicRow(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      type: serializer.fromJson<String>(json['type']),
+      pointsJson: serializer.fromJson<String>(json['pointsJson']),
+      color: serializer.fromJson<int>(json['color']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'type': serializer.toJson<String>(type),
+      'pointsJson': serializer.toJson<String>(pointsJson),
+      'color': serializer.toJson<int>(color),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  MapGraphicRow copyWith({
+    int? id,
+    String? name,
+    String? type,
+    String? pointsJson,
+    int? color,
+    DateTime? createdAt,
+  }) => MapGraphicRow(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    type: type ?? this.type,
+    pointsJson: pointsJson ?? this.pointsJson,
+    color: color ?? this.color,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  MapGraphicRow copyWithCompanion(MapGraphicsCompanion data) {
+    return MapGraphicRow(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      type: data.type.present ? data.type.value : this.type,
+      pointsJson: data.pointsJson.present
+          ? data.pointsJson.value
+          : this.pointsJson,
+      color: data.color.present ? data.color.value : this.color,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MapGraphicRow(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('type: $type, ')
+          ..write('pointsJson: $pointsJson, ')
+          ..write('color: $color, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, type, pointsJson, color, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MapGraphicRow &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.type == this.type &&
+          other.pointsJson == this.pointsJson &&
+          other.color == this.color &&
+          other.createdAt == this.createdAt);
+}
+
+class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<String> type;
+  final Value<String> pointsJson;
+  final Value<int> color;
+  final Value<DateTime> createdAt;
+  const MapGraphicsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.type = const Value.absent(),
+    this.pointsJson = const Value.absent(),
+    this.color = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  MapGraphicsCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    required String type,
+    required String pointsJson,
+    required int color,
+    required DateTime createdAt,
+  }) : name = Value(name),
+       type = Value(type),
+       pointsJson = Value(pointsJson),
+       color = Value(color),
+       createdAt = Value(createdAt);
+  static Insertable<MapGraphicRow> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<String>? type,
+    Expression<String>? pointsJson,
+    Expression<int>? color,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (type != null) 'type': type,
+      if (pointsJson != null) 'points_json': pointsJson,
+      if (color != null) 'color': color,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  MapGraphicsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? name,
+    Value<String>? type,
+    Value<String>? pointsJson,
+    Value<int>? color,
+    Value<DateTime>? createdAt,
+  }) {
+    return MapGraphicsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      type: type ?? this.type,
+      pointsJson: pointsJson ?? this.pointsJson,
+      color: color ?? this.color,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (pointsJson.present) {
+      map['points_json'] = Variable<String>(pointsJson.value);
+    }
+    if (color.present) {
+      map['color'] = Variable<int>(color.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MapGraphicsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('type: $type, ')
+          ..write('pointsJson: $pointsJson, ')
+          ..write('color: $color, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ImportedLayersTable extends ImportedLayers
+    with TableInfo<$ImportedLayersTable, ImportedLayerRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ImportedLayersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _labelMeta = const VerificationMeta('label');
+  @override
+  late final GeneratedColumn<String> label = GeneratedColumn<String>(
+    'label',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 80,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fileNameMeta = const VerificationMeta(
+    'fileName',
+  );
+  @override
+  late final GeneratedColumn<String> fileName = GeneratedColumn<String>(
+    'file_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceTypeMeta = const VerificationMeta(
+    'sourceType',
+  );
+  @override
+  late final GeneratedColumn<String> sourceType = GeneratedColumn<String>(
+    'source_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _stylePathMeta = const VerificationMeta(
+    'stylePath',
+  );
+  @override
+  late final GeneratedColumn<String> stylePath = GeneratedColumn<String>(
+    'style_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _minZoomMeta = const VerificationMeta(
+    'minZoom',
+  );
+  @override
+  late final GeneratedColumn<int> minZoom = GeneratedColumn<int>(
+    'min_zoom',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _maxZoomMeta = const VerificationMeta(
+    'maxZoom',
+  );
+  @override
+  late final GeneratedColumn<int> maxZoom = GeneratedColumn<int>(
+    'max_zoom',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _centerLatMeta = const VerificationMeta(
+    'centerLat',
+  );
+  @override
+  late final GeneratedColumn<double> centerLat = GeneratedColumn<double>(
+    'center_lat',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _centerLonMeta = const VerificationMeta(
+    'centerLon',
+  );
+  @override
+  late final GeneratedColumn<double> centerLon = GeneratedColumn<double>(
+    'center_lon',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    label,
+    fileName,
+    sourceType,
+    stylePath,
+    minZoom,
+    maxZoom,
+    centerLat,
+    centerLon,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'imported_layers';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ImportedLayerRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('label')) {
+      context.handle(
+        _labelMeta,
+        label.isAcceptableOrUnknown(data['label']!, _labelMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_labelMeta);
+    }
+    if (data.containsKey('file_name')) {
+      context.handle(
+        _fileNameMeta,
+        fileName.isAcceptableOrUnknown(data['file_name']!, _fileNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fileNameMeta);
+    }
+    if (data.containsKey('source_type')) {
+      context.handle(
+        _sourceTypeMeta,
+        sourceType.isAcceptableOrUnknown(data['source_type']!, _sourceTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceTypeMeta);
+    }
+    if (data.containsKey('style_path')) {
+      context.handle(
+        _stylePathMeta,
+        stylePath.isAcceptableOrUnknown(data['style_path']!, _stylePathMeta),
+      );
+    }
+    if (data.containsKey('min_zoom')) {
+      context.handle(
+        _minZoomMeta,
+        minZoom.isAcceptableOrUnknown(data['min_zoom']!, _minZoomMeta),
+      );
+    }
+    if (data.containsKey('max_zoom')) {
+      context.handle(
+        _maxZoomMeta,
+        maxZoom.isAcceptableOrUnknown(data['max_zoom']!, _maxZoomMeta),
+      );
+    }
+    if (data.containsKey('center_lat')) {
+      context.handle(
+        _centerLatMeta,
+        centerLat.isAcceptableOrUnknown(data['center_lat']!, _centerLatMeta),
+      );
+    }
+    if (data.containsKey('center_lon')) {
+      context.handle(
+        _centerLonMeta,
+        centerLon.isAcceptableOrUnknown(data['center_lon']!, _centerLonMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ImportedLayerRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ImportedLayerRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      label: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}label'],
+      )!,
+      fileName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_name'],
+      )!,
+      sourceType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_type'],
+      )!,
+      stylePath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}style_path'],
+      ),
+      minZoom: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}min_zoom'],
+      ),
+      maxZoom: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}max_zoom'],
+      ),
+      centerLat: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}center_lat'],
+      ),
+      centerLon: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}center_lon'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ImportedLayersTable createAlias(String alias) {
+    return $ImportedLayersTable(attachedDatabase, alias);
+  }
+}
+
+class ImportedLayerRow extends DataClass
+    implements Insertable<ImportedLayerRow> {
+  final String id;
+  final String label;
+  final String fileName;
+  final String sourceType;
+  final String? stylePath;
+  final int? minZoom;
+  final int? maxZoom;
+  final double? centerLat;
+  final double? centerLon;
+  final DateTime createdAt;
+  const ImportedLayerRow({
+    required this.id,
+    required this.label,
+    required this.fileName,
+    required this.sourceType,
+    this.stylePath,
+    this.minZoom,
+    this.maxZoom,
+    this.centerLat,
+    this.centerLon,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['label'] = Variable<String>(label);
+    map['file_name'] = Variable<String>(fileName);
+    map['source_type'] = Variable<String>(sourceType);
+    if (!nullToAbsent || stylePath != null) {
+      map['style_path'] = Variable<String>(stylePath);
+    }
+    if (!nullToAbsent || minZoom != null) {
+      map['min_zoom'] = Variable<int>(minZoom);
+    }
+    if (!nullToAbsent || maxZoom != null) {
+      map['max_zoom'] = Variable<int>(maxZoom);
+    }
+    if (!nullToAbsent || centerLat != null) {
+      map['center_lat'] = Variable<double>(centerLat);
+    }
+    if (!nullToAbsent || centerLon != null) {
+      map['center_lon'] = Variable<double>(centerLon);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  ImportedLayersCompanion toCompanion(bool nullToAbsent) {
+    return ImportedLayersCompanion(
+      id: Value(id),
+      label: Value(label),
+      fileName: Value(fileName),
+      sourceType: Value(sourceType),
+      stylePath: stylePath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(stylePath),
+      minZoom: minZoom == null && nullToAbsent
+          ? const Value.absent()
+          : Value(minZoom),
+      maxZoom: maxZoom == null && nullToAbsent
+          ? const Value.absent()
+          : Value(maxZoom),
+      centerLat: centerLat == null && nullToAbsent
+          ? const Value.absent()
+          : Value(centerLat),
+      centerLon: centerLon == null && nullToAbsent
+          ? const Value.absent()
+          : Value(centerLon),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory ImportedLayerRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ImportedLayerRow(
+      id: serializer.fromJson<String>(json['id']),
+      label: serializer.fromJson<String>(json['label']),
+      fileName: serializer.fromJson<String>(json['fileName']),
+      sourceType: serializer.fromJson<String>(json['sourceType']),
+      stylePath: serializer.fromJson<String?>(json['stylePath']),
+      minZoom: serializer.fromJson<int?>(json['minZoom']),
+      maxZoom: serializer.fromJson<int?>(json['maxZoom']),
+      centerLat: serializer.fromJson<double?>(json['centerLat']),
+      centerLon: serializer.fromJson<double?>(json['centerLon']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'label': serializer.toJson<String>(label),
+      'fileName': serializer.toJson<String>(fileName),
+      'sourceType': serializer.toJson<String>(sourceType),
+      'stylePath': serializer.toJson<String?>(stylePath),
+      'minZoom': serializer.toJson<int?>(minZoom),
+      'maxZoom': serializer.toJson<int?>(maxZoom),
+      'centerLat': serializer.toJson<double?>(centerLat),
+      'centerLon': serializer.toJson<double?>(centerLon),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  ImportedLayerRow copyWith({
+    String? id,
+    String? label,
+    String? fileName,
+    String? sourceType,
+    Value<String?> stylePath = const Value.absent(),
+    Value<int?> minZoom = const Value.absent(),
+    Value<int?> maxZoom = const Value.absent(),
+    Value<double?> centerLat = const Value.absent(),
+    Value<double?> centerLon = const Value.absent(),
+    DateTime? createdAt,
+  }) => ImportedLayerRow(
+    id: id ?? this.id,
+    label: label ?? this.label,
+    fileName: fileName ?? this.fileName,
+    sourceType: sourceType ?? this.sourceType,
+    stylePath: stylePath.present ? stylePath.value : this.stylePath,
+    minZoom: minZoom.present ? minZoom.value : this.minZoom,
+    maxZoom: maxZoom.present ? maxZoom.value : this.maxZoom,
+    centerLat: centerLat.present ? centerLat.value : this.centerLat,
+    centerLon: centerLon.present ? centerLon.value : this.centerLon,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  ImportedLayerRow copyWithCompanion(ImportedLayersCompanion data) {
+    return ImportedLayerRow(
+      id: data.id.present ? data.id.value : this.id,
+      label: data.label.present ? data.label.value : this.label,
+      fileName: data.fileName.present ? data.fileName.value : this.fileName,
+      sourceType: data.sourceType.present
+          ? data.sourceType.value
+          : this.sourceType,
+      stylePath: data.stylePath.present ? data.stylePath.value : this.stylePath,
+      minZoom: data.minZoom.present ? data.minZoom.value : this.minZoom,
+      maxZoom: data.maxZoom.present ? data.maxZoom.value : this.maxZoom,
+      centerLat: data.centerLat.present ? data.centerLat.value : this.centerLat,
+      centerLon: data.centerLon.present ? data.centerLon.value : this.centerLon,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ImportedLayerRow(')
+          ..write('id: $id, ')
+          ..write('label: $label, ')
+          ..write('fileName: $fileName, ')
+          ..write('sourceType: $sourceType, ')
+          ..write('stylePath: $stylePath, ')
+          ..write('minZoom: $minZoom, ')
+          ..write('maxZoom: $maxZoom, ')
+          ..write('centerLat: $centerLat, ')
+          ..write('centerLon: $centerLon, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    label,
+    fileName,
+    sourceType,
+    stylePath,
+    minZoom,
+    maxZoom,
+    centerLat,
+    centerLon,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ImportedLayerRow &&
+          other.id == this.id &&
+          other.label == this.label &&
+          other.fileName == this.fileName &&
+          other.sourceType == this.sourceType &&
+          other.stylePath == this.stylePath &&
+          other.minZoom == this.minZoom &&
+          other.maxZoom == this.maxZoom &&
+          other.centerLat == this.centerLat &&
+          other.centerLon == this.centerLon &&
+          other.createdAt == this.createdAt);
+}
+
+class ImportedLayersCompanion extends UpdateCompanion<ImportedLayerRow> {
+  final Value<String> id;
+  final Value<String> label;
+  final Value<String> fileName;
+  final Value<String> sourceType;
+  final Value<String?> stylePath;
+  final Value<int?> minZoom;
+  final Value<int?> maxZoom;
+  final Value<double?> centerLat;
+  final Value<double?> centerLon;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const ImportedLayersCompanion({
+    this.id = const Value.absent(),
+    this.label = const Value.absent(),
+    this.fileName = const Value.absent(),
+    this.sourceType = const Value.absent(),
+    this.stylePath = const Value.absent(),
+    this.minZoom = const Value.absent(),
+    this.maxZoom = const Value.absent(),
+    this.centerLat = const Value.absent(),
+    this.centerLon = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ImportedLayersCompanion.insert({
+    required String id,
+    required String label,
+    required String fileName,
+    required String sourceType,
+    this.stylePath = const Value.absent(),
+    this.minZoom = const Value.absent(),
+    this.maxZoom = const Value.absent(),
+    this.centerLat = const Value.absent(),
+    this.centerLon = const Value.absent(),
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       label = Value(label),
+       fileName = Value(fileName),
+       sourceType = Value(sourceType),
+       createdAt = Value(createdAt);
+  static Insertable<ImportedLayerRow> custom({
+    Expression<String>? id,
+    Expression<String>? label,
+    Expression<String>? fileName,
+    Expression<String>? sourceType,
+    Expression<String>? stylePath,
+    Expression<int>? minZoom,
+    Expression<int>? maxZoom,
+    Expression<double>? centerLat,
+    Expression<double>? centerLon,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (label != null) 'label': label,
+      if (fileName != null) 'file_name': fileName,
+      if (sourceType != null) 'source_type': sourceType,
+      if (stylePath != null) 'style_path': stylePath,
+      if (minZoom != null) 'min_zoom': minZoom,
+      if (maxZoom != null) 'max_zoom': maxZoom,
+      if (centerLat != null) 'center_lat': centerLat,
+      if (centerLon != null) 'center_lon': centerLon,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ImportedLayersCompanion copyWith({
+    Value<String>? id,
+    Value<String>? label,
+    Value<String>? fileName,
+    Value<String>? sourceType,
+    Value<String?>? stylePath,
+    Value<int?>? minZoom,
+    Value<int?>? maxZoom,
+    Value<double?>? centerLat,
+    Value<double?>? centerLon,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return ImportedLayersCompanion(
+      id: id ?? this.id,
+      label: label ?? this.label,
+      fileName: fileName ?? this.fileName,
+      sourceType: sourceType ?? this.sourceType,
+      stylePath: stylePath ?? this.stylePath,
+      minZoom: minZoom ?? this.minZoom,
+      maxZoom: maxZoom ?? this.maxZoom,
+      centerLat: centerLat ?? this.centerLat,
+      centerLon: centerLon ?? this.centerLon,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (label.present) {
+      map['label'] = Variable<String>(label.value);
+    }
+    if (fileName.present) {
+      map['file_name'] = Variable<String>(fileName.value);
+    }
+    if (sourceType.present) {
+      map['source_type'] = Variable<String>(sourceType.value);
+    }
+    if (stylePath.present) {
+      map['style_path'] = Variable<String>(stylePath.value);
+    }
+    if (minZoom.present) {
+      map['min_zoom'] = Variable<int>(minZoom.value);
+    }
+    if (maxZoom.present) {
+      map['max_zoom'] = Variable<int>(maxZoom.value);
+    }
+    if (centerLat.present) {
+      map['center_lat'] = Variable<double>(centerLat.value);
+    }
+    if (centerLon.present) {
+      map['center_lon'] = Variable<double>(centerLon.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ImportedLayersCompanion(')
+          ..write('id: $id, ')
+          ..write('label: $label, ')
+          ..write('fileName: $fileName, ')
+          ..write('sourceType: $sourceType, ')
+          ..write('stylePath: $stylePath, ')
+          ..write('minZoom: $minZoom, ')
+          ..write('maxZoom: $maxZoom, ')
+          ..write('centerLat: $centerLat, ')
+          ..write('centerLon: $centerLon, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1347,6 +2526,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SettingsTable settings = $SettingsTable(this);
   late final $TracksTable tracks = $TracksTable(this);
   late final $TrackPointsTable trackPoints = $TrackPointsTable(this);
+  late final $MapGraphicsTable mapGraphics = $MapGraphicsTable(this);
+  late final $ImportedLayersTable importedLayers = $ImportedLayersTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1356,6 +2537,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     settings,
     tracks,
     trackPoints,
+    mapGraphics,
+    importedLayers,
   ];
 }
 
@@ -1367,6 +2550,9 @@ typedef $$WaypointsTableCreateCompanionBuilder =
       required double lon,
       required DateTime createdAt,
       Value<String?> note,
+      Value<String?> affiliation,
+      Value<String?> echelon,
+      Value<String?> role,
     });
 typedef $$WaypointsTableUpdateCompanionBuilder =
     WaypointsCompanion Function({
@@ -1376,6 +2562,9 @@ typedef $$WaypointsTableUpdateCompanionBuilder =
       Value<double> lon,
       Value<DateTime> createdAt,
       Value<String?> note,
+      Value<String?> affiliation,
+      Value<String?> echelon,
+      Value<String?> role,
     });
 
 class $$WaypointsTableFilterComposer
@@ -1414,6 +2603,21 @@ class $$WaypointsTableFilterComposer
 
   ColumnFilters<String> get note => $composableBuilder(
     column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get affiliation => $composableBuilder(
+    column: $table.affiliation,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get echelon => $composableBuilder(
+    column: $table.echelon,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get role => $composableBuilder(
+    column: $table.role,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -1456,6 +2660,21 @@ class $$WaypointsTableOrderingComposer
     column: $table.note,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get affiliation => $composableBuilder(
+    column: $table.affiliation,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get echelon => $composableBuilder(
+    column: $table.echelon,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get role => $composableBuilder(
+    column: $table.role,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$WaypointsTableAnnotationComposer
@@ -1484,6 +2703,17 @@ class $$WaypointsTableAnnotationComposer
 
   GeneratedColumn<String> get note =>
       $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<String> get affiliation => $composableBuilder(
+    column: $table.affiliation,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get echelon =>
+      $composableBuilder(column: $table.echelon, builder: (column) => column);
+
+  GeneratedColumn<String> get role =>
+      $composableBuilder(column: $table.role, builder: (column) => column);
 }
 
 class $$WaypointsTableTableManager
@@ -1523,6 +2753,9 @@ class $$WaypointsTableTableManager
                 Value<double> lon = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<String?> note = const Value.absent(),
+                Value<String?> affiliation = const Value.absent(),
+                Value<String?> echelon = const Value.absent(),
+                Value<String?> role = const Value.absent(),
               }) => WaypointsCompanion(
                 id: id,
                 name: name,
@@ -1530,6 +2763,9 @@ class $$WaypointsTableTableManager
                 lon: lon,
                 createdAt: createdAt,
                 note: note,
+                affiliation: affiliation,
+                echelon: echelon,
+                role: role,
               ),
           createCompanionCallback:
               ({
@@ -1539,6 +2775,9 @@ class $$WaypointsTableTableManager
                 required double lon,
                 required DateTime createdAt,
                 Value<String?> note = const Value.absent(),
+                Value<String?> affiliation = const Value.absent(),
+                Value<String?> echelon = const Value.absent(),
+                Value<String?> role = const Value.absent(),
               }) => WaypointsCompanion.insert(
                 id: id,
                 name: name,
@@ -1546,6 +2785,9 @@ class $$WaypointsTableTableManager
                 lon: lon,
                 createdAt: createdAt,
                 note: note,
+                affiliation: affiliation,
+                echelon: echelon,
+                role: role,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -2106,6 +3348,524 @@ typedef $$TrackPointsTableProcessedTableManager =
       TrackPointRow,
       PrefetchHooks Function()
     >;
+typedef $$MapGraphicsTableCreateCompanionBuilder =
+    MapGraphicsCompanion Function({
+      Value<int> id,
+      required String name,
+      required String type,
+      required String pointsJson,
+      required int color,
+      required DateTime createdAt,
+    });
+typedef $$MapGraphicsTableUpdateCompanionBuilder =
+    MapGraphicsCompanion Function({
+      Value<int> id,
+      Value<String> name,
+      Value<String> type,
+      Value<String> pointsJson,
+      Value<int> color,
+      Value<DateTime> createdAt,
+    });
+
+class $$MapGraphicsTableFilterComposer
+    extends Composer<_$AppDatabase, $MapGraphicsTable> {
+  $$MapGraphicsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get pointsJson => $composableBuilder(
+    column: $table.pointsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MapGraphicsTableOrderingComposer
+    extends Composer<_$AppDatabase, $MapGraphicsTable> {
+  $$MapGraphicsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get pointsJson => $composableBuilder(
+    column: $table.pointsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MapGraphicsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MapGraphicsTable> {
+  $$MapGraphicsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get pointsJson => $composableBuilder(
+    column: $table.pointsJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$MapGraphicsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MapGraphicsTable,
+          MapGraphicRow,
+          $$MapGraphicsTableFilterComposer,
+          $$MapGraphicsTableOrderingComposer,
+          $$MapGraphicsTableAnnotationComposer,
+          $$MapGraphicsTableCreateCompanionBuilder,
+          $$MapGraphicsTableUpdateCompanionBuilder,
+          (
+            MapGraphicRow,
+            BaseReferences<_$AppDatabase, $MapGraphicsTable, MapGraphicRow>,
+          ),
+          MapGraphicRow,
+          PrefetchHooks Function()
+        > {
+  $$MapGraphicsTableTableManager(_$AppDatabase db, $MapGraphicsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MapGraphicsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MapGraphicsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MapGraphicsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> type = const Value.absent(),
+                Value<String> pointsJson = const Value.absent(),
+                Value<int> color = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => MapGraphicsCompanion(
+                id: id,
+                name: name,
+                type: type,
+                pointsJson: pointsJson,
+                color: color,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String name,
+                required String type,
+                required String pointsJson,
+                required int color,
+                required DateTime createdAt,
+              }) => MapGraphicsCompanion.insert(
+                id: id,
+                name: name,
+                type: type,
+                pointsJson: pointsJson,
+                color: color,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MapGraphicsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MapGraphicsTable,
+      MapGraphicRow,
+      $$MapGraphicsTableFilterComposer,
+      $$MapGraphicsTableOrderingComposer,
+      $$MapGraphicsTableAnnotationComposer,
+      $$MapGraphicsTableCreateCompanionBuilder,
+      $$MapGraphicsTableUpdateCompanionBuilder,
+      (
+        MapGraphicRow,
+        BaseReferences<_$AppDatabase, $MapGraphicsTable, MapGraphicRow>,
+      ),
+      MapGraphicRow,
+      PrefetchHooks Function()
+    >;
+typedef $$ImportedLayersTableCreateCompanionBuilder =
+    ImportedLayersCompanion Function({
+      required String id,
+      required String label,
+      required String fileName,
+      required String sourceType,
+      Value<String?> stylePath,
+      Value<int?> minZoom,
+      Value<int?> maxZoom,
+      Value<double?> centerLat,
+      Value<double?> centerLon,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$ImportedLayersTableUpdateCompanionBuilder =
+    ImportedLayersCompanion Function({
+      Value<String> id,
+      Value<String> label,
+      Value<String> fileName,
+      Value<String> sourceType,
+      Value<String?> stylePath,
+      Value<int?> minZoom,
+      Value<int?> maxZoom,
+      Value<double?> centerLat,
+      Value<double?> centerLon,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$ImportedLayersTableFilterComposer
+    extends Composer<_$AppDatabase, $ImportedLayersTable> {
+  $$ImportedLayersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fileName => $composableBuilder(
+    column: $table.fileName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceType => $composableBuilder(
+    column: $table.sourceType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get stylePath => $composableBuilder(
+    column: $table.stylePath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get minZoom => $composableBuilder(
+    column: $table.minZoom,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get maxZoom => $composableBuilder(
+    column: $table.maxZoom,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get centerLat => $composableBuilder(
+    column: $table.centerLat,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get centerLon => $composableBuilder(
+    column: $table.centerLon,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ImportedLayersTableOrderingComposer
+    extends Composer<_$AppDatabase, $ImportedLayersTable> {
+  $$ImportedLayersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fileName => $composableBuilder(
+    column: $table.fileName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceType => $composableBuilder(
+    column: $table.sourceType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get stylePath => $composableBuilder(
+    column: $table.stylePath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get minZoom => $composableBuilder(
+    column: $table.minZoom,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get maxZoom => $composableBuilder(
+    column: $table.maxZoom,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get centerLat => $composableBuilder(
+    column: $table.centerLat,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get centerLon => $composableBuilder(
+    column: $table.centerLon,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ImportedLayersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ImportedLayersTable> {
+  $$ImportedLayersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get label =>
+      $composableBuilder(column: $table.label, builder: (column) => column);
+
+  GeneratedColumn<String> get fileName =>
+      $composableBuilder(column: $table.fileName, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceType => $composableBuilder(
+    column: $table.sourceType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get stylePath =>
+      $composableBuilder(column: $table.stylePath, builder: (column) => column);
+
+  GeneratedColumn<int> get minZoom =>
+      $composableBuilder(column: $table.minZoom, builder: (column) => column);
+
+  GeneratedColumn<int> get maxZoom =>
+      $composableBuilder(column: $table.maxZoom, builder: (column) => column);
+
+  GeneratedColumn<double> get centerLat =>
+      $composableBuilder(column: $table.centerLat, builder: (column) => column);
+
+  GeneratedColumn<double> get centerLon =>
+      $composableBuilder(column: $table.centerLon, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$ImportedLayersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ImportedLayersTable,
+          ImportedLayerRow,
+          $$ImportedLayersTableFilterComposer,
+          $$ImportedLayersTableOrderingComposer,
+          $$ImportedLayersTableAnnotationComposer,
+          $$ImportedLayersTableCreateCompanionBuilder,
+          $$ImportedLayersTableUpdateCompanionBuilder,
+          (
+            ImportedLayerRow,
+            BaseReferences<
+              _$AppDatabase,
+              $ImportedLayersTable,
+              ImportedLayerRow
+            >,
+          ),
+          ImportedLayerRow,
+          PrefetchHooks Function()
+        > {
+  $$ImportedLayersTableTableManager(
+    _$AppDatabase db,
+    $ImportedLayersTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ImportedLayersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ImportedLayersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ImportedLayersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> label = const Value.absent(),
+                Value<String> fileName = const Value.absent(),
+                Value<String> sourceType = const Value.absent(),
+                Value<String?> stylePath = const Value.absent(),
+                Value<int?> minZoom = const Value.absent(),
+                Value<int?> maxZoom = const Value.absent(),
+                Value<double?> centerLat = const Value.absent(),
+                Value<double?> centerLon = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ImportedLayersCompanion(
+                id: id,
+                label: label,
+                fileName: fileName,
+                sourceType: sourceType,
+                stylePath: stylePath,
+                minZoom: minZoom,
+                maxZoom: maxZoom,
+                centerLat: centerLat,
+                centerLon: centerLon,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String label,
+                required String fileName,
+                required String sourceType,
+                Value<String?> stylePath = const Value.absent(),
+                Value<int?> minZoom = const Value.absent(),
+                Value<int?> maxZoom = const Value.absent(),
+                Value<double?> centerLat = const Value.absent(),
+                Value<double?> centerLon = const Value.absent(),
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => ImportedLayersCompanion.insert(
+                id: id,
+                label: label,
+                fileName: fileName,
+                sourceType: sourceType,
+                stylePath: stylePath,
+                minZoom: minZoom,
+                maxZoom: maxZoom,
+                centerLat: centerLat,
+                centerLon: centerLon,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ImportedLayersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ImportedLayersTable,
+      ImportedLayerRow,
+      $$ImportedLayersTableFilterComposer,
+      $$ImportedLayersTableOrderingComposer,
+      $$ImportedLayersTableAnnotationComposer,
+      $$ImportedLayersTableCreateCompanionBuilder,
+      $$ImportedLayersTableUpdateCompanionBuilder,
+      (
+        ImportedLayerRow,
+        BaseReferences<_$AppDatabase, $ImportedLayersTable, ImportedLayerRow>,
+      ),
+      ImportedLayerRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2118,4 +3878,8 @@ class $AppDatabaseManager {
       $$TracksTableTableManager(_db, _db.tracks);
   $$TrackPointsTableTableManager get trackPoints =>
       $$TrackPointsTableTableManager(_db, _db.trackPoints);
+  $$MapGraphicsTableTableManager get mapGraphics =>
+      $$MapGraphicsTableTableManager(_db, _db.mapGraphics);
+  $$ImportedLayersTableTableManager get importedLayers =>
+      $$ImportedLayersTableTableManager(_db, _db.importedLayers);
 }

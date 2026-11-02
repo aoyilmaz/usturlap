@@ -30,6 +30,10 @@ class PmtilesVectorTileProvider extends VectorTileProvider {
   @override
   int get maximumZoom => _maxZoom;
 
+  /// PMTiles header'ındaki varsayılan merkez (içe-aktarmada katman merkezi için).
+  double get centerLatitude => _archive.centerPosition.latitude;
+  double get centerLongitude => _archive.centerPosition.longitude;
+
   @override
   TileOffset get tileOffset => TileOffset.DEFAULT;
 

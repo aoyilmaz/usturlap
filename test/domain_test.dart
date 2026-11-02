@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 
-import 'package:pusula/domain/models/contact.dart';
-import 'package:pusula/domain/ports/comms_channel.dart';
-import 'package:pusula/domain/ports/position_source.dart';
-import 'package:pusula/data/position/stub_position_source.dart';
-import 'package:pusula/data/comms/null_comms_channel.dart';
+import 'package:kerteriz/domain/models/contact.dart';
+import 'package:kerteriz/domain/ports/comms_channel.dart';
+import 'package:kerteriz/domain/ports/position_source.dart';
+import 'package:kerteriz/data/position/stub_position_source.dart';
+import 'package:kerteriz/data/comms/null_comms_channel.dart';
 
 void main() {
   group('Contact', () {

@@ -28,6 +28,9 @@ class WaypointRepository {
     required String name,
     required LatLng position,
     String? note,
+    Affiliation affiliation = Affiliation.waypoint,
+    Echelon echelon = Echelon.none,
+    SymbolRole role = SymbolRole.none,
   }) {
     return _db.into(_db.waypoints).insert(
           WaypointsCompanion.insert(
@@ -36,8 +39,41 @@ class WaypointRepository {
             lon: position.longitude,
             createdAt: DateTime.now(),
             note: Value(note),
+            affiliation: Value(affiliation.name),
+            echelon: Value(echelon.name),
+            role: Value(role.name),
           ),
         );
+  }
+
+  /// Var olan bir waypoint'in ad/not/sadakat/echelon/rolünü günceller.
+  Future<void> updateDetails(
+    int id, {
+    required String name,
+    String? note,
+    required Affiliation affiliation,
+    Echelon echelon = Echelon.none,
+    SymbolRole role = SymbolRole.none,
+  }) {
+    return (_db.update(_db.waypoints)..where((t) => t.id.equals(id))).write(
+      WaypointsCompanion(
+        name: Value(name),
+        note: Value(note),
+        affiliation: Value(affiliation.name),
+        echelon: Value(echelon.name),
+        role: Value(role.name),
+      ),
+    );
+  }
+
+  /// Waypoint'i yeni konuma taşır (sürükle/yeniden konumlandır).
+  Future<void> move(int id, LatLng position) {
+    return (_db.update(_db.waypoints)..where((t) => t.id.equals(id))).write(
+      WaypointsCompanion(
+        lat: Value(position.latitude),
+        lon: Value(position.longitude),
+      ),
+    );
   }
 
   Future<void> delete(int id) {
@@ -50,5 +86,8 @@ class WaypointRepository {
         position: LatLng(r.lat, r.lon),
         createdAt: r.createdAt,
         note: r.note,
+        affiliation: Affiliation.fromName(r.affiliation),
+        echelon: Echelon.fromName(r.echelon),
+        role: SymbolRole.fromName(r.role),
       );
 }

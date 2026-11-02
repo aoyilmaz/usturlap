@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/coord_format.dart';
 import '../../domain/models/waypoint.dart';
+import '../../providers/nav_providers.dart';
 import '../../providers/settings_providers.dart';
 import '../../providers/waypoint_providers.dart';
+import '../import/import_action.dart';
+import '../symbols/nato_symbol.dart';
 
 /// Kayıtlı waypoint'leri listeleyen alt panel. Dokun → haritada ortala,
 /// çöp kutusu → sil. Liste drift akışından canlı güncellenir.
@@ -39,11 +42,21 @@ class _WaypointListBody extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: Text('Waypoint\'ler',
-                  style:
-                      TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+              child: Row(
+                children: [
+                  const Text('Waypoint\'ler',
+                      style: TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Spacer(),
+                  TextButton.icon(
+                    onPressed: () => runGpxKmlImport(context, ref),
+                    icon: const Icon(Icons.file_download_outlined),
+                    label: const Text('İçe aktar'),
+                  ),
+                ],
+              ),
             ),
             Flexible(
               child: async.when(
@@ -66,8 +79,14 @@ class _WaypointListBody extends ConsumerWidget {
                     itemBuilder: (context, i) {
                       final wp = list[i];
                       return ListTile(
-                        leading: const Icon(Icons.location_on,
-                            color: Colors.redAccent),
+                        leading: wp.affiliation == Affiliation.waypoint
+                            ? const Icon(Icons.location_on,
+                                color: Colors.redAccent)
+                            : SizedBox(
+                                width: 28,
+                                height: 28,
+                                child: NatoSymbol(
+                                    affiliation: wp.affiliation, size: 28)),
                         title: Text(wp.name),
                         subtitle: Text(
                           CoordFormat.format(wp.position, format),
@@ -76,9 +95,13 @@ class _WaypointListBody extends ConsumerWidget {
                         trailing: IconButton(
                           icon: const Icon(Icons.delete_outline),
                           tooltip: 'Sil',
-                          onPressed: () => ref
-                              .read(waypointRepositoryProvider)
-                              .delete(wp.id!),
+                          onPressed: () {
+                            final target = ref.read(navTargetProvider);
+                            if (target != null && target.position == wp.position) {
+                              ref.read(navTargetProvider.notifier).clear();
+                            }
+                            ref.read(waypointRepositoryProvider).delete(wp.id!);
+                          },
                         ),
                         onTap: () {
                           Navigator.of(context).pop();

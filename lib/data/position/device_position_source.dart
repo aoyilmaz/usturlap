@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/constants.dart';
+import '../../core/utils/kalman_filter.dart';
 import '../../domain/models/contact.dart';
 import '../../domain/ports/position_source.dart';
 
@@ -25,6 +26,8 @@ class DevicePositionSource implements PositionSource {
 
   StreamSubscription<Position>? _posSub;
   StreamSubscription<CompassEvent>? _headingSub;
+
+  final KalmanFilter _headingFilter = KalmanFilter();
 
   Position? _lastPosition;
   double? _lastHeading;
@@ -67,7 +70,7 @@ class DevicePositionSource implements PositionSource {
     if (compass != null) {
       _headingSub = compass.listen((event) {
         if (event.heading != null) {
-          _lastHeading = event.heading;
+          _lastHeading = _headingFilter.update(event.heading!);
           _emit();
         }
       });
@@ -100,12 +103,16 @@ class DevicePositionSource implements PositionSource {
   /// servis bildirimi açılır. Aksi halde ön-plan (batarya dostu).
   LocationSettings _buildLocationSettings() {
     const accuracy = LocationAccuracy.best;
+    // Batarya optimizasyonu için Mesafe Filtresi (Distance Filter)
+    // 2 metre hareket etmeden yeni konum akışı tetiklenmez.
+    const int distanceFilterMeters = 0;
+
     switch (defaultTargetPlatform) {
       case TargetPlatform.iOS:
       case TargetPlatform.macOS:
         return AppleSettings(
           accuracy: accuracy,
-          distanceFilter: 0,
+          distanceFilter: distanceFilterMeters,
           activityType: ActivityType.fitness,
           pauseLocationUpdatesAutomatically: false,
           allowBackgroundLocationUpdates: _backgroundEnabled,
@@ -114,17 +121,18 @@ class DevicePositionSource implements PositionSource {
       case TargetPlatform.android:
         return AndroidSettings(
           accuracy: accuracy,
-          distanceFilter: 0,
+          distanceFilter: distanceFilterMeters,
           foregroundNotificationConfig: _backgroundEnabled
               ? const ForegroundNotificationConfig(
-                  notificationTitle: 'Pusula',
+                  notificationTitle: 'Kerteriz',
                   notificationText: 'İz kaydı: konum izleniyor',
                   enableWakeLock: true,
                 )
               : null,
         );
       default:
-        return const LocationSettings(accuracy: accuracy, distanceFilter: 0);
+        return const LocationSettings(
+            accuracy: accuracy, distanceFilter: distanceFilterMeters);
     }
   }
 

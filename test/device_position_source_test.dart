@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:pusula/data/position/device_position_source.dart';
+import 'package:kerteriz/data/position/device_position_source.dart';
 
 void main() {
   group('DevicePositionSource.buildSelfContact', () {
@@ -8,7 +8,7 @@ void main() {
 
     test('geçerli değerleri Contact alanlarına çevirir', () {
       final c = DevicePositionSource.buildSelfContact(
-        callsign: 'PUSULA-1',
+        callsign: 'KERTERIZ-1',
         latitude: 39.92,
         longitude: 32.86,
         timestamp: t,

@@ -119,3 +119,30 @@ class AccuracyFilterNotifier extends Notifier<bool> {
 
 final accuracyFilterProvider =
     NotifierProvider<AccuracyFilterNotifier, bool>(AccuracyFilterNotifier.new);
+
+const _showRepeatersKey = 'show_repeaters';
+
+/// Telsiz rölelerini haritada göster/gizle. Kalıcı.
+class ShowRepeatersNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    _load();
+    return false; // varsayılan kapalı
+  }
+
+  Future<void> _load() async {
+    final saved =
+        await ref.read(settingsRepositoryProvider).get(_showRepeatersKey);
+    if (saved == 'true') state = true;
+  }
+
+  void toggle() {
+    state = !state;
+    ref
+        .read(settingsRepositoryProvider)
+        .set(_showRepeatersKey, state.toString());
+  }
+}
+
+final showRepeatersProvider =
+    NotifierProvider<ShowRepeatersNotifier, bool>(ShowRepeatersNotifier.new);

@@ -37,6 +37,38 @@ class TrackRepository {
         );
   }
 
+  /// Tam bir izi (tüm noktalarıyla) tek transaction'da ekler — GPX/KML içe
+  /// aktarma için. Kaydı bitmiş (endedAt dolu) olarak ekler; noktalar 1 sn
+  /// aralıkla sıralanır (çizim sırası korunur). İz id'sini döndürür.
+  Future<int> importTrack(String name, List<LatLng> points) {
+    return _db.transaction(() async {
+      final start = DateTime.now();
+      final id = await _db.into(_db.tracks).insert(
+            TracksCompanion.insert(
+              name: name,
+              startedAt: start,
+              endedAt: Value(start),
+            ),
+          );
+      await _db.batch((b) {
+        var ts = start;
+        for (final p in points) {
+          b.insert(
+            _db.trackPoints,
+            TrackPointsCompanion.insert(
+              trackId: id,
+              lat: p.latitude,
+              lon: p.longitude,
+              timestamp: ts,
+            ),
+          );
+          ts = ts.add(const Duration(seconds: 1));
+        }
+      });
+      return id;
+    });
+  }
+
   /// İzi sonlandırır (endedAt = now).
   Future<void> endTrack(int trackId) {
     return (_db.update(_db.tracks)..where((t) => t.id.equals(trackId)))

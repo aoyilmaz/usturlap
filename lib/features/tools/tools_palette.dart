@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../providers/graphic_providers.dart';
 import '../../providers/tool_providers.dart';
+import 'graphic_list_sheet.dart';
 
 /// Ölçüm/çizim araçları paleti. Bir araç seçince haritaya dokunarak nokta
 /// koyulur; üstteki ölçüm şeridi (ToolBanner) değeri gösterir.
@@ -50,7 +52,19 @@ Future<void> showToolsPalette(BuildContext context, WidgetRef ref) {
                 'Köşe koy → alan + çevre'),
             item(ToolMode.sector, Icons.pie_chart_outline, 'Sektör',
                 'Merkez, yarıçap, bitiş kerterizi (3 dokunuş)'),
+            item(ToolMode.lineOfSight, Icons.landscape_outlined, 'Görüş Hattı',
+                'İki nokta seç → Yükseklik profili ve engel analizi'),
             const Divider(),
+            ListTile(
+              leading: const Icon(Icons.bookmarks_outlined),
+              title: Text(
+                  'Kayıtlı çizimler (${ref.read(mapGraphicsProvider).value?.length ?? 0})'),
+              subtitle: const Text('Taktik grafikleri göster/sil'),
+              onTap: () {
+                Navigator.of(context).pop();
+                showGraphicListSheet(context, ref);
+              },
+            ),
             SwitchListTile(
               secondary: const Icon(Icons.visibility),
               title: const Text('Çizimi göster'),

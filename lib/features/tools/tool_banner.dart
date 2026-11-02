@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/geo_math.dart';
+import '../../domain/models/map_graphic.dart';
+import '../../providers/settings_providers.dart';
 import '../../providers/tool_providers.dart';
+import 'save_graphic_dialog.dart';
 
 /// Aktif araç için ölçüm değerini gösteren şerit (HUD'un altında).
 class ToolBanner extends ConsumerWidget {
@@ -14,6 +17,19 @@ class ToolBanner extends ConsumerWidget {
     if (!tool.active) return const SizedBox.shrink();
 
     final notifier = ref.read(toolProvider.notifier);
+    // Gece modunda kırmızı tonla (gece görüşü).
+    final night = ref.watch(nightModeProvider);
+    final accent = night ? Colors.redAccent : Colors.amberAccent;
+
+    // Kalıcı grafik olarak kaydedilebilir mi? (v1: çizgi + alan)
+    final GraphicType? savable;
+    if (tool.mode == ToolMode.distance && tool.points.length >= 2) {
+      savable = GraphicType.line;
+    } else if (tool.mode == ToolMode.polygon && tool.points.length >= 3) {
+      savable = GraphicType.area;
+    } else {
+      savable = null;
+    }
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
@@ -21,11 +37,11 @@ class ToolBanner extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.72),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.amber.withValues(alpha: 0.6)),
+        border: Border.all(color: accent.withValues(alpha: 0.6)),
       ),
       child: Row(
         children: [
-          Icon(_icon(tool.mode), size: 18, color: Colors.amberAccent),
+          Icon(_icon(tool.mode), size: 18, color: accent),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -37,6 +53,16 @@ class ToolBanner extends ConsumerWidget {
                 fontFeatures: [FontFeature.tabularFigures()],
               ),
             ),
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            icon: Icon(Icons.bookmark_add_outlined,
+                color: savable == null ? Colors.white24 : accent, size: 20),
+            tooltip: 'Çizimi kaydet',
+            onPressed: savable == null
+                ? null
+                : () => showSaveGraphicDialog(context, ref,
+                    type: savable!, points: tool.points),
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
@@ -65,6 +91,8 @@ class ToolBanner extends ConsumerWidget {
         return Icons.pie_chart_outline;
       case ToolMode.none:
         return Icons.straighten;
+      case ToolMode.lineOfSight:
+        return Icons.landscape_outlined;
     }
   }
 
@@ -95,6 +123,10 @@ class ToolBanner extends ConsumerWidget {
         return 'Sektör: R=${GeoMath.fmtDistance(r)} · ${sweep.round()}°';
       case ToolMode.none:
         return '';
+      case ToolMode.lineOfSight:
+        if (pts.isEmpty) return 'Görüş Hattı: 1. noktayı seçin';
+        if (pts.length == 1) return 'Görüş Hattı: 2. noktayı seçin';
+        return 'Görüş Hattı: Analiz tamamlandı';
     }
   }
 }

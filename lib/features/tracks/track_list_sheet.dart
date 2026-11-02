@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../data/export/track_exporter.dart';
 import '../../domain/models/track.dart';
 import '../../providers/track_providers.dart';
+import '../import/import_action.dart';
 
 /// Kayıtlı izlerin paneli: haritada göster, KML/GeoJSON paylaş, sil.
 Future<void> showTrackListSheet(BuildContext context, WidgetRef ref) {
@@ -33,11 +34,21 @@ class _TrackListBody extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: Text('İzler',
-                  style:
-                      TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+              child: Row(
+                children: [
+                  const Text('İzler',
+                      style: TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Spacer(),
+                  TextButton.icon(
+                    onPressed: () => runGpxKmlImport(context, ref),
+                    icon: const Icon(Icons.file_download_outlined),
+                    label: const Text('İçe aktar'),
+                  ),
+                ],
+              ),
             ),
             Flexible(
               child: async.when(

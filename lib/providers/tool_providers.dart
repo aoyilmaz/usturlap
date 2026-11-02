@@ -7,6 +7,7 @@ enum ToolMode {
   distance, // çoklu nokta — mesafe ölçümü
   polygon, // alan
   sector, // merkez + yarıçap + iki kerteriz
+  lineOfSight, // Görüş hattı analizi
 }
 
 class ToolState {

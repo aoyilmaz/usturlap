@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Kerteriz launcher adaptive icon arka planı (ikon SVG'siyle aynı: koyu haki). -->
+    <color name="ic_launcher_background">#1e1c14</color>
+</resources>
