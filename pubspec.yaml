@@ -1,5 +1,5 @@
-name: pusula
-description: "A new Flutter project."
+name: kerteriz
+description: "Kerteriz — çevrimdışı taktik harita uygulaması."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -50,6 +50,10 @@ dependencies:
   vector_map_tiles: 9.0.0-beta.9
   pmtiles: ^1.2.0
   vector_tile_renderer: ^6.1.0
+  path_provider: ^2.1.5
+  file_picker: ^11.0.2
+  xml: ^6.6.1
+  mapbox_maps_flutter: ^3.34.1
 
 dev_dependencies:
   flutter_test:
@@ -80,6 +84,7 @@ flutter:
   assets:
     - assets/tiles/
     - assets/style/
+    - assets/data/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

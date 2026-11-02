@@ -1,0 +1,212 @@
+import 'package:flutter/widgets.dart';
+import 'package:latlong2/latlong.dart';
+
+/// Harita motorundan bağımsız tipler.
+///
+/// Harita ekranı (map_screen) yalnızca bu tiplerle konuşur; hangi motorun
+/// (flutter_map / Mapbox) çizdiğini bilmez. Bkz. docs/harita-motoru-gecis-plani.md.
+
+/// Kameranın anlık durumu.
+@immutable
+class MapCameraState {
+  const MapCameraState({
+    required this.center,
+    required this.zoom,
+    this.bearing = 0,
+  });
+
+  final LatLng center;
+  final double zoom;
+
+  /// Ekranın üstünün baktığı yön, kuzeyden saat yönünde derece
+  /// (0 = kuzey-yukarı). Mapbox'taki `bearing` ile aynı anlam.
+  final double bearing;
+}
+
+/// Basit coğrafi dikdörtgen (güney-batı / kuzey-doğu).
+@immutable
+class GeoBounds {
+  const GeoBounds({
+    required this.south,
+    required this.west,
+    required this.north,
+    required this.east,
+  });
+
+  /// Noktaları kapsayan en küçük dikdörtgen. [points] boş olamaz.
+  factory GeoBounds.fromPoints(Iterable<LatLng> points) {
+    final it = points.iterator;
+    if (!it.moveNext()) {
+      throw ArgumentError.value(points, 'points', 'boş olamaz');
+    }
+    var s = it.current.latitude, n = s;
+    var w = it.current.longitude, e = w;
+    while (it.moveNext()) {
+      final p = it.current;
+      if (p.latitude < s) s = p.latitude;
+      if (p.latitude > n) n = p.latitude;
+      if (p.longitude < w) w = p.longitude;
+      if (p.longitude > e) e = p.longitude;
+    }
+    return GeoBounds(south: s, west: w, north: n, east: e);
+  }
+
+  final double south, west, north, east;
+
+  LatLng get southWest => LatLng(south, west);
+  LatLng get northEast => LatLng(north, east);
+
+  bool contains(LatLng p) =>
+      p.latitude >= south &&
+      p.latitude <= north &&
+      p.longitude >= west &&
+      p.longitude <= east;
+
+  @override
+  bool operator ==(Object other) =>
+      other is GeoBounds &&
+      other.south == south &&
+      other.west == west &&
+      other.north == north &&
+      other.east == east;
+
+  @override
+  int get hashCode => Object.hash(south, west, north, east);
+
+  @override
+  String toString() => 'GeoBounds($south,$west → $north,$east)';
+}
+
+// --------------------------------------------------------------------------
+// Harita üstü çizimler (overlay). Liste sırası = çizim sırası (alttan üste).
+// --------------------------------------------------------------------------
+
+sealed class MapOverlay {
+  const MapOverlay();
+}
+
+/// Çizgi (iz, ölçüm, navigasyon çizgisi).
+class MapLine extends MapOverlay {
+  const MapLine({required this.points, required this.color, this.width = 3});
+
+  final List<LatLng> points;
+  final Color color;
+  final double width;
+}
+
+/// Kapalı alan (poligon, sektör).
+class MapArea extends MapOverlay {
+  const MapArea({
+    required this.points,
+    required this.fillColor,
+    required this.strokeColor,
+    this.strokeWidth = 3,
+  });
+
+  final List<LatLng> points;
+  final Color fillColor;
+  final Color strokeColor;
+  final double strokeWidth;
+}
+
+/// Metre cinsinden yarıçaplı daire (ör. röle kapsama alanı).
+class MapCircle extends MapOverlay {
+  const MapCircle({
+    required this.center,
+    required this.radiusMeters,
+    required this.fillColor,
+    required this.strokeColor,
+    this.strokeWidth = 1.5,
+  });
+
+  final LatLng center;
+  final double radiusMeters;
+  final Color fillColor;
+  final Color strokeColor;
+  final double strokeWidth;
+}
+
+/// Haritaya sabitlenmiş bir Flutter widget'ı (waypoint, NATO sembolü, kendi
+/// konum oku). Dokunma vb. davranış [child] içinde tanımlanır.
+class MapMarker extends MapOverlay {
+  const MapMarker({
+    required this.point,
+    required this.child,
+    this.width = 32,
+    this.height = 32,
+  });
+
+  final LatLng point;
+  final Widget child;
+  final double width;
+  final double height;
+}
+
+// --------------------------------------------------------------------------
+// Taban katman — dosyası bulunmuş / adresi belli, çizilmeye hazır hali.
+// (Katman tanımı: base_layer.dart; çözümleme: base_layer_resolver.dart)
+// --------------------------------------------------------------------------
+
+sealed class ResolvedBaseLayer {
+  const ResolvedBaseLayer({required this.id, this.attribution});
+
+  /// Katman kimliği (BaseLayerDef.id).
+  final String id;
+
+  /// Haritada gösterilecek kaynak atfı (lisans gereği).
+  final String? attribution;
+}
+
+/// Henüz hazır olmayan / boş taban katman.
+class NoBaseLayer extends ResolvedBaseLayer {
+  const NoBaseLayer() : super(id: '');
+}
+
+/// İnternetten {z}/{x}/{y} adresiyle gelen raster karolar.
+class RasterUrlBaseLayer extends ResolvedBaseLayer {
+  const RasterUrlBaseLayer({
+    required super.id,
+    required this.urlTemplate,
+    required this.maxNativeZoom,
+    this.tileDimension = 256,
+    this.zoomOffset = 0,
+    this.additionalOptions = const {},
+    super.attribution,
+  });
+
+  final String urlTemplate;
+
+  /// Kaynağın sunduğu en yüksek zoom; üstünde son karo büyütülür.
+  final int maxNativeZoom;
+  final int tileDimension;
+  final double zoomOffset;
+
+  /// urlTemplate içindeki ek {yer tutucular} (ör. accessToken).
+  final Map<String, String> additionalOptions;
+}
+
+/// Cihazdaki .mbtiles dosyası (raster).
+class MbtilesBaseLayer extends ResolvedBaseLayer {
+  const MbtilesBaseLayer({
+    required super.id,
+    required this.path,
+    required this.maxNativeZoom,
+    super.attribution,
+  });
+
+  final String path;
+  final int maxNativeZoom;
+}
+
+/// Cihazdaki .pmtiles dosyası (vektör) + MapLibre stil JSON asset'i.
+class PmtilesBaseLayer extends ResolvedBaseLayer {
+  const PmtilesBaseLayer({
+    required super.id,
+    required this.path,
+    required this.stylePath,
+    super.attribution,
+  });
+
+  final String path;
+  final String stylePath;
+}

@@ -5,15 +5,15 @@ class AppConstants {
   AppConstants._();
 
   /// Uygulama adı (HUD/başlıkta kullanılabilir).
-  static const String appName = 'Pusula';
+  static const String appName = 'Kerteriz';
 
   /// Kendi işaretçimizin varsayılan callsign'ı.
   /// (İleride ayarlardan düzenlenebilir hale gelecek.)
-  static const String defaultCallsign = 'PUSULA-1';
+  static const String defaultCallsign = 'KERTERIZ-1';
 
   /// OSM kutucuk sunucusu istekleri için User-Agent paketi adı.
   /// OSM kullanım politikası gereği gerçek bir tanımlayıcı gönderilmeli.
-  static const String osmUserAgent = 'com.pusula.app';
+  static const String osmUserAgent = 'com.kerteriz.app';
 
   /// Çevrimiçi OSM raster karo şablonu (Adım 1).
   /// Adım 2'de bunun yanına gömülü MBTiles katmanı eklenecek.
@@ -27,5 +27,23 @@ class AppConstants {
   static const double initialZoom = 13.0;
 
   static const double minZoom = 3.0;
-  static const double maxZoom = 19.0;
+
+  /// Harita en fazla bu zoom'a yaklaşır. Karo kaynağının kendi sınırının
+  /// (maxNativeZoom) ötesinde son karo büyütülür → boş/gri karo yerine
+  /// görüntü yumuşakça büyür.
+  static const double maxZoom = 22.0;
+
+  /// Mapbox erişim anahtarı (public `pk.` token). Koda gömülmez; derlemede
+  /// verilir: `flutter run --dart-define=MAPBOX_ACCESS_TOKEN=pk.xxx`.
+  /// Boşsa çevrimiçi uydu katmanı devre dışı görünür.
+  static const String mapboxAccessToken =
+      String.fromEnvironment('MAPBOX_ACCESS_TOKEN');
+
+  /// Mapbox uydu + yol/yer adı (raster, 512px @2x — retina ekranda keskin).
+  static const String mapboxSatelliteStreetsUrl =
+      'https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/512/{z}/{x}/{y}@2x?access_token={accessToken}';
+
+  /// OpenTopoMap en fazla z17 karo sunar.
+  static const String openTopoMapUrl =
+      'https://a.tile.opentopomap.org/{z}/{x}/{y}.png';
 }

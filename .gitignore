@@ -58,3 +58,10 @@ assets/tiles/*.manifest.json
 .DS_Store
 __pycache__/
 *.pyc
+
+# Bundle DIŞI karo dosyaları (cihaza sideload edilir / emekli)
+tiles_external/
+
+# Gizli derleme değişkenleri (Mapbox token vb.)
+dart_defines.json
+assets/tiles/*.hgt

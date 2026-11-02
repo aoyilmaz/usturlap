@@ -41,14 +41,16 @@ ve **kişisel kullanım** içindir.
 
 - **Platform önceliği:** iOS (iPhone). Kod tabanı baştan Android'i de destekleyecek
   şekilde platform-bağımsız yazılır, ama test ve cilalama önce iOS'ta.
-- **Uydu görüntüsü:** v1'de **yüksek çözünürlüklü ticari uydu YOK**. Sebep: Google/Mapbox/Esri
-  yüksek-çöz. karolarını çevrimdışı önbelleğe almak lisans ihlalidir. v1 şu üç **yasal ve
-  ücretsiz** kaynağa dayanır:
-  - **OpenStreetMap** (vektör/sokak)
-  - **Topografik** (OpenTopoMap / Copernicus-SRTM yükseklik)
-  - **ESA Sentinel-2** (~10 m gerçek uydu — arazi/rota planlaması için yeterli)
-  - Karo paketleri kullanıcı tarafından **QGIS + `gdal2tiles`** ile MBTiles/PMTiles olarak
-    üretilip uygulamaya gömülecek. Sen bu MBTiles dosyalarını okuyup gösteren tarafı yaz.
+- **Uydu görüntüsü (2026-11-02'de güncellendi):** Yüksek çözünürlüklü uydu **Mapbox Satellite**
+  ile sağlanır, **yalnızca Mapbox Maps SDK** üzerinden (çevrimiçi + SDK'nın kendi
+  OfflineManager/TileStore indirmesi). Mapbox/Google/Esri karolarını **kendi indiricimizle**
+  (FMTC, script, pusula-tiler) toplu indirmek/önbelleğe almak **YASAK** (lisans ihlali).
+  - Geçiş planı: [`docs/harita-motoru-gecis-plani.md`](docs/harita-motoru-gecis-plani.md)
+  - Mapbox token'ı koda gömülmez: `--dart-define=MAPBOX_ACCESS_TOKEN=pk...`
+- **Kullanıcının kendi karo paketleri** (yasal/ücretsiz kaynaklar) desteklenmeye devam eder:
+  - **OpenStreetMap / Protomaps** (vektör/sokak), **Topografik** (OpenTopoMap / Copernicus DEM)
+  - **ESA Sentinel-2** (~10 m uydu), WMS ortofoto vb.
+  - Bunlar `pusula-tiler` / QGIS + `gdal2tiles` ile MBTiles/PMTiles olarak üretilip içe aktarılır.
 - **Mesh (Meshtastic) Faz 2'dir.** Ama v1 mimarisi mesh'e hazır olmalı (bkz. §4 soyutlamalar).
 
 ---
@@ -61,9 +63,10 @@ ve **kişisel kullanım** içindir.
 | Katman | Paket / Araç | Not |
 |---|---|---|
 | Çatı | Flutter (stable) + Dart | Tek kod, iOS + Android |
-| Harita | `flutter_map` | v1 için MapLibre'den daha hacklenebilir; raster + MBTiles |
-| Karo katmanları | `flutter_map_mbtiles` / MBTiles okuyucu | Gömülü çevrimdışı karolar |
-| Çevrimdışı indirme | `flutter_map_tile_caching` (FMTC) | İsteğe bağlı online→cache |
+| Harita (hedef) | `mapbox_maps_flutter` | GPU motoru, Mapbox Satellite, 3B arazi, SDK içi offline indirme. Geçiş sürüyor (spike) |
+| Harita (mevcut) | `flutter_map` | Geçiş bitene kadar ana ekran; MBTiles/PMTiles katmanları |
+| Karo katmanları | `mbtiles` / `pmtiles` okuyucu | Kullanıcının kendi çevrimdışı paketleri |
+| Çevrimdışı indirme | Mapbox `OfflineManager` + `TileStore` | FMTC **kullanılmaz** (Mapbox karoları için lisans ihlali) |
 | Yerel veri | `drift` (SQLite üstü) | Waypoint/track/geofence; tip güvenli |
 | Konum | `geolocator` | Konum, hız, yükseklik |
 | Pusula | `flutter_compass` | Kerteriz |

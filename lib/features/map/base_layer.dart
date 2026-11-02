@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../core/constants.dart';
+
 /// Bir taban harita katmanının nereden geldiğini belirtir.
 enum BaseLayerSourceType {
   /// Çevrimiçi OSM raster karoları (internet gerekir).
   onlineOsm,
+
+  /// Çevrimiçi Topografik raster karoları.
+  onlineTopo,
+
+  /// Çevrimiçi Mapbox uydu (+ yol/yer adları) raster karoları. Token gerekir.
+  onlineSatellite,
 
   /// Uygulamaya gömülü çevrimdışı MBTiles dosyası.
   offlineMbtiles,
@@ -37,6 +45,11 @@ class BaseLayerDef {
   /// vectorPmtiles için MapLibre stil JSON asset yolu (yol/su/bina renkleri).
   final String? stylePath;
 
+  /// Büyük katmanlar (ör. tüm-Türkiye) gömülü asset olamaz. Verilirse karo
+  /// dosyası cihazın **Documents** dizininden bu ada göre okunur (Dosyalar/Finder
+  /// ile kopyalanır); assetPath yerine geçer. null → gömülü asset.
+  final String? fileName;
+
   const BaseLayerDef({
     required this.id,
     required this.label,
@@ -46,9 +59,16 @@ class BaseLayerDef {
     this.maxNativeZoom,
     this.center,
     this.stylePath,
+    this.fileName,
   });
 
-  bool get isAvailable => type != BaseLayerSourceType.missing;
+  bool get isAvailable {
+    if (type == BaseLayerSourceType.missing) return false;
+    if (type == BaseLayerSourceType.onlineSatellite) {
+      return AppConstants.mapboxAccessToken.isNotEmpty;
+    }
+    return true;
+  }
 }
 
 /// Kullanılabilir taban katmanlar.
@@ -59,62 +79,35 @@ class BaseLayerDef {
 /// (`LatLng` const olmadığı için liste `final`.)
 final List<BaseLayerDef> kBaseLayers = [
   const BaseLayerDef(
-    id: 'offline_street',
-    label: 'Sokak — çevrimdışı',
-    icon: Icons.map_outlined,
-    type: BaseLayerSourceType.offlineMbtiles,
-    assetPath: 'assets/tiles/ankara_osm.mbtiles',
-    maxNativeZoom: 14,
+    id: 'online_satellite',
+    label: 'Uydu — çevrimiçi',
+    icon: Icons.satellite_alt,
+    type: BaseLayerSourceType.onlineSatellite,
+    maxNativeZoom: 22,
   ),
   const BaseLayerDef(
     id: 'online_street',
-    label: 'Sokak — çevrimiçi (OSM)',
-    icon: Icons.public,
+    label: 'Sokak — çevrimiçi',
+    icon: Icons.map,
     type: BaseLayerSourceType.onlineOsm,
-  ),
-  // --- pusula-tiler çıktıları ---
-  const BaseLayerDef(
-    id: 'sat_ankara',
-    label: 'Uydu — Ankara',
-    icon: Icons.satellite_alt,
-    type: BaseLayerSourceType.offlineMbtiles,
-    assetPath: 'assets/tiles/ankara_sat_z10-14.mbtiles',
-    maxNativeZoom: 14,
+    maxNativeZoom: 19,
   ),
   const BaseLayerDef(
-    id: 'topo_ankara',
-    label: 'Topografik — Ankara',
+    id: 'online_topo',
+    label: 'Topografik — çevrimiçi',
     icon: Icons.terrain,
-    type: BaseLayerSourceType.offlineMbtiles,
-    assetPath: 'assets/tiles/ankara_topo_z10-16.mbtiles',
-    maxNativeZoom: 16,
-  ),
-  BaseLayerDef(
-    id: 'sat_olucak',
-    label: 'Uydu — Olucak',
-    icon: Icons.satellite_alt,
-    type: BaseLayerSourceType.offlineMbtiles,
-    assetPath: 'assets/tiles/olucak_sat_z10-14.mbtiles',
-    maxNativeZoom: 14,
-    center: LatLng(37.1815, 36.696),
-  ),
-  BaseLayerDef(
-    id: 'topo_olucak',
-    label: 'Topografik — Olucak',
-    icon: Icons.terrain,
-    type: BaseLayerSourceType.offlineMbtiles,
-    assetPath: 'assets/tiles/olucak_topo_z10-16.mbtiles',
-    maxNativeZoom: 16,
-    center: LatLng(37.1815, 36.696),
+    type: BaseLayerSourceType.onlineTopo,
+    maxNativeZoom: 17,
   ),
   // --- vektör (PMTiles / Protomaps) ---
+  // Tüm Türkiye (~0.8 GB, z0-14): gömülemez → cihaz Documents'ından okunur.
+  // turkey.pmtiles'ı Dosyalar/Finder ile Kerteriz'e kopyalayın.
   BaseLayerDef(
-    id: 'vec_gaziantep',
-    label: 'Vektör — Gaziantep',
-    icon: Icons.account_tree_outlined,
+    id: 'vec_turkiye',
+    label: 'Vektör — Türkiye',
+    icon: Icons.public,
     type: BaseLayerSourceType.vectorPmtiles,
-    assetPath: 'assets/tiles/gaziantep.pmtiles',
+    fileName: 'turkey.pmtiles', // Documents/turkey.pmtiles
     stylePath: 'assets/style/protomaps_light.json',
-    center: LatLng(37.066, 37.378), // Gaziantep; PMTiles kapsamı içinde
   ),
 ];
