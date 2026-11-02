@@ -126,20 +126,39 @@ class MapCircle extends MapOverlay {
   final double strokeWidth;
 }
 
-/// Haritaya sabitlenmiş bir Flutter widget'ı (waypoint, NATO sembolü, kendi
-/// konum oku). Dokunma vb. davranış [child] içinde tanımlanır.
+/// Haritaya sabitlenmiş işaretçi (waypoint, NATO sembolü, kendi konum oku).
+///
+/// [child] yalnızca GÖRÜNÜMDÜR (dokunma/döndürme içermez): Mapbox motoru onu
+/// bir kez resme çevirip native sembol olarak çizer. Dokunma [onTap], yön
+/// [rotationDeg] ile verilir ki her motor kendi yoluyla uygulasın.
 class MapMarker extends MapOverlay {
   const MapMarker({
+    required this.id,
     required this.point,
     required this.child,
+    String? imageKey,
     this.width = 32,
     this.height = 32,
-  });
+    this.rotationDeg,
+    this.onTap,
+  }) : imageKey = imageKey ?? id;
+
+  /// Bu işaretçinin benzersiz kimliği (dokunma eşlemesi için).
+  final String id;
+
+  /// Görünümün önbellek anahtarı: aynı görünen işaretçiler (ör. tüm röleler)
+  /// aynı anahtarı paylaşır → tek kez resme çevrilir.
+  final String imageKey;
 
   final LatLng point;
   final Widget child;
   final double width;
   final double height;
+
+  /// Harita kuzeyine göre saat yönünde döndürme (ör. kerteriz oku). null → yok.
+  final double? rotationDeg;
+
+  final VoidCallback? onTap;
 }
 
 // --------------------------------------------------------------------------

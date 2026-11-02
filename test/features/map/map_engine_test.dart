@@ -38,7 +38,7 @@ void main() {
         points: const [a, b, LatLng(39.9, 32.9)],
         fillColor: Colors.red,
         strokeColor: Colors.red);
-    final marker = MapMarker(point: a, child: const SizedBox());
+    final marker = MapMarker(id: 'm', point: a, child: const SizedBox());
     final circle = MapCircle(
         center: a,
         radiusMeters: 100,

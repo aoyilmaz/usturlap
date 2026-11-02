@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -52,8 +51,19 @@ class MapScreen extends ConsumerStatefulWidget {
 }
 
 class _MapScreenState extends ConsumerState<MapScreen> {
-  /// Harita motoru kontrolcüsü (hangi motor olduğu: engine/map_engine.dart).
-  final MapEngineController _map = kMapEngine.createController();
+  /// Motor başına kontrolcü (Mapbox / Klasik). Aktif olan [_map].
+  final Map<MapEngineKind, MapEngineController> _controllers = {};
+  MapEngineKind _activeKind = MapEngineKind.flutterMap;
+
+  /// Aktif motorun kontrolcüsü.
+  MapEngineController get _map => _controllers.putIfAbsent(
+      _activeKind, () => engineFor(_activeKind).createController());
+
+  /// Son bilinen kamera — motor değişince yeni harita buradan başlar.
+  MapCameraState _lastCamera = const MapCameraState(
+    center: AppConstants.initialCenter,
+    zoom: AppConstants.initialZoom,
+  );
   static const _resolver = BaseLayerResolver();
 
   /// Çözülmüş (dosyası bulunmuş / adresi belli) taban katmanlar — id → katman.
@@ -140,7 +150,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   @override
   void dispose() {
-    _map.dispose(); // motorun açtığı karo kaynaklarını da kapatır
+    // Motorların açtığı karo kaynaklarını da kapatır.
+    for (final c in _controllers.values) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -158,16 +171,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   MapMarker _selfMarker(Contact self) {
     final heading = self.headingDeg;
     return MapMarker(
+      id: 'self',
+      imageKey: heading == null ? 'self:dot' : 'self:arrow',
       point: self.position,
       width: 44,
       height: 44,
+      rotationDeg: heading,
       child: heading == null
           ? const Icon(Icons.my_location, color: Colors.lightBlueAccent, size: 28)
-          : Transform.rotate(
-              angle: heading * math.pi / 180.0,
-              child: const Icon(Icons.navigation,
-                  color: Colors.lightBlueAccent, size: 34),
-            ),
+          : const Icon(Icons.navigation, color: Colors.lightBlueAccent, size: 34),
     );
   }
 
@@ -176,42 +188,44 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   MapMarker _waypointMarker(Waypoint wp) {
     final isNato = wp.affiliation != Affiliation.waypoint;
     return MapMarker(
+      id: 'wp:${wp.id}',
+      // Aynı görünen semboller tek resmi paylaşır.
+      imageKey: isNato
+          ? 'wp:nato:${wp.affiliation.name}:${wp.echelon}:${wp.role}'
+          : 'wp:pin',
       point: wp.position,
       width: isNato ? 34 : 40,
       height: isNato ? 34 : 40,
-      child: GestureDetector(
-        onTap: () => _showWaypointDetail(wp),
-        child: isNato
-            ? NatoSymbol(
-                affiliation: wp.affiliation,
-                echelon: wp.echelon,
-                role: wp.role,
-                size: 34)
-            : const Icon(Icons.location_on,
-                color: Colors.redAccent, size: 36),
-      ),
+      onTap: () => _showWaypointDetail(wp),
+      child: isNato
+          ? NatoSymbol(
+              affiliation: wp.affiliation,
+              echelon: wp.echelon,
+              role: wp.role,
+              size: 34)
+          : const Icon(Icons.location_on, color: Colors.redAccent, size: 36),
     );
   }
 
   /// Telsiz röle işaretçisi (anten ikonu; dokun → özellikler).
   MapMarker _repeaterMarker(Repeater r) {
     return MapMarker(
+      id: 'rep:${r.id}',
+      imageKey: 'repeater',
       point: r.position,
       width: 32,
       height: 32,
-      child: GestureDetector(
-        onTap: () {
-          ref.read(selectedRepeaterProvider.notifier).select(r);
-          _showRepeaterDetail(r);
-        },
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.55),
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.tealAccent, width: 1.5),
-          ),
-          child: const Icon(Icons.cell_tower, color: Colors.tealAccent, size: 20),
+      onTap: () {
+        ref.read(selectedRepeaterProvider.notifier).select(r);
+        _showRepeaterDetail(r);
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.55),
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.tealAccent, width: 1.5),
         ),
+        child: const Icon(Icons.cell_tower, color: Colors.tealAccent, size: 20),
       ),
     );
   }
@@ -364,8 +378,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
 
     // Dokunulan köşeleri küçük noktalarla göster.
-    for (final p in pts) {
+    for (var i = 0; i < pts.length; i++) {
+      final p = pts[i];
       out.add(MapMarker(
+        id: 'tool:$i',
+        imageKey: 'tool:vertex',
         point: p,
         width: 14,
         height: 14,
@@ -721,6 +738,24 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 const Divider(),
                 // --- Görünüm ayarları ---
                 Consumer(builder: (context, ref, _) {
+                  final kind = ref.watch(mapEngineKindProvider);
+                  final hasToken = AppConstants.mapboxAccessToken.isNotEmpty;
+                  return SwitchListTile(
+                    secondary: const Icon(Icons.memory),
+                    title: const Text('Harita motoru: Mapbox'),
+                    subtitle: Text(!hasToken
+                        ? 'Mapbox anahtarı yok — Klasik motor'
+                        : kind == MapEngineKind.mapbox
+                            ? 'GPU, akıcı · kendi paketleriniz Klasik\'te açılır'
+                            : 'Kapalı — Klasik (flutter_map)'),
+                    value: kind == MapEngineKind.mapbox,
+                    onChanged: !hasToken
+                        ? null
+                        : (on) => ref.read(mapEngineKindProvider.notifier).set(
+                            on ? MapEngineKind.mapbox : MapEngineKind.flutterMap),
+                  );
+                }),
+                Consumer(builder: (context, ref, _) {
                   final night = ref.watch(nightModeProvider);
                   return SwitchListTile(
                     secondary: Icon(
@@ -853,6 +888,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             _selected.type == BaseLayerSourceType.vectorPmtiles) &&
         !_resolved.containsKey(_selected.id);
 
+    // Etkin motor: tercih Mapbox olsa bile kendi MBTiles/PMTiles paketlerimiz
+    // (henüz) Klasik motorda çizilir — özellik kaybı olmasın.
+    final preferred = ref.watch(mapEngineKindProvider);
+    final fileLayer = _selected.type == BaseLayerSourceType.offlineMbtiles ||
+        _selected.type == BaseLayerSourceType.vectorPmtiles;
+    final kind = fileLayer ? MapEngineKind.flutterMap : preferred;
+    if (kind != _activeKind) {
+      if (_map.isReady) _lastCamera = _map.camera;
+      _activeKind = kind;
+    }
+
     // Harita üstü çizimler — liste sırası = çizim sırası (alttan üste).
     final overlays = <MapOverlay>[
       // Kalıcı taktik grafikler (çizgi/alan).
@@ -915,18 +961,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     ),
                   );
                 }
-                return kMapEngine.buildView(
+                return engineFor(kind).buildView(
+                  key: ValueKey('engine_${kind.name}'),
                   controller: _map,
                   baseLayer: _resolved[_selected.id] ?? const NoBaseLayer(),
                   overlays: overlays,
-                  initialCamera: const MapCameraState(
-                    center: AppConstants.initialCenter,
-                    zoom: AppConstants.initialZoom,
-                  ),
+                  initialCamera: _lastCamera,
+                  // Motor değişince yeni harita hazır olunca katman alanına git.
+                  onReady: () => _recenterToLayer(_selected),
                   minZoom: AppConstants.minZoom,
                   maxZoom: AppConstants.maxZoom,
                   // Kullanıcı elle kaydırınca takibi bırak.
                   onCameraChanged: (camera, byGesture) {
+                    _lastCamera = camera;
                     if (byGesture && _follow) {
                       setState(() => _follow = false);
                     }

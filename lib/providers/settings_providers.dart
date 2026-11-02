@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants.dart';
 import '../core/coord_format.dart';
 import '../data/db/settings_repository.dart';
+import '../features/map/engine/map_engine.dart' show MapEngineKind;
 import 'waypoint_providers.dart';
 
 final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
@@ -146,3 +147,34 @@ class ShowRepeatersNotifier extends Notifier<bool> {
 
 final showRepeatersProvider =
     NotifierProvider<ShowRepeatersNotifier, bool>(ShowRepeatersNotifier.new);
+
+const _mapEngineKey = 'map_engine';
+
+/// Tercih edilen harita motoru (Mapbox / Klasik). Kalıcı.
+///
+/// Mapbox anahtarı yoksa her zaman Klasik. Kendi MBTiles/PMTiles katmanları
+/// seçiliyken harita ekranı yine Klasik'e geçer (Mapbox henüz okuyamıyor).
+class MapEngineKindNotifier extends Notifier<MapEngineKind> {
+  static bool get _mapboxAvailable => AppConstants.mapboxAccessToken.isNotEmpty;
+
+  @override
+  MapEngineKind build() {
+    _load();
+    return _mapboxAvailable ? MapEngineKind.mapbox : MapEngineKind.flutterMap;
+  }
+
+  Future<void> _load() async {
+    final saved = await ref.read(settingsRepositoryProvider).get(_mapEngineKey);
+    if (saved == MapEngineKind.flutterMap.name) state = MapEngineKind.flutterMap;
+  }
+
+  void set(MapEngineKind kind) {
+    if (kind == MapEngineKind.mapbox && !_mapboxAvailable) return;
+    state = kind;
+    ref.read(settingsRepositoryProvider).set(_mapEngineKey, kind.name);
+  }
+}
+
+final mapEngineKindProvider =
+    NotifierProvider<MapEngineKindNotifier, MapEngineKind>(
+        MapEngineKindNotifier.new);

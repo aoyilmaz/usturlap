@@ -3,6 +3,7 @@ import 'package:latlong2/latlong.dart';
 
 import 'flutter_map_engine.dart';
 import 'map_types.dart';
+import 'mapbox_engine.dart';
 
 export 'map_types.dart';
 
@@ -55,7 +56,20 @@ abstract class MapEngine {
   });
 }
 
-/// Uygulamanın kullandığı motor — DEĞİŞTİRME NOKTASI BURASI.
-///
-/// Geçiş sırasında (planın 3. adımı) burası Mapbox motoruna çevrilecek.
-const MapEngine kMapEngine = FlutterMapEngine();
+/// Kullanılabilir motorlar.
+enum MapEngineKind {
+  /// Mapbox Maps SDK — native GPU, Mapbox uydu, z22 (varsayılan).
+  mapbox('Mapbox'),
+
+  /// flutter_map — Dart/Canvas; kendi MBTiles/PMTiles paketleri için.
+  flutterMap('Klasik');
+
+  const MapEngineKind(this.label);
+  final String label;
+}
+
+/// Motor seçimi — DEĞİŞTİRME NOKTASI BURASI.
+MapEngine engineFor(MapEngineKind kind) => switch (kind) {
+      MapEngineKind.mapbox => const MapboxEngine(),
+      MapEngineKind.flutterMap => const FlutterMapEngine(),
+    };

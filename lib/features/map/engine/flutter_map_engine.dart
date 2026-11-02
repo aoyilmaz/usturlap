@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
@@ -266,6 +267,15 @@ class _FlutterMapEngineViewState extends State<_FlutterMapEngineView> {
   }
 }
 
+/// İşaretçi görünümüne döndürme + dokunma ekler (flutter_map'te widget olarak).
+Widget _markerChild(MapMarker m) {
+  Widget w = m.child;
+  final r = m.rotationDeg;
+  if (r != null) w = Transform.rotate(angle: r * math.pi / 180.0, child: w);
+  if (m.onTap != null) w = GestureDetector(onTap: m.onTap, child: w);
+  return w;
+}
+
 /// OSM vb. karo sunucularına gönderilen tanımlayıcı.
 const String _userAgent = 'com.kerteriz.app';
 
@@ -314,10 +324,12 @@ List<Widget> buildFlutterMapOverlayLayers(List<MapOverlay> overlays) {
         layers.add(MarkerLayer(markers: [
           for (final m in group.cast<MapMarker>())
             Marker(
-                point: m.point,
-                width: m.width,
-                height: m.height,
-                child: m.child),
+              key: ValueKey(m.id),
+              point: m.point,
+              width: m.width,
+              height: m.height,
+              child: _markerChild(m),
+            ),
         ]));
     }
     i = j;
