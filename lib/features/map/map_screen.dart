@@ -84,6 +84,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// true: track-up (harita hareket yönüne döner), false: kuzey-yukarı.
   bool _trackUp = false;
 
+  /// 3B arazi açık mı (yalnızca Mapbox motorunda).
+  bool _terrain3d = false;
+
   /// Çevrimdışı bölge çerçeveleme modu açık mı.
   bool _framing = false;
 
@@ -984,8 +987,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     ),
                   );
                 }
-                return engineFor(kind).buildView(
+                final engine = engineFor(kind);
+                return engine.buildView(
                   key: ValueKey('engine_${kind.name}'),
+                  terrain3d: _terrain3d && engine.supportsTerrain,
+                  nightMode: nightMode,
                   controller: _map,
                   baseLayer: _resolved[_selected.id] ?? const NoBaseLayer(),
                   overlays: overlays,
@@ -1111,6 +1117,22 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // 3B arazi (yalnızca Mapbox motorunda)
+                if (engineFor(_activeKind).supportsTerrain) ...[
+                  FloatingActionButton(
+                    heroTag: 'terrain3d',
+                    mini: true,
+                    onPressed: () {
+                      HapticFeedback.selectionClick();
+                      setState(() => _terrain3d = !_terrain3d);
+                    },
+                    tooltip: _terrain3d ? '3B arazi (dokun: kapat)' : '3B arazi',
+                    backgroundColor: _terrain3d ? Colors.amber.shade800 : null,
+                    child: const Text('3B',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 // Pusula: kuzey-yukarı / track-up
                 FloatingActionButton(
                   heroTag: 'orientation',

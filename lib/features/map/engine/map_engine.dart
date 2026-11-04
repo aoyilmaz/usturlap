@@ -45,6 +45,9 @@ abstract class MapEngine {
 
   MapEngineController createController();
 
+  /// 3B arazi çizebilir mi (Klasik motor: hayır).
+  bool get supportsTerrain => false;
+
   /// Harita widget'ı. [overlays] liste sırasıyla (alttan üste) çizilir.
   Widget buildView({
     Key? key,
@@ -58,6 +61,8 @@ abstract class MapEngine {
     MapCameraCallback? onCameraChanged,
     MapPointCallback? onTap,
     MapPointCallback? onLongPress,
+    bool terrain3d = false,
+    bool nightMode = false,
   });
 }
 

@@ -8,6 +8,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' hide MapEvent, Siz
 
 import 'map_engine.dart';
 import 'mapbox_geojson.dart';
+import 'mapbox_night_style.dart';
 import 'widget_rasterizer.dart';
 
 /// Mapbox Maps SDK (native, GPU) ile çizen motor.
@@ -29,6 +30,9 @@ class MapboxEngine extends MapEngine {
   MapEngineController createController() => MapboxEngineController();
 
   @override
+  bool get supportsTerrain => true;
+
+  @override
   Widget buildView({
     Key? key,
     required MapEngineController controller,
@@ -41,6 +45,8 @@ class MapboxEngine extends MapEngine {
     MapCameraCallback? onCameraChanged,
     MapPointCallback? onTap,
     MapPointCallback? onLongPress,
+    bool terrain3d = false,
+    bool nightMode = false,
   }) {
     return _MapboxEngineView(
       key: key,
@@ -54,6 +60,8 @@ class MapboxEngine extends MapEngine {
       onCameraChanged: onCameraChanged,
       onTap: onTap,
       onLongPress: onLongPress,
+      terrain3d: terrain3d,
+      nightMode: nightMode,
     );
   }
 }
@@ -136,6 +144,17 @@ const _srcAreas = 'pz-areas';
 const _srcLines = 'pz-lines';
 const _srcMarkers = 'pz-markers';
 const _layerMarkers = 'pz-markers';
+const _srcDem = 'pz-dem';
+const _layerSky = 'pz-sky';
+
+/// Uygulamanın kendi katmanları — gece stili bunlara dokunmaz.
+const _ownLayers = {
+  'pz-areas-fill',
+  'pz-areas-line',
+  'pz-lines',
+  _layerMarkers,
+  // pz-sky bilerek yok: gece modunda gökyüzü de söndürülür.
+};
 
 /// Taban katmana göre stil: ya Mapbox stil adresi ya da yerel stil JSON'u.
 class _StyleSpec {
@@ -194,6 +213,8 @@ class _MapboxEngineView extends StatefulWidget {
     this.onCameraChanged,
     this.onTap,
     this.onLongPress,
+    this.terrain3d = false,
+    this.nightMode = false,
   });
 
   final MapboxEngineController controller;
@@ -206,6 +227,8 @@ class _MapboxEngineView extends StatefulWidget {
   final MapCameraCallback? onCameraChanged;
   final MapPointCallback? onTap;
   final MapPointCallback? onLongPress;
+  final bool terrain3d;
+  final bool nightMode;
 
   @override
   State<_MapboxEngineView> createState() => _MapboxEngineViewState();
@@ -247,7 +270,18 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
     final next = _styleFor(widget.baseLayer);
     if (next.key != _style.key) {
       _style = next;
-      _loadStyle();
+      _loadStyle(); // yükleninince 3B/gece yeniden uygulanır
+    } else if (old.nightMode != widget.nightMode) {
+      // Gündüze dönüş: orijinal renkleri geri almanın en sağlam yolu stili
+      // yeniden yüklemek (overlay'ler onStyleLoaded'da yeniden kurulur).
+      if (widget.nightMode) {
+        _applyNight();
+      } else {
+        _loadStyle();
+      }
+    }
+    if (old.terrain3d != widget.terrain3d) {
+      _applyTerrain(widget.terrain3d, animate: true);
     }
     if (!identical(old.overlays, widget.overlays)) _scheduleSync();
   }
@@ -316,12 +350,79 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
     widget.onReady?.call();
   }
 
-  void _onStyleLoaded(StyleLoadedEventData _) {
+  Future<void> _onStyleLoaded(StyleLoadedEventData _) async {
     // Stil değişince eklediğimiz kaynak/katman/resimler silinir → yeniden kur.
     _styleReady = true;
     _layersAdded = false;
     _imagesInStyle.clear();
+    try {
+      if (widget.terrain3d) await _applyTerrain(true, animate: false);
+      if (widget.nightMode) await _applyNight();
+    } catch (e) {
+      debugPrint('Mapbox stil eki hatası: $e');
+    }
     _scheduleSync();
+  }
+
+  /// 3B arazi: Mapbox yükseklik verisi (DEM) + gökyüzü; açınca kamera eğilir.
+  Future<void> _applyTerrain(bool on, {required bool animate}) async {
+    final map = _c._map;
+    if (map == null || !_styleReady) return;
+    if (on) {
+      if (!await map.styleSourceExists(_srcDem)) {
+        await map.addSource(RasterDemSource(
+          id: _srcDem,
+          url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
+          tileSize: 514,
+          maxzoom: 14,
+        ));
+      }
+      await map.setStyleTerrain(
+          jsonEncode({'source': _srcDem, 'exaggeration': 1.5}));
+      if (!widget.nightMode && !await map.styleLayerExists(_layerSky)) {
+        await map.addStyleLayer(
+            jsonEncode({
+              'id': _layerSky,
+              'type': 'sky',
+              'paint': {
+                'sky-type': 'atmosphere',
+                'sky-atmosphere-sun-intensity': 12,
+              },
+            }),
+            null);
+      }
+      if (animate) {
+        await map.easeTo(
+            CameraOptions(pitch: 60), MapAnimationOptions(duration: 800));
+      }
+    } else {
+      await map.removeStyleTerrain();
+      if (await map.styleLayerExists(_layerSky)) {
+        await map.removeStyleLayer(_layerSky);
+      }
+      if (animate) {
+        await map.easeTo(
+            CameraOptions(pitch: 0), MapAnimationOptions(duration: 600));
+      }
+    }
+  }
+
+  /// Gece stili: stil katmanlarını karart/kırmızıya çevir (bkz. mapbox_night_style).
+  Future<void> _applyNight() async {
+    final map = _c._map;
+    if (map == null || !_styleReady) return;
+    final infos = await map.getStyleLayers();
+    final edits = nightStyleEdits(
+      [for (final i in infos) if (i != null) (id: i.id, type: i.type)],
+      keep: _ownLayers,
+    );
+    for (final e in edits) {
+      try {
+        await map.setStyleLayerProperty(e.layerId, e.property, e.value);
+      } catch (_) {
+        // Bazı katmanlar özelliği desteklemeyebilir — atla.
+      }
+    }
   }
 
   void _onCamera(CameraChangedEventData e) {

@@ -34,6 +34,9 @@ class FlutterMapEngine extends MapEngine {
     MapCameraCallback? onCameraChanged,
     MapPointCallback? onTap,
     MapPointCallback? onLongPress,
+    // Klasik motorda 3B yok; gece modu harita ekranındaki kırmızı örtüyle.
+    bool terrain3d = false,
+    bool nightMode = false,
   }) {
     return _FlutterMapEngineView(
       key: key,
