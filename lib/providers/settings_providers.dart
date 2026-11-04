@@ -152,8 +152,7 @@ const _mapEngineKey = 'map_engine';
 
 /// Tercih edilen harita motoru (Mapbox / Klasik). Kalıcı.
 ///
-/// Mapbox anahtarı yoksa her zaman Klasik. Kendi MBTiles/PMTiles katmanları
-/// seçiliyken harita ekranı yine Klasik'e geçer (Mapbox henüz okuyamıyor).
+/// Mapbox anahtarı yoksa her zaman Klasik.
 class MapEngineKindNotifier extends Notifier<MapEngineKind> {
   static bool get _mapboxAvailable => AppConstants.mapboxAccessToken.isNotEmpty;
 

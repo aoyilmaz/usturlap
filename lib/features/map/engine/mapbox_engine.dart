@@ -3,10 +3,13 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:latlong2/latlong.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' hide MapEvent, Size;
 
+import '../../../data/tiles/local_tile_server.dart';
 import 'map_engine.dart';
+import 'mapbox_local_style.dart';
 import 'mapbox_geojson.dart';
 import 'mapbox_night_style.dart';
 import 'widget_rasterizer.dart';
@@ -17,14 +20,10 @@ import 'widget_rasterizer.dart';
 /// - Diğer internet karoları (OSM/Topo): boş stil + raster kaynak.
 /// - Overlay'ler: 3 GeoJSON kaynağı (alan < çizgi < işaretçi).
 /// - İşaretçiler: widget bir kez PNG'ye çevrilir → sembol katmanı (native, akıcı).
-/// - Dosya tabanlı katmanlar (MBTiles/PMTiles) henüz desteklenmez (plan adım 6);
-///   harita ekranı bu katmanlarda klasik motora geçer.
+/// - Kendi MBTiles/PMTiles dosyaları: yerel karo sunucusu (127.0.0.1) üzerinden
+///   raster/vektör kaynak; PMTiles kendi stil JSON'uyla çizilir.
 class MapboxEngine extends MapEngine {
   const MapboxEngine();
-
-  /// Bu motor taban katmanı çizebilir mi?
-  static bool supports(ResolvedBaseLayer layer) =>
-      layer is RasterUrlBaseLayer || layer is NoBaseLayer;
 
   @override
   MapEngineController createController() => MapboxEngineController();
@@ -129,7 +128,7 @@ class MapboxEngineController implements MapEngineController {
 
   @override
   void releaseBaseLayer(String layerId) {
-    // Dosya tabanlı katman açmıyoruz (henüz) → serbest bırakılacak kaynak yok.
+    LocalTileServer.instance.unregister(layerId);
   }
 
   @override
@@ -200,6 +199,52 @@ _StyleSpec _styleFor(ResolvedBaseLayer base) {
       jsonEncode({'version': 8, 'sources': {}, 'layers': [_bgLayer]}));
 }
 
+/// Taban katmanın kimliği (değişti mi?) — dosya yolu dahil.
+String _baseKeyOf(ResolvedBaseLayer b) => switch (b) {
+      RasterUrlBaseLayer r => 'url:${r.id}:${r.urlTemplate}',
+      MbtilesBaseLayer m => 'mb:${m.id}:${m.path}',
+      PmtilesBaseLayer p => 'pm:${p.id}:${p.path}:${p.stylePath}',
+      NoBaseLayer() => 'none',
+    };
+
+/// Stil asset'leri (PMTiles için MapLibre stil JSON'u) — bir kez okunur.
+final Map<String, Map<String, dynamic>> _styleAssets = {};
+
+/// Taban katmanın stilini çözer. Dosya tabanlı katmanlar yerel sunucuya
+/// kaydedilir (async); diğerleri anında.
+Future<_StyleSpec> _resolveStyle(ResolvedBaseLayer base) async {
+  switch (base) {
+    case MbtilesBaseLayer():
+      final info =
+          await LocalTileServer.instance.registerMbtiles(base.id, base.path);
+      if (!info.isVector) {
+        return _StyleSpec.json(
+            localRasterStyle(info, attribution: base.attribution));
+      }
+      // Vektör MBTiles: şema bilinmiyor → Protomaps stiliyle dene.
+      return _StyleSpec.json(localVectorStyle(
+          await _loadStyleAsset('assets/style/protomaps_light.json'), info,
+          attribution: base.attribution));
+    case PmtilesBaseLayer():
+      final info =
+          await LocalTileServer.instance.registerPmtiles(base.id, base.path);
+      if (!info.isVector) {
+        return _StyleSpec.json(
+            localRasterStyle(info, attribution: base.attribution));
+      }
+      return _StyleSpec.json(localVectorStyle(
+          await _loadStyleAsset(base.stylePath), info,
+          attribution: base.attribution));
+    case RasterUrlBaseLayer():
+    case NoBaseLayer():
+      return _styleFor(base);
+  }
+}
+
+Future<Map<String, dynamic>> _loadStyleAsset(String path) async =>
+    _styleAssets[path] ??=
+        jsonDecode(await rootBundle.loadString(path)) as Map<String, dynamic>;
+
 class _MapboxEngineView extends StatefulWidget {
   const _MapboxEngineView({
     super.key,
@@ -236,7 +281,10 @@ class _MapboxEngineView extends StatefulWidget {
 
 class _MapboxEngineViewState extends State<_MapboxEngineView> {
   late final CameraViewportState _initialViewport;
-  late _StyleSpec _style;
+
+  /// Yüklenen/yüklenecek stil (dosya katmanında çözülene kadar null).
+  _StyleSpec? _style;
+  late String _baseKey;
   final List<StreamSubscription<Object?>> _subs = [];
 
   bool _styleReady = false;
@@ -261,16 +309,16 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
       zoom: cam.zoom,
       bearing: cam.bearing,
     );
-    _style = _styleFor(widget.baseLayer);
+    _baseKey = _baseKeyOf(widget.baseLayer);
+    final b = widget.baseLayer;
+    _style = (b is MbtilesBaseLayer || b is PmtilesBaseLayer) ? null : _styleFor(b);
   }
 
   @override
   void didUpdateWidget(covariant _MapboxEngineView old) {
     super.didUpdateWidget(old);
-    final next = _styleFor(widget.baseLayer);
-    if (next.key != _style.key) {
-      _style = next;
-      _loadStyle(); // yükleninince 3B/gece yeniden uygulanır
+    if (_baseKeyOf(widget.baseLayer) != _baseKey) {
+      _applyBase(); // yükleninince 3B/gece yeniden uygulanır
     } else if (old.nightMode != widget.nightMode) {
       // Gündüze dönüş: orijinal renkleri geri almanın en sağlam yolu stili
       // yeniden yüklemek (overlay'ler onStyleLoaded'da yeniden kurulur).
@@ -297,13 +345,33 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
 
   Future<void> _loadStyle() async {
     final map = _c._map;
-    if (map == null) return;
+    final style = _style;
+    if (map == null || style == null) return;
     _styleReady = false;
-    if (_style.uri != null) {
-      await map.loadStyleURI(_style.uri!);
+    if (style.uri != null) {
+      await map.loadStyleURI(style.uri!);
     } else {
-      await map.loadStyleJson(_style.json!);
+      await map.loadStyleJson(style.json!);
     }
+  }
+
+  /// Taban katman değişti: stili çöz (gerekirse yerel sunucuya kaydet) ve yükle.
+  Future<void> _applyBase() async {
+    final base = widget.baseLayer;
+    final key = _baseKeyOf(base);
+    _baseKey = key;
+    _StyleSpec spec;
+    try {
+      spec = await _resolveStyle(base);
+    } catch (e) {
+      debugPrint('Mapbox: katman açılamadı ($key): $e');
+      spec = _styleFor(const NoBaseLayer());
+    }
+    // Bu arada başka katmana geçildiyse eskisini yükleme.
+    if (!mounted || key != _baseKey) return;
+    if (spec.key == _style?.key && _styleReady) return;
+    _style = spec;
+    await _loadStyle();
   }
 
   Future<void> _onCreated(MapboxMap map) async {
@@ -346,7 +414,7 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
     }
 
     // İlk stil: adres ise MapWidget zaten yüklüyor; JSON ise biz yükleriz.
-    if (_style.json != null) await _loadStyle();
+    if (_style?.uri == null) await _applyBase();
     widget.onReady?.call();
   }
 
@@ -556,7 +624,8 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
     _dpr = MediaQuery.devicePixelRatioOf(context);
     return MapWidget(
       key: const ValueKey('pz-mapbox'),
-      styleUri: _style.uri ?? MapboxStyles.SATELLITE_STREETS,
+      // JSON stiller (OSM/Topo/kendi dosyaların) harita kurulunca yüklenir.
+      styleUri: _style?.uri ?? MapboxStyles.SATELLITE_STREETS,
       viewport: _initialViewport,
       onMapCreated: _onCreated,
       onStyleLoadedListener: _onStyleLoaded,

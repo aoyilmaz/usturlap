@@ -770,7 +770,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     subtitle: Text(!hasToken
                         ? 'Mapbox anahtarı yok — Klasik motor'
                         : kind == MapEngineKind.mapbox
-                            ? 'GPU, akıcı · kendi paketleriniz Klasik\'te açılır'
+                            ? 'GPU, akıcı, 3B · kendi paketleriniz dahil'
                             : 'Kapalı — Klasik (flutter_map)'),
                     value: kind == MapEngineKind.mapbox,
                     onChanged: !hasToken
@@ -912,12 +912,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             _selected.type == BaseLayerSourceType.vectorPmtiles) &&
         !_resolved.containsKey(_selected.id);
 
-    // Etkin motor: tercih Mapbox olsa bile kendi MBTiles/PMTiles paketlerimiz
-    // (henüz) Klasik motorda çizilir — özellik kaybı olmasın.
-    final preferred = ref.watch(mapEngineKindProvider);
-    final fileLayer = _selected.type == BaseLayerSourceType.offlineMbtiles ||
-        _selected.type == BaseLayerSourceType.vectorPmtiles;
-    final kind = fileLayer ? MapEngineKind.flutterMap : preferred;
+    // Etkin motor: menüdeki tercih (Mapbox varsayılan; kendi MBTiles/PMTiles
+    // paketleri de Mapbox'ta yerel karo sunucusuyla açılır).
+    final kind = ref.watch(mapEngineKindProvider);
     if (kind != _activeKind) {
       if (_map.isReady) _lastCamera = _map.camera;
       _activeKind = kind;
