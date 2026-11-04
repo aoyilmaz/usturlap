@@ -109,6 +109,17 @@ class MapboxEngineController implements MapEngineController {
   }
 
   @override
+  Future<GeoBounds?> boundsOfScreenRect(Rect rect) async {
+    final map = _map;
+    if (map == null) return null;
+    final pts = <LatLng>[];
+    for (final o in [rect.topLeft, rect.topRight, rect.bottomLeft, rect.bottomRight]) {
+      pts.add(_ll(await map.coordinateForPixel(ScreenCoordinate(x: o.dx, y: o.dy))));
+    }
+    return GeoBounds.fromPoints(pts);
+  }
+
+  @override
   void releaseBaseLayer(String layerId) {
     // Dosya tabanlı katman açmıyoruz (henüz) → serbest bırakılacak kaynak yok.
   }

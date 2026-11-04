@@ -10,7 +10,6 @@ import 'package:share_plus/share_plus.dart';
 import '../../core/constants.dart';
 import '../../core/coord_format.dart';
 import '../../core/geo_math.dart';
-import '../map_spike/mapbox_spike_screen.dart';
 import '../../domain/models/contact.dart';
 import '../../domain/models/imported_layer.dart';
 import '../../domain/models/map_graphic.dart';
@@ -21,6 +20,10 @@ import '../../providers/graphic_providers.dart';
 import '../../providers/layer_providers.dart';
 import '../../providers/location_providers.dart';
 import '../../providers/nav_providers.dart';
+import '../../providers/offline_providers.dart';
+import '../../domain/models/offline_region.dart';
+import '../offline/offline_frame_panel.dart';
+import '../offline/offline_regions_sheet.dart';
 import '../../providers/repeater_providers.dart';
 import '../../providers/settings_providers.dart';
 import '../../providers/tool_providers.dart';
@@ -80,6 +83,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   /// true: track-up (harita hareket yönüne döner), false: kuzey-yukarı.
   bool _trackUp = false;
+
+  /// Çevrimdışı bölge çerçeveleme modu açık mı.
+  bool _framing = false;
+
+  /// Harita her hareket ettiğinde artar (çerçeve boyut tahmini için).
+  final ValueNotifier<int> _cameraTick = ValueNotifier(0);
+
+  /// Listeden "haritada göster" denen bölge (sınırı vurgulanır).
+  String? _highlightRegionId;
 
   @override
   void initState() {
@@ -151,6 +163,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   @override
   void dispose() {
     // Motorların açtığı karo kaynaklarını da kapatır.
+    _cameraTick.dispose();
     for (final c in _controllers.values) {
       c.dispose();
     }
@@ -617,6 +630,27 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 ),
 
                 // --- Veri & araçlar ---
+                Consumer(builder: (context, ref, _) {
+                  final regions =
+                      ref.watch(offlineRegionsProvider).value ?? const [];
+                  final total =
+                      regions.fold<int>(0, (s, r) => s + r.sizeBytes);
+                  return ListTile(
+                    leading: const Icon(Icons.download_for_offline_outlined),
+                    title: const Text('Çevrimdışı haritalar'),
+                    subtitle: Text(regions.isEmpty
+                        ? 'bölge indir · sinyalsiz kullan'
+                        : '${regions.length} bölge · ${fmtBytes(total)}'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      showOfflineRegionsSheet(
+                        this.context,
+                        onShowRegion: _showRegion,
+                        onNewRegion: _startFraming,
+                      );
+                    },
+                  );
+                }),
                 ListTile(
                   leading: const Icon(Icons.straighten),
                   title: const Text('Ölçüm / çizim araçları'),
@@ -645,19 +679,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   onTap: () {
                     Navigator.of(context).pop();
                     showTrackListSheet(context, ref);
-                  },
-                ),
-
-                // SPIKE: Mapbox motoru denemesi (geçici).
-                ListTile(
-                  leading: const Icon(Icons.science_outlined),
-                  title: const Text('Mapbox haritası (deneme)'),
-                  subtitle: const Text('uydu · z22 · 3B · bölge indirme'),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    Navigator.of(context).push(MaterialPageRoute<void>(
-                      builder: (_) => const MapboxSpikeScreen(),
-                    ));
                   },
                 ),
 
@@ -901,6 +922,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
     // Harita üstü çizimler — liste sırası = çizim sırası (alttan üste).
     final overlays = <MapOverlay>[
+      // İndirilmiş bölgelerin sınırları (çerçevelerken hepsi, yoksa seçilen).
+      ..._regionOutlines(),
       // Kalıcı taktik grafikler (çizgi/alan).
       ..._graphicOverlays(graphics),
       // Aktif ölçüm/çizim aracı.
@@ -974,12 +997,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   // Kullanıcı elle kaydırınca takibi bırak.
                   onCameraChanged: (camera, byGesture) {
                     _lastCamera = camera;
+                    if (_framing) _cameraTick.value++;
                     if (byGesture && _follow) {
                       setState(() => _follow = false);
                     }
                   },
                   // Tek dokun → araç aktifse nokta koy.
                   onTap: (point) {
+                    if (_highlightRegionId != null) {
+                      setState(() => _highlightRegionId = null);
+                    }
                     if (ref.read(toolProvider).active) {
                       HapticFeedback.selectionClick();
                       ref.read(toolProvider.notifier).addPoint(point);
@@ -1077,6 +1104,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
           // Tüm kontroller alt-sağda tek kolon (tek elle erişim).
           // En altta birincil (ortala, kayıt), üstte ikincil (menü, pusula).
+          if (!_framing)
           Positioned(
             right: 16,
             bottom: 32,
@@ -1152,10 +1180,90 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             ),
           ),
           const LosOverlay(),
+
+          // Çevrimdışı indirme ilerlemesi + ağ-kapalı (test) uyarısı.
+          if (!_framing)
+            const Positioned(
+              left: 12,
+              right: 84,
+              bottom: 40,
+              child: _OfflineStatusCards(),
+            ),
+
+          // Bölge çerçeveleme modu: karartma + alt panel.
+          if (_framing) ...[
+            OfflineFrameMask(frame: _frameRect(context)),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: OfflineFramePanel(
+                defaultName: 'Bölge ${(ref.read(offlineRegionsProvider).value?.length ?? 0) + 1}',
+                frameBounds: () => _map.boundsOfScreenRect(_frameRect(context)),
+                cameraTick: _cameraTick,
+                onClose: () => setState(() => _framing = false),
+              ),
+            ),
+          ],
         ],
         ),
       ),
     );
+  }
+
+  Rect _frameRect(BuildContext context) => offlineFrameRect(
+      MediaQuery.sizeOf(context), MediaQuery.paddingOf(context));
+
+  /// Çerçeveleme modunu aç. İndirilen görüntü Mapbox uydu olduğundan,
+  /// kendi paket katmanı seçiliyse uydu katmanına geçilir.
+  void _startFraming() {
+    if (AppConstants.mapboxAccessToken.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Bölge indirmek için Mapbox anahtarı gerekli.')));
+      return;
+    }
+    final sat = kBaseLayers.firstWhere((l) => l.id == 'online_satellite');
+    if (_selected.id != sat.id) {
+      setState(() => _selected = sat);
+      _ensureResolved(sat);
+    }
+    setState(() {
+      _framing = true;
+      _follow = false;
+      _highlightRegionId = null;
+    });
+  }
+
+  /// Listeden seçilen bölgeye git ve sınırını vurgula.
+  void _showRegion(OfflineRegion r) {
+    setState(() {
+      _follow = false;
+      _highlightRegionId = r.id;
+    });
+    _map.fitBounds(
+      GeoBounds(south: r.south, west: r.west, north: r.north, east: r.east),
+      padding: const EdgeInsets.all(40),
+    );
+  }
+
+  List<MapOverlay> _regionOutlines() {
+    if (!_framing && _highlightRegionId == null) return const [];
+    final regions = ref.watch(offlineRegionsProvider).value ?? const [];
+    return [
+      for (final r in regions)
+        if (_framing || r.id == _highlightRegionId)
+          MapArea(
+            points: [
+              LatLng(r.south, r.west),
+              LatLng(r.south, r.east),
+              LatLng(r.north, r.east),
+              LatLng(r.north, r.west),
+            ],
+            fillColor: Colors.amber.withValues(alpha: 0.08),
+            strokeColor: Colors.amber.withValues(alpha: 0.9),
+            strokeWidth: 2,
+          ),
+    ];
   }
 
   /// Gece modunda FAB'ları kırmızı tonlar (gece görüşü).
@@ -1169,6 +1277,81 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         ),
       ),
       child: child,
+    );
+  }
+}
+
+
+/// Haritanın sol altında: indirme ilerlemesi / sonucu ve ağ-kapalı uyarısı.
+class _OfflineStatusCards extends ConsumerWidget {
+  const _OfflineStatusCards();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dl = ref.watch(offlineDownloadProvider);
+    final offlineTest = ref.watch(offlineTestModeProvider);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (offlineTest)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: ActionChip(
+              avatar: const Icon(Icons.cloud_off, size: 18, color: Colors.white),
+              backgroundColor: Colors.red.shade700,
+              label: const Text('Ağ kapalı (test) — dokun: aç',
+                  style: TextStyle(color: Colors.white)),
+              onPressed: () =>
+                  ref.read(offlineTestModeProvider.notifier).set(false),
+            ),
+          ),
+        if (dl != null)
+          Card(
+            margin: EdgeInsets.zero,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          dl.error != null
+                              ? '“${dl.name}” indirilemedi'
+                              : dl.done
+                                  ? '“${dl.name}” indirildi · ${fmtBytes(dl.bytes)}'
+                                  : '“${dl.name}” indiriliyor · '
+                                      '%${(dl.fraction * 100).round()} · ${fmtBytes(dl.bytes)}',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        if (dl.error != null)
+                          Text(dl.error!,
+                              style: const TextStyle(
+                                  fontSize: 12, color: Colors.redAccent)),
+                        if (dl.running) ...[
+                          const SizedBox(height: 6),
+                          LinearProgressIndicator(value: dl.fraction),
+                          const SizedBox(height: 2),
+                          const Text('Uygulama açık kalmalı',
+                              style: TextStyle(fontSize: 11, color: Colors.grey)),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (!dl.running)
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () =>
+                          ref.read(offlineDownloadProvider.notifier).dismiss(),
+                    ),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

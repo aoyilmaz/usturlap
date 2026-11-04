@@ -96,6 +96,16 @@ class FlutterMapEngineController implements MapEngineController {
   }
 
   @override
+  Future<GeoBounds?> boundsOfScreenRect(Rect rect) async {
+    if (!_ready) return null;
+    final c = _map.camera;
+    return GeoBounds.fromPoints([
+      for (final o in [rect.topLeft, rect.topRight, rect.bottomLeft, rect.bottomRight])
+        c.screenOffsetToLatLng(o),
+    ]);
+  }
+
+  @override
   void releaseBaseLayer(String layerId) {
     _mbtiles.remove(layerId)?.dispose();
     _pmtiles.remove(layerId)?.dispose();

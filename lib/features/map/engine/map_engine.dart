@@ -24,6 +24,11 @@ abstract class MapEngineController {
   /// [bounds] ekrana sığacak şekilde kamerayı ayarlar.
   void fitBounds(GeoBounds bounds, {EdgeInsets padding = const EdgeInsets.all(40)});
 
+  /// Harita widget'ı içindeki [rect] (mantıksal piksel) dikdörtgeninin
+  /// kapsadığı coğrafi alan (harita dönükse 4 köşeyi kapsayan dikdörtgen).
+  /// Harita hazır değilse null.
+  Future<GeoBounds?> boundsOfScreenRect(Rect rect);
+
   /// [layerId] taban katmanı için açılmış kaynakları (dosya bağlantısı,
   /// önbellek) serbest bırakır — ör. içe aktarılmış katman silinince.
   void releaseBaseLayer(String layerId);
