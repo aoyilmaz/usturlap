@@ -21,9 +21,11 @@ Future<ImportedLayer?> pickAndImportLayer(
 ) async {
   final messenger = ScaffoldMessenger.of(context);
   try {
+    // FileType.any: iOS seçicisi uzantıyı değil UTI'yi tanır; .pmtiles/.mbtiles
+    // için sistem UTI'si olmadığından custom filtre dosyaları gri (seçilemez)
+    // gösterir. Uzantı aşağıda elle doğrulanır.
     final res = await FilePicker.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pmtiles', 'mbtiles'],
+      type: FileType.any,
       // Büyük (~GB) dosyalar → belleğe ALMA; path'ten kopyala.
       withData: false,
     );
