@@ -1,7 +1,8 @@
 # Harita motoru geçiş planı: flutter_map → Mapbox Maps SDK
 
-> Durum: **taslak, onay bekliyor.** CLAUDE.md §2 ("v1'de ticari uydu yok") ve §3
-> ("Harita: flutter_map") kararlarını değiştirir.
+> Durum: **tamamlandı (2026-11-04).** Adım 1–7 uygulandı; flutter_map kaldırıldı.
+> Kendi MBTiles/PMTiles dosyaları yerel karo sunucusu (seçenek a) ile çözüldü.
+> CLAUDE.md §2 ve §3 buna göre güncellendi.
 
 ## Neden
 

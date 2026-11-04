@@ -4,7 +4,7 @@ import 'package:latlong2/latlong.dart';
 /// Harita motorundan bağımsız tipler.
 ///
 /// Harita ekranı (map_screen) yalnızca bu tiplerle konuşur; hangi motorun
-/// (flutter_map / Mapbox) çizdiğini bilmez. Bkz. docs/harita-motoru-gecis-plani.md.
+/// çizdiğini bilmez. Bkz. docs/harita-motoru-gecis-plani.md.
 
 /// Kameranın anlık durumu.
 @immutable

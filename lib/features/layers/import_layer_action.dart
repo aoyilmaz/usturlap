@@ -3,10 +3,10 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mbtiles/mbtiles.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pmtiles/pmtiles.dart';
 
-import '../../data/tiles/cached_mbtiles_provider.dart';
-import '../../data/tiles/pmtiles_vector_provider.dart';
 import '../../domain/models/imported_layer.dart';
 import '../../providers/layer_providers.dart';
 
@@ -57,19 +57,22 @@ Future<ImportedLayer?> pickAndImportLayer(
     int? minZoom, maxZoom;
     double? centerLat, centerLon;
     if (isPmtiles) {
-      final p = await PmtilesVectorTileProvider.open(destPath);
-      minZoom = p.minimumZoom;
-      maxZoom = p.maximumZoom;
-      final lat = p.centerLatitude, lon = p.centerLongitude;
-      if (lat != 0 || lon != 0) {
-        centerLat = lat;
-        centerLon = lon;
+      // Arşiv dosyadan aralık okur → büyük dosya belleğe yüklenmez.
+      final a = await PmTilesArchive.from(destPath);
+      try {
+        minZoom = a.header.minZoom;
+        maxZoom = a.header.maxZoom;
+        final c = a.centerPosition;
+        if (c.latitude != 0 || c.longitude != 0) {
+          centerLat = c.latitude;
+          centerLon = c.longitude;
+        }
+      } finally {
+        await a.close();
       }
-      await p.dispose();
     } else {
-      final mp = CachedMbtilesTileProvider.fromPath(
-          path: destPath, silenceTileNotFound: true);
-      final md = mp.mbtiles.getMetadata();
+      final mp = MbTiles(mbtilesPath: destPath);
+      final md = mp.getMetadata();
       minZoom = md.minZoom?.round();
       maxZoom = md.maxZoom?.round();
       final c = md.defaultCenter;

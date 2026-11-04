@@ -34,9 +34,7 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  flutter_map: ^8.3.0
   latlong2: ^0.9.1
-  flutter_map_mbtiles: ^1.0.4
   geolocator: ^14.0.2
   flutter_compass: ^0.8.1
   flutter_riverpod: ^3.3.1
@@ -47,9 +45,7 @@ dependencies:
   mbtiles: ^0.4.2
   # vmt 9.x + vtr 6.x = Canvas renderer (native-asset YOK). vmt 10/vtr 7 beta
   # Flutter GPU/flutter_scene native asset'i kullanıp iOS build'i bozuyordu.
-  vector_map_tiles: 9.0.0-beta.9
   pmtiles: ^1.2.0
-  vector_tile_renderer: ^6.1.0
   path_provider: ^2.1.5
   file_picker: ^11.0.2
   xml: ^6.6.1

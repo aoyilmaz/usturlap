@@ -63,9 +63,8 @@ ve **kişisel kullanım** içindir.
 | Katman | Paket / Araç | Not |
 |---|---|---|
 | Çatı | Flutter (stable) + Dart | Tek kod, iOS + Android |
-| Harita (varsayılan) | `mapbox_maps_flutter` | GPU motoru, Mapbox Satellite, z22. Motor ara katmanı: `lib/features/map/engine/` |
-| Harita (Klasik) | `flutter_map` | Kendi MBTiles/PMTiles katmanları (Mapbox okuyana kadar — plan adım 6) |
-| Karo katmanları | `mbtiles` / `pmtiles` okuyucu | Kullanıcının kendi çevrimdışı paketleri |
+| Harita | `mapbox_maps_flutter` | GPU motoru, Mapbox Satellite, z22, 3B, gece stili. Motor ara katmanı: `lib/features/map/engine/` (flutter_map 2026-11-04'te kaldırıldı) |
+| Karo katmanları | `mbtiles` / `pmtiles` + yerel karo sunucusu | Kullanıcının kendi paketleri Mapbox'a 127.0.0.1 üzerinden sunulur |
 | Çevrimdışı indirme | Mapbox `OfflineManager` + `TileStore` | FMTC **kullanılmaz** (Mapbox karoları için lisans ihlali) |
 | Yerel veri | `drift` (SQLite üstü) | Waypoint/track/geofence; tip güvenli |
 | Konum | `geolocator` | Konum, hız, yükseklik |

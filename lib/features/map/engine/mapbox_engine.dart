@@ -609,7 +609,7 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
       'layout': {
         'icon-image': ['get', 'icon'],
         'icon-rotate': ['get', 'rotate'],
-        // flutter_map'teki gibi işaretçiler haritayla birlikte döner.
+        // İşaretçiler haritayla birlikte döner (yön okları doğru kalsın).
         'icon-rotation-alignment': 'map',
         'icon-allow-overlap': true,
         'icon-ignore-placement': true,

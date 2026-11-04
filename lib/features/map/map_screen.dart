@@ -54,15 +54,10 @@ class MapScreen extends ConsumerStatefulWidget {
 }
 
 class _MapScreenState extends ConsumerState<MapScreen> {
-  /// Motor başına kontrolcü (Mapbox / Klasik). Aktif olan [_map].
-  final Map<MapEngineKind, MapEngineController> _controllers = {};
-  MapEngineKind _activeKind = MapEngineKind.flutterMap;
+  /// Harita motoru kontrolcüsü (motor: engine/map_engine.dart → kMapEngine).
+  final MapEngineController _map = kMapEngine.createController();
 
-  /// Aktif motorun kontrolcüsü.
-  MapEngineController get _map => _controllers.putIfAbsent(
-      _activeKind, () => engineFor(_activeKind).createController());
-
-  /// Son bilinen kamera — motor değişince yeni harita buradan başlar.
+  /// Son bilinen kamera — harita yeniden kurulursa buradan başlar.
   MapCameraState _lastCamera = const MapCameraState(
     center: AppConstants.initialCenter,
     zoom: AppConstants.initialZoom,
@@ -165,11 +160,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   @override
   void dispose() {
-    // Motorların açtığı karo kaynaklarını da kapatır.
     _cameraTick.dispose();
-    for (final c in _controllers.values) {
-      c.dispose();
-    }
+    _map.dispose(); // motorun açtığı kaynakları da kapatır
     super.dispose();
   }
 
@@ -762,24 +754,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 const Divider(),
                 // --- Görünüm ayarları ---
                 Consumer(builder: (context, ref, _) {
-                  final kind = ref.watch(mapEngineKindProvider);
-                  final hasToken = AppConstants.mapboxAccessToken.isNotEmpty;
-                  return SwitchListTile(
-                    secondary: const Icon(Icons.memory),
-                    title: const Text('Harita motoru: Mapbox'),
-                    subtitle: Text(!hasToken
-                        ? 'Mapbox anahtarı yok — Klasik motor'
-                        : kind == MapEngineKind.mapbox
-                            ? 'GPU, akıcı, 3B · kendi paketleriniz dahil'
-                            : 'Kapalı — Klasik (flutter_map)'),
-                    value: kind == MapEngineKind.mapbox,
-                    onChanged: !hasToken
-                        ? null
-                        : (on) => ref.read(mapEngineKindProvider.notifier).set(
-                            on ? MapEngineKind.mapbox : MapEngineKind.flutterMap),
-                  );
-                }),
-                Consumer(builder: (context, ref, _) {
                   final night = ref.watch(nightModeProvider);
                   return SwitchListTile(
                     secondary: Icon(
@@ -912,14 +886,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             _selected.type == BaseLayerSourceType.vectorPmtiles) &&
         !_resolved.containsKey(_selected.id);
 
-    // Etkin motor: menüdeki tercih (Mapbox varsayılan; kendi MBTiles/PMTiles
-    // paketleri de Mapbox'ta yerel karo sunucusuyla açılır).
-    final kind = ref.watch(mapEngineKindProvider);
-    if (kind != _activeKind) {
-      if (_map.isReady) _lastCamera = _map.camera;
-      _activeKind = kind;
-    }
-
     // Harita üstü çizimler — liste sırası = çizim sırası (alttan üste).
     final overlays = <MapOverlay>[
       // İndirilmiş bölgelerin sınırları (çerçevelerken hepsi, yoksa seçilen).
@@ -984,10 +950,20 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     ),
                   );
                 }
-                final engine = engineFor(kind);
-                return engine.buildView(
-                  key: ValueKey('engine_${kind.name}'),
-                  terrain3d: _terrain3d && engine.supportsTerrain,
+                if (AppConstants.mapboxAccessToken.isEmpty) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Text(
+                        'Mapbox anahtarı yok.\n\nUygulamayı şöyle derleyin:\n'
+                        'flutter run --dart-define-from-file=dart_defines.json',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );
+                }
+                return kMapEngine.buildView(
+                  terrain3d: _terrain3d && kMapEngine.supportsTerrain,
                   nightMode: nightMode,
                   controller: _map,
                   baseLayer: _resolved[_selected.id] ?? const NoBaseLayer(),
@@ -1115,7 +1091,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 // 3B arazi (yalnızca Mapbox motorunda)
-                if (engineFor(_activeKind).supportsTerrain) ...[
+                if (kMapEngine.supportsTerrain) ...[
                   FloatingActionButton(
                     heroTag: 'terrain3d',
                     mini: true,

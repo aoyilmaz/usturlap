@@ -1,9 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kerteriz/features/map/base_layer.dart';
 import 'package:kerteriz/features/map/base_layer_resolver.dart';
-import 'package:kerteriz/features/map/engine/flutter_map_engine.dart';
 import 'package:kerteriz/features/map/engine/map_types.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -28,46 +25,6 @@ void main() {
 
     test('boş nokta listesi hata verir', () {
       expect(() => GeoBounds.fromPoints(const []), throwsArgumentError);
-    });
-  });
-
-  group('buildFlutterMapOverlayLayers', () {
-    const a = LatLng(39.9, 32.8), b = LatLng(39.95, 32.85);
-    final line = MapLine(points: const [a, b], color: Colors.red);
-    final area = MapArea(
-        points: const [a, b, LatLng(39.9, 32.9)],
-        fillColor: Colors.red,
-        strokeColor: Colors.red);
-    final marker = MapMarker(id: 'm', point: a, child: const SizedBox());
-    final circle = MapCircle(
-        center: a,
-        radiusMeters: 100,
-        fillColor: Colors.teal,
-        strokeColor: Colors.teal);
-
-    test('ardışık aynı türler tek katmanda toplanır, sıra korunur', () {
-      final layers = buildFlutterMapOverlayLayers(
-          [area, line, line, circle, marker, marker]);
-      expect(layers.map((w) => w.runtimeType).toList(),
-          [PolygonLayer, PolylineLayer, CircleLayer, MarkerLayer]);
-      expect((layers[1] as PolylineLayer).polylines, hasLength(2));
-      expect((layers[3] as MarkerLayer).markers, hasLength(2));
-    });
-
-    test('araya giren tür grubu böler (çizim sırası bozulmaz)', () {
-      final layers = buildFlutterMapOverlayLayers([line, marker, line]);
-      expect(layers.map((w) => w.runtimeType).toList(),
-          [PolylineLayer, MarkerLayer, PolylineLayer]);
-    });
-
-    test('daire metre cinsinden yarıçapla çizilir', () {
-      final layer = buildFlutterMapOverlayLayers([circle]).single as CircleLayer;
-      expect(layer.circles.single.useRadiusInMeter, isTrue);
-      expect(layer.circles.single.radius, 100);
-    });
-
-    test('boş liste → katman yok', () {
-      expect(buildFlutterMapOverlayLayers(const []), isEmpty);
     });
   });
 

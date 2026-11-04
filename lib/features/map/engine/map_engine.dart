@@ -1,7 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:latlong2/latlong.dart';
 
-import 'flutter_map_engine.dart';
 import 'map_types.dart';
 import 'mapbox_engine.dart';
 
@@ -45,7 +44,7 @@ abstract class MapEngine {
 
   MapEngineController createController();
 
-  /// 3B arazi çizebilir mi (Klasik motor: hayır).
+  /// 3B arazi çizebilir mi.
   bool get supportsTerrain => false;
 
   /// Harita widget'ı. [overlays] liste sırasıyla (alttan üste) çizilir.
@@ -66,20 +65,8 @@ abstract class MapEngine {
   });
 }
 
-/// Kullanılabilir motorlar.
-enum MapEngineKind {
-  /// Mapbox Maps SDK — native GPU, Mapbox uydu, z22 (varsayılan).
-  mapbox('Mapbox'),
-
-  /// flutter_map — Dart/Canvas; kendi MBTiles/PMTiles paketleri için.
-  flutterMap('Klasik');
-
-  const MapEngineKind(this.label);
-  final String label;
-}
-
-/// Motor seçimi — DEĞİŞTİRME NOKTASI BURASI.
-MapEngine engineFor(MapEngineKind kind) => switch (kind) {
-      MapEngineKind.mapbox => const MapboxEngine(),
-      MapEngineKind.flutterMap => const FlutterMapEngine(),
-    };
+/// Uygulamanın kullandığı motor — DEĞİŞTİRME NOKTASI BURASI.
+///
+/// Sözleşme ileride başka motorlara (ör. MapLibre) geçişi kolaylaştırmak için
+/// korunur; flutter_map motoru 2026-11-04'te kaldırıldı.
+const MapEngine kMapEngine = MapboxEngine();

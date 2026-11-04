@@ -34,7 +34,7 @@ class BaseLayerDef {
   /// offlineMbtiles için asset yolu (ör. 'assets/tiles/ankara_osm.mbtiles').
   final String? assetPath;
 
-  /// MBTiles dosyasındaki en yüksek karo zoom'u. Bunun üstünde flutter_map
+  /// MBTiles dosyasındaki en yüksek karo zoom'u. Bunun üstünde harita motoru
   /// mevcut en yakın karoyu büyüterek gösterir (bulanık ama görünür).
   final int? maxNativeZoom;
 
