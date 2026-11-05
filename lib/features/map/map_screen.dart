@@ -30,6 +30,14 @@ import '../../providers/tool_providers.dart';
 import '../../providers/track_providers.dart';
 import '../../providers/waypoint_providers.dart';
 import '../hud/callsign_hud.dart';
+import '../import/import_action.dart';
+import '../shell/coordinate_sheet.dart';
+import '../shell/map_controls.dart';
+import '../shell/missions_sheet.dart';
+import '../shell/route_sheet.dart';
+import '../shell/settings_sheet.dart';
+import '../shell/tactical_bottom_bar.dart';
+import '../tools/graphic_list_sheet.dart';
 import '../layers/import_layer_action.dart';
 import '../nav/nav_banner.dart';
 import '../symbols/nato_symbol.dart';
@@ -600,13 +608,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   /// Tek birleşik menü: veri & araçlar + harita katmanı + görünüm ayarları.
-  void _openMenu() {
+  /// ▤ Katmanlar: taban harita, içe aktarılan paketler, çevrimdışı bölgeler.
+  void _openLayers() {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
       builder: (context) {
-        final tool = ref.watch(toolProvider);
         final imported =
             ref.watch(importedLayersProvider).value ?? const <ImportedLayer>[];
         return SafeArea(
@@ -618,71 +626,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               shrinkWrap: true,
               children: [
                 const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 4, 16, 8),
-                  child: Text('Menü',
+                  padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Text('Katmanlar',
                       style: TextStyle(
                           fontSize: 18, fontWeight: FontWeight.bold)),
-                ),
-
-                // --- Veri & araçlar ---
-                Consumer(builder: (context, ref, _) {
-                  final regions =
-                      ref.watch(offlineRegionsProvider).value ?? const [];
-                  final total =
-                      regions.fold<int>(0, (s, r) => s + r.sizeBytes);
-                  return ListTile(
-                    leading: const Icon(Icons.download_for_offline_outlined),
-                    title: const Text('Çevrimdışı haritalar'),
-                    subtitle: Text(regions.isEmpty
-                        ? 'bölge indir · sinyalsiz kullan'
-                        : '${regions.length} bölge · ${fmtBytes(total)}'),
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      showOfflineRegionsSheet(
-                        this.context,
-                        onShowRegion: _showRegion,
-                        onNewRegion: _startFraming,
-                      );
-                    },
-                  );
-                }),
-                ListTile(
-                  leading: const Icon(Icons.straighten),
-                  title: const Text('Ölçüm / çizim araçları'),
-                  subtitle: Text(tool.active
-                      ? 'aktif: ${_toolLabel(tool.mode)}'
-                      : 'mesafe · alan · sektör'),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    showToolsPalette(context, ref);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.place),
-                  title: const Text('Waypoint\'ler'),
-                  subtitle: const Text('uzun bas → ekle; listele/sil'),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    showWaypointListSheet(context, ref,
-                        onTapWaypoint: (wp) => _centerOn(wp.position));
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.route),
-                  title: const Text('İzler'),
-                  subtitle: const Text('kayıtlı rotalar; göster/paylaş/sil'),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    showTrackListSheet(context, ref);
-                  },
-                ),
-
-                const Divider(),
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 4, 16, 4),
-                  child: Text('Harita katmanı',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.white70)),
                 ),
                 ListTile(
                   contentPadding: const EdgeInsets.symmetric(
@@ -752,75 +699,25 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   ),
 
                 const Divider(),
-                // --- Görünüm ayarları ---
                 Consumer(builder: (context, ref, _) {
-                  final night = ref.watch(nightModeProvider);
-                  return SwitchListTile(
-                    secondary: Icon(
-                        night
-                            ? Icons.nightlight_round
-                            : Icons.nightlight_outlined,
-                        color: night ? Colors.redAccent : null),
-                    title: const Text('Gece modu'),
-                    subtitle: const Text('Düşük ışık — kırmızı tonlama'),
-                    value: night,
-                    onChanged: (_) =>
-                        ref.read(nightModeProvider.notifier).toggle(),
-                  );
-                }),
-                Consumer(builder: (context, ref, _) {
-                  final on = ref.watch(accuracyFilterProvider);
-                  return SwitchListTile(
-                    secondary: const Icon(Icons.gps_fixed),
-                    title: const Text('Track doğruluk filtresi'),
-                    subtitle:
-                        const Text('Düşük doğruluklu (>20 m) noktaları atla'),
-                    value: on,
-                    onChanged: (_) =>
-                        ref.read(accuracyFilterProvider.notifier).toggle(),
-                  );
-                }),
-                Consumer(builder: (context, ref, _) {
-                  final on = ref.watch(showRepeatersProvider);
-                  final count =
-                      ref.watch(repeatersProvider).value?.length ?? 0;
-                  final band = ref.watch(repeaterBandProvider);
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SwitchListTile(
-                        secondary: const Icon(Icons.cell_tower),
-                        title: const Text('Telsiz röleleri'),
-                        subtitle: Text('Haritada göster ($count röle)'),
-                        value: on,
-                        onChanged: (_) =>
-                            ref.read(showRepeatersProvider.notifier).toggle(),
-                      ),
-                      if (on)
-                        Padding(
-                          padding:
-                              const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                          child: Row(
-                            children: [
-                              const Text('Band: ',
-                                  style: TextStyle(color: Colors.grey)),
-                              const SizedBox(width: 6),
-                              for (final b in const [null, 'VHF', 'UHF'])
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.only(right: 6),
-                                  child: ChoiceChip(
-                                    label: Text(b ?? 'Tümü'),
-                                    selected: band == b,
-                                    onSelected: (_) => ref
-                                        .read(repeaterBandProvider.notifier)
-                                        .set(b),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                    ],
+                  final regions =
+                      ref.watch(offlineRegionsProvider).value ?? const [];
+                  final total =
+                      regions.fold<int>(0, (s, r) => s + r.sizeBytes);
+                  return ListTile(
+                    leading: const Icon(Icons.download_for_offline_outlined),
+                    title: const Text('Çevrimdışı haritalar'),
+                    subtitle: Text(regions.isEmpty
+                        ? 'bölge indir · sinyalsiz kullan'
+                        : '${regions.length} bölge · ${fmtBytes(total)}'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      showOfflineRegionsSheet(
+                        this.context,
+                        onShowRegion: _showRegion,
+                        onNewRegion: _startFraming,
+                      );
+                    },
                   );
                 }),
               ],
@@ -831,19 +728,43 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
-  String _toolLabel(ToolMode m) {
-    switch (m) {
-      case ToolMode.distance:
-        return 'mesafe';
-      case ToolMode.polygon:
-        return 'alan';
-      case ToolMode.sector:
-        return 'sektör';
-      case ToolMode.none:
-        return '—';
-      case ToolMode.lineOfSight:
-        return 'görüş hattı';
+  /// "+" düğmesi: araç açıksa imleçteki noktayı araca ekler, değilse
+  /// imleçteki yere nokta (waypoint) ekleme penceresini açar.
+  void _addAtCrosshair() {
+    final p = _map.camera.center;
+    if (ref.read(toolProvider).active) {
+      ref.read(toolProvider.notifier).addPoint(p);
+    } else {
+      HapticFeedback.mediumImpact();
+      showAddWaypointDialog(context, ref, p);
     }
+  }
+
+  void _openCoordinate() {
+    showCoordinateSheet(
+      context,
+      crosshair: _map.camera.center,
+      onSaveHere: (p) => showAddWaypointDialog(context, ref, p),
+      onNavigateHere: (p) {
+        ref.read(navTargetProvider.notifier).set(p, CoordFormat.mgrs(p));
+      },
+    );
+  }
+
+  void _openMissions() {
+    showMissionsSheet(
+      context,
+      onWaypoints: () => showWaypointListSheet(context, ref,
+          onTapWaypoint: (wp) => _centerOn(wp.position)),
+      onTracks: () => showTrackListSheet(context, ref),
+      onGraphics: () => showGraphicListSheet(context, ref),
+      onOfflineRegions: () => showOfflineRegionsSheet(
+        context,
+        onShowRegion: _showRegion,
+        onNewRegion: _startFraming,
+      ),
+      onImportGpxKml: () => runGpxKmlImport(context, ref),
+    );
   }
 
   @override
@@ -885,6 +806,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         (_selected.type == BaseLayerSourceType.offlineMbtiles ||
             _selected.type == BaseLayerSourceType.vectorPmtiles) &&
         !_resolved.containsKey(_selected.id);
+
+    // Alt çubuğun kapladığı yükseklik (güvenli alan dahil).
+    final safeBottom = MediaQuery.paddingOf(context).bottom;
+    final bottomInset = kBottomBarHeight + safeBottom;
 
     // Harita üstü çizimler — liste sırası = çizim sırası (alttan üste).
     final overlays = <MapOverlay>[
@@ -964,6 +889,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 }
                 return kMapEngine.buildView(
                   terrain3d: _terrain3d && kMapEngine.supportsTerrain,
+                  // Logo/atıf alt çubuğun (çerçevelerken panelin) üstünde kalsın.
+                  ornamentPadding: EdgeInsets.only(
+                      bottom: _framing ? safeBottom + 300 : bottomInset),
                   nightMode: nightMode,
                   controller: _map,
                   baseLayer: _resolved[_selected.id] ?? const NoBaseLayer(),
@@ -1081,109 +1009,82 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             ),
           ),
 
-          // Tüm kontroller alt-sağda tek kolon (tek elle erişim).
-          // En altta birincil (ortala, kayıt), üstte ikincil (menü, pusula).
-          if (!_framing)
-          Positioned(
-            right: 16,
-            bottom: 32,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 3B arazi (yalnızca Mapbox motorunda)
-                if (kMapEngine.supportsTerrain) ...[
-                  FloatingActionButton(
-                    heroTag: 'terrain3d',
-                    mini: true,
-                    onPressed: () {
-                      HapticFeedback.selectionClick();
-                      setState(() => _terrain3d = !_terrain3d);
-                    },
-                    tooltip: _terrain3d ? '3B arazi (dokun: kapat)' : '3B arazi',
-                    backgroundColor: _terrain3d ? Colors.amber.shade800 : null,
-                    child: const Text('3B',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-                // Pusula: kuzey-yukarı / track-up
-                FloatingActionButton(
-                  heroTag: 'orientation',
-                  mini: true,
-                  onPressed: _toggleOrientation,
-                  tooltip:
-                      _trackUp ? 'Track-up (dokun: kuzey)' : 'Kuzey-yukarı',
-                  backgroundColor: _trackUp ? Colors.blueGrey : null,
-                  child: Icon(_trackUp ? Icons.navigation : Icons.explore),
-                ),
-                const SizedBox(height: 12),
-                // Menü (araçlar/waypoint/iz/katman/ayar)
-                FloatingActionButton(
-                  heroTag: 'menu',
-                  mini: true,
-                  backgroundColor: tool.active ? Colors.amber.shade800 : null,
-                  onPressed: _openMenu,
-                  tooltip: 'Menü',
-                  child: const Icon(Icons.menu),
-                ),
-                const SizedBox(height: 12),
-                // Konuma ortala / takip (birincil)
-                FloatingActionButton(
-                  heroTag: 'recenter',
-                  onPressed: _recenter,
-                  tooltip: 'Konuma ortala / takip',
-                  backgroundColor: _follow ? Colors.blue : null,
-                  child: Icon(
-                      _follow ? Icons.my_location : Icons.location_searching),
-                ),
-                const SizedBox(height: 12),
-                // İz kaydı başlat/durdur (birincil)
-                FloatingActionButton(
-                  heroTag: 'record',
-                  onPressed: () {
-                    HapticFeedback.mediumImpact();
-                    final n = ref.read(recordingProvider.notifier);
-                    recording.isRecording ? n.stop() : n.start();
-                  },
-                  backgroundColor: recording.isRecording ? Colors.red : null,
-                  tooltip: recording.isRecording
-                      ? 'Kaydı durdur'
-                      : 'İz kaydını başlat',
-                  child: Icon(recording.isRecording
-                      ? Icons.stop
-                      : Icons.fiber_manual_record),
-                ),
-              ],
-            ),
-          ),
+          // Ortadaki artı imleç (eldivenle nokta koymak / ölçmek için).
+          if (!_framing) MapCrosshair(night: nightMode),
 
-          // Sağ kenardan içeri kaydır → menü (§8 jest).
-          // FAB kümesini engellememek için orta-sağ şeride yerleşir.
-          Positioned(
-            right: 0,
-            top: 120,
-            bottom: 320,
-            width: 24,
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onHorizontalDragEnd: (d) {
-                if ((d.primaryVelocity ?? 0) < -100) {
-                  HapticFeedback.selectionClick();
-                  _openMenu();
-                }
-              },
+          // Sağ kenar: harita kontrolleri (Kerteriz tarzı).
+          if (!_framing)
+            Positioned(
+              right: 12,
+              bottom: bottomInset + 16,
+              child: MapControlsColumn(
+                night: nightMode,
+                onSettings: () => showSettingsSheet(context),
+                onLayers: _openLayers,
+                onTerrain: kMapEngine.supportsTerrain
+                    ? () => setState(() => _terrain3d = !_terrain3d)
+                    : null,
+                terrainOn: _terrain3d,
+                onAdd: _addAtCrosshair,
+                addLabel: tool.active ? 'İmleçe araç noktası' : 'İmleçe nokta ekle',
+                onRecenter: _recenter,
+                following: _follow,
+                onOrientation: _toggleOrientation,
+                trackUp: _trackUp,
+              ),
             ),
-          ),
-          const LosOverlay(),
+
+          // Sağ kenardan içeri kaydır → katmanlar (§8 jest).
+          if (!_framing)
+            Positioned(
+              right: 0,
+              top: 160,
+              bottom: bottomInset + 380,
+              width: 20,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onHorizontalDragEnd: (d) {
+                  if ((d.primaryVelocity ?? 0) < -100) {
+                    HapticFeedback.selectionClick();
+                    _openLayers();
+                  }
+                },
+              ),
+            ),
 
           // Çevrimdışı indirme ilerlemesi + ağ-kapalı (test) uyarısı.
           if (!_framing)
-            const Positioned(
+            Positioned(
               left: 12,
-              right: 84,
-              bottom: 40,
-              child: _OfflineStatusCards(),
+              right: 76,
+              bottom: bottomInset + 40,
+              child: const _OfflineStatusCards(),
             ),
+
+          // Alt çubuk: Koordinat · Araçlar · ● İz · Rota · Görevler.
+          if (!_framing)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: TacticalBottomBar(
+                night: nightMode,
+                recording: recording.isRecording,
+                toolActive: tool.active,
+                navActive: navTarget != null,
+                onCoordinate: _openCoordinate,
+                onTools: () => showToolsPalette(context, ref),
+                onRecord: () {
+                  final n = ref.read(recordingProvider.notifier);
+                  recording.isRecording ? n.stop() : n.start();
+                },
+                onRoute: () => showRouteSheet(context),
+                onMissions: _openMissions,
+              ),
+            ),
+
+          // Görüş hattı profili (alt çubuğun üstünde açılır).
+          const LosOverlay(),
 
           // Bölge çerçeveleme modu: karartma + alt panel.
           if (_framing) ...[

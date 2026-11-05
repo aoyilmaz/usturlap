@@ -9,14 +9,22 @@ import '../../providers/settings_providers.dart';
 /// Ekranın üstünde kalıcı taktik bilgi şeridi (HUD).
 ///
 /// Gösterir: callsign, koordinat (seçili biçim), kerteriz, hız, yükseklik.
+/// - HUD'a **dokun** → genişlet/daralt (diğer biçimler + GPS doğruluğu).
 /// - HUD'a **çift dokun** → koordinat biçimi (MGRS/UTM/WGS84).
 /// - **Callsign'a dokun** → düzenle (kalıcı).
 /// - Gece modunda kırmızı tonlama.
-class CallsignHud extends ConsumerWidget {
+class CallsignHud extends ConsumerStatefulWidget {
   const CallsignHud({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CallsignHud> createState() => _CallsignHudState();
+}
+
+class _CallsignHudState extends ConsumerState<CallsignHud> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
     final async = ref.watch(contactsProvider);
     final self = ref.watch(selfContactProvider);
     final format = ref.watch(coordFormatProvider);
@@ -24,6 +32,7 @@ class CallsignHud extends ConsumerWidget {
     final night = ref.watch(nightModeProvider);
 
     return GestureDetector(
+      onTap: () => setState(() => _expanded = !_expanded),
       onDoubleTap: () => ref.read(coordFormatProvider.notifier).cycle(),
       behavior: HitTestBehavior.opaque,
       child: SafeArea(
@@ -47,6 +56,7 @@ class CallsignHud extends ConsumerWidget {
                     callsign: callsign,
                     format: format,
                     night: night,
+                    expanded: _expanded,
                     onTapCallsign: () => _editCallsign(context, ref, callsign),
                   ),
             loading: () => _statusLine('Konum bekleniyor…', night: night),
@@ -118,6 +128,7 @@ class _HudContent extends StatelessWidget {
     required this.callsign,
     required this.format,
     required this.night,
+    required this.expanded,
     required this.onTapCallsign,
   });
 
@@ -125,6 +136,7 @@ class _HudContent extends StatelessWidget {
   final String callsign;
   final CoordFormatType format;
   final bool night;
+  final bool expanded;
   final VoidCallback onTapCallsign;
 
   @override
@@ -180,11 +192,46 @@ class _HudContent extends StatelessWidget {
             _stat('KRT', _heading(contact.headingDeg)),
             _stat('HIZ', _speed(contact.speedMps)),
             _stat('İRT', _altitude(contact.altitudeMsl)),
+            Icon(expanded ? Icons.expand_less : Icons.expand_more,
+                color: Colors.white38, size: 20),
           ],
         ),
+        if (expanded) ...[
+          const Divider(color: Colors.white24, height: 14),
+          for (final f in CoordFormatType.values)
+            if (f != format)
+              _line(f.label, CoordFormat.format(contact.position, f)),
+          _line(
+            'GPS',
+            contact.accuracyMeters == null
+                ? '—'
+                : '±${contact.accuracyMeters!.round()} m',
+          ),
+        ],
       ],
     );
   }
+
+  Widget _line(String label, String value) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 52,
+              child: Text(label,
+                  style: const TextStyle(color: Colors.white54, fontSize: 11)),
+            ),
+            Expanded(
+              child: Text(value,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontFeatures: [FontFeature.tabularFigures()],
+                  )),
+            ),
+          ],
+        ),
+      );
 
   Widget _formatTag(String label) {
     return Container(

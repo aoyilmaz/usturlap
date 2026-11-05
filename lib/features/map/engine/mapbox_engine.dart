@@ -46,6 +46,7 @@ class MapboxEngine extends MapEngine {
     MapPointCallback? onLongPress,
     bool terrain3d = false,
     bool nightMode = false,
+    EdgeInsets ornamentPadding = EdgeInsets.zero,
   }) {
     return _MapboxEngineView(
       key: key,
@@ -61,6 +62,7 @@ class MapboxEngine extends MapEngine {
       onLongPress: onLongPress,
       terrain3d: terrain3d,
       nightMode: nightMode,
+      ornamentPadding: ornamentPadding,
     );
   }
 }
@@ -260,6 +262,7 @@ class _MapboxEngineView extends StatefulWidget {
     this.onLongPress,
     this.terrain3d = false,
     this.nightMode = false,
+    this.ornamentPadding = EdgeInsets.zero,
   });
 
   final MapboxEngineController controller;
@@ -274,6 +277,7 @@ class _MapboxEngineView extends StatefulWidget {
   final MapPointCallback? onLongPress;
   final bool terrain3d;
   final bool nightMode;
+  final EdgeInsets ornamentPadding;
 
   @override
   State<_MapboxEngineView> createState() => _MapboxEngineViewState();
@@ -328,6 +332,7 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
         _loadStyle();
       }
     }
+    if (old.ornamentPadding != widget.ornamentPadding) _applyOrnaments();
     if (old.terrain3d != widget.terrain3d) {
       _applyTerrain(widget.terrain3d, animate: true);
     }
@@ -381,6 +386,7 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
     // Pusula/ölçek uygulamanın kendi kontrollerinde; Mapbox logo+atıf kalır.
     await map.compass.updateSettings(CompassSettings(enabled: false));
     await map.scaleBar.updateSettings(ScaleBarSettings(enabled: false));
+    await _applyOrnaments();
 
     // İşaretçiye dokunma (haritaya dokunmadan önce yakalanır).
     map.addInteraction(
@@ -416,6 +422,17 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
     // İlk stil: adres ise MapWidget zaten yüklüyor; JSON ise biz yükleriz.
     if (_style?.uri == null) await _applyBase();
     widget.onReady?.call();
+  }
+
+  /// Mapbox logosu + atıf düğmesi arayüzün (alt çubuk) altında kalmasın.
+  Future<void> _applyOrnaments() async {
+    final map = _c._map;
+    if (map == null) return;
+    final p = widget.ornamentPadding;
+    await map.logo.updateSettings(
+        LogoSettings(marginLeft: 8 + p.left, marginBottom: 8 + p.bottom));
+    await map.attribution.updateSettings(AttributionSettings(
+        marginLeft: 92 + p.left, marginBottom: 8 + p.bottom));
   }
 
   Future<void> _onStyleLoaded(StyleLoadedEventData _) async {

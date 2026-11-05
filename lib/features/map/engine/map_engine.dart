@@ -62,6 +62,9 @@ abstract class MapEngine {
     MapPointCallback? onLongPress,
     bool terrain3d = false,
     bool nightMode = false,
+    // Haritanın üstünü kaplayan arayüz (alt çubuk vb.): logo/atıf gibi
+    // motor süsleri bunun dışında kalsın (Mapbox şartı: görünür olmalı).
+    EdgeInsets ornamentPadding = EdgeInsets.zero,
   });
 }
 
