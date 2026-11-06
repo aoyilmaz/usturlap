@@ -31,7 +31,11 @@ ve **kişisel kullanım** içindir.
 
 **Ana ilkeler**
 - **Offline-first:** harita karoları, waypoint'ler ve track'ler internet olmadan çalışmalı.
-- **Tek elle / eldivenle kullanım:** büyük dokunma hedefleri, kalıcı üst HUD.
+- **Eldivenle kullanım:** büyük dokunma hedefleri (≥ 48 pt).
+- **ATAK düzeni (2026-11-06'da kararlaştırıldı):** sol üstte araç çubuğu (≡ bütün araçlar),
+  altında pusula oku · ◎ · zoom; sol altta bilgi kutuları + ölçek; sağ altta konum kutusu.
+  Kalıcı üst HUD ve Kerteriz tarzı alt çubuk kaldırıldı. Ayrıntı:
+  [`docs/atak-parite-plani.md`](docs/atak-parite-plani.md) Aşama D.
 - **Gizlilik:** hesap yok, telemetri yok, tüm veri cihazda.
 - **Sade jest seti:** stres altında kas hafızasıyla kullanılabilecek kadar az jest.
 
@@ -154,6 +158,7 @@ Her adım sonunda: derlenir, çalışır, kısa bir "nasıl test edilir" notu ve
 **Adım 3 — GPS + pusula + HUD**
 - `DevicePositionSource` (PositionSource impl.) → konum, hız, yükseklik.
 - Üstte kalıcı **Callsign HUD**: callsign, koordinat, kerteriz, hız, yükseklik (MSL notu).
+  *(2026-11-06: ATAK düzeninde sağ alttaki konum kutusuna taşındı.)*
 - Harita üzerinde kendi konum işaretçisi + kuzey/track-up modu.
 - Kabul: hareket edince HUD ve işaretçi güncelleniyor.
 
@@ -164,6 +169,7 @@ Her adım sonunda: derlenir, çalışır, kısa bir "nasıl test edilir" notu ve
 
 **Adım 5 — Koordinat format geçişi**
 - HUD'a çift dokun → MGRS / UTM / WGS84 döngüsü; tercih kalıcı.
+  *(Bugün: konum kutusuna çift dokun → MGRS / UTM / WGS84 / DM / DMS.)*
 
 **Adım 6 — Track kaydı**
 - Başlat/durdur ile rota izi; polyline çizimi; drift'e kaydet; KML/GeoJSON export.
@@ -174,6 +180,8 @@ Her adım sonunda: derlenir, çalışır, kısa bir "nasıl test edilir" notu ve
 **Adım 8 — Gece modu + jest cilası**
 - Düşük ışık teması; jest seti: uzun-bas (waypoint), çift-dokun-HUD (format),
   sağ kenardan kaydır (katman paneli).
+  *(2026-11-06: sağ kenardan kaydırma ATAK'ta olmadığı için kaldırıldı; katmanlar araç
+  çubuğundaki "Haritalar" düğmesinde. Çift dokunma artık konum kutusunda.)*
 
 ---
 
