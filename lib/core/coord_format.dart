@@ -55,8 +55,16 @@ class CoordFormat {
   /// Kutup bölgeleri/aralık dışı için '—' döner.
   static String mgrs(LatLng p, {int accuracy = 5}) {
     try {
-      final raw = Mgrs.forward([p.longitude, p.latitude], accuracy);
-      return _group(raw, accuracy);
+      // mgrs_dart'ın forward()'u hassasiyet < 5'te hanelerin SONUNU tutuyor
+      // (yanlış; doğrusu baştakiler — kesme). Bu yüzden hep 5 haneyle kodlayıp
+      // doğu/kuzeyin ilk [accuracy] hanesini kendimiz alıyoruz.
+      final full = Mgrs.forward([p.longitude, p.latitude], 5);
+      final a = accuracy.clamp(0, 5);
+      final head = full.substring(0, full.length - 10);
+      final e = full.substring(full.length - 10, full.length - 5);
+      final n = full.substring(full.length - 5);
+      final raw = '$head${e.substring(0, a)}${n.substring(0, a)}';
+      return _group(raw, a);
     } catch (_) {
       return '—';
     }

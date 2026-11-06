@@ -88,6 +88,16 @@ class TrackPoints extends Table {
   RealColumn get speed => real().nullable()();
 }
 
+/// Planlanmış rotalar (kontrol noktaları sıralı). Noktalar JSON dizisi.
+@DataClassName('RoutePlanRow')
+class RoutePlans extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text().withLength(min: 1, max: 80)();
+  // [[lat,lon],...] JSON — sıra = rota sırası.
+  TextColumn get pointsJson => text()();
+  DateTimeColumn get createdAt => dateTime()();
+}
+
 /// Uygulamanın drift veritabanı. Faz ilerledikçe geofence tabloları
 /// buraya eklenecek (şema sürümü artırılarak).
 @DriftDatabase(tables: [
@@ -96,7 +106,8 @@ class TrackPoints extends Table {
   Tracks,
   TrackPoints,
   MapGraphics,
-  ImportedLayers
+  ImportedLayers,
+  RoutePlans,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_open());
@@ -105,7 +116,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -127,6 +138,8 @@ class AppDatabase extends _$AppDatabase {
           }
           // v6: uygulama-içi içe-aktarılan harita paketleri.
           if (from < 6) await m.createTable(importedLayers);
+          // v7: planlanmış rotalar.
+          if (from < 7) await m.createTable(routePlans);
         },
         beforeOpen: (details) async {
           // Cascade delete için foreign key'leri aç.

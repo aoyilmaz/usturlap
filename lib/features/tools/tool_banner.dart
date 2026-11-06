@@ -93,6 +93,8 @@ class ToolBanner extends ConsumerWidget {
         return Icons.straighten;
       case ToolMode.lineOfSight:
         return Icons.landscape_outlined;
+      case ToolMode.rangeRings:
+        return Icons.radar;
     }
   }
 
@@ -101,6 +103,12 @@ class ToolBanner extends ConsumerWidget {
     switch (tool.mode) {
       case ToolMode.distance:
         if (pts.length < 2) return 'Mesafe: nokta koyun (${pts.length})';
+        if (pts.length == 2) {
+          // Mesafe-kerteriz çizgisi: ileri + ters kerteriz.
+          final b = (GeoMath.bearing(pts[0], pts[1]) + 360) % 360;
+          return 'Mesafe: ${GeoMath.fmtDistance(GeoMath.distance(pts[0], pts[1]))}'
+              ' · KRT ${GeoMath.fmtBearing(b)} (ters ${GeoMath.fmtBearing(b + 180)})';
+        }
         return 'Mesafe: ${GeoMath.fmtDistance(GeoMath.pathLength(pts))}'
             ' · ${pts.length} nokta';
       case ToolMode.polygon:
@@ -127,6 +135,12 @@ class ToolBanner extends ConsumerWidget {
         if (pts.isEmpty) return 'Görüş Hattı: 1. noktayı seçin';
         if (pts.length == 1) return 'Görüş Hattı: 2. noktayı seçin';
         return 'Görüş Hattı: Analiz tamamlandı';
+      case ToolMode.rangeRings:
+        if (pts.isEmpty) return 'Menzil halkası: merkezi seçin';
+        if (pts.length == 1) return 'Menzil halkası: yarıçap için dokunun';
+        final r = GeoMath.distance(pts[0], pts[1]);
+        return 'Menzil: R=${GeoMath.fmtDistance(r)} · ${GeoMath.fmtDistance(2 * r)}'
+            ' · ${GeoMath.fmtDistance(3 * r)}';
     }
   }
 }

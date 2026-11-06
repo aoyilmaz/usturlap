@@ -6,6 +6,7 @@ import '../../providers/offline_providers.dart';
 import '../../providers/track_providers.dart';
 import '../../providers/waypoint_providers.dart';
 import '../offline/offline_regions_sheet.dart' show fmtBytes;
+import 'adaptive_sheet.dart';
 
 /// Görevler: kayıtlı her şeyin tek giriş noktası (noktalar, izler, grafikler,
 /// çevrimdışı bölgeler, içe aktarma). Her satır ilgili listeyi açar.
@@ -17,7 +18,7 @@ Future<void> showMissionsSheet(
   required VoidCallback onOfflineRegions,
   required VoidCallback onImportGpxKml,
 }) {
-  return showModalBottomSheet<void>(
+  return showAdaptiveSheet<void>(
     context: context,
     showDragHandle: true,
     builder: (context) => _MissionsSheet(

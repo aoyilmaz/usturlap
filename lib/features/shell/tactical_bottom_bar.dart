@@ -5,6 +5,9 @@ import 'package:flutter/services.dart';
 /// kontroller ve kartlar bunun üstüne yerleşir.
 const double kBottomBarHeight = 72;
 
+/// Yatay ekranda alt çubuğun dönüştüğü sol şeridin genişliği.
+const double kSideRailWidth = 76;
+
 /// Kerteriz tarzı alt çubuk: Koordinat · Araçlar · ● İz · Rota · Görevler.
 ///
 /// Ortadaki büyük düğme iz kaydını başlatır/durdurur (en sık kullanılan iş,
@@ -22,6 +25,7 @@ class TacticalBottomBar extends StatelessWidget {
     required this.onRoute,
     required this.onMissions,
     this.night = false,
+    this.vertical = false,
   });
 
   final bool recording;
@@ -34,16 +38,22 @@ class TacticalBottomBar extends StatelessWidget {
   final VoidCallback onMissions;
   final bool night;
 
+  /// true → yatay ekranda sol kenarda dikey şerit (ATAK gibi).
+  final bool vertical;
+
   @override
   Widget build(BuildContext context) {
     final accent = night ? Colors.redAccent : Colors.amber;
     return Material(
       color: Colors.black.withValues(alpha: 0.82),
       child: SafeArea(
-        top: false,
+        top: vertical,
+        right: !vertical,
         child: SizedBox(
-          height: kBottomBarHeight,
-          child: Row(
+          height: vertical ? double.infinity : kBottomBarHeight,
+          width: vertical ? kSideRailWidth : double.infinity,
+          child: Flex(
+            direction: vertical ? Axis.vertical : Axis.horizontal,
             children: [
               _Tab(
                   icon: Icons.my_location,

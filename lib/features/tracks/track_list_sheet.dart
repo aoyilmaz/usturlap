@@ -8,10 +8,11 @@ import '../../data/export/track_exporter.dart';
 import '../../domain/models/track.dart';
 import '../../providers/track_providers.dart';
 import '../import/import_action.dart';
+import '../shell/adaptive_sheet.dart';
 
 /// Kayıtlı izlerin paneli: haritada göster, KML/GeoJSON paylaş, sil.
 Future<void> showTrackListSheet(BuildContext context, WidgetRef ref) {
-  return showModalBottomSheet<void>(
+  return showAdaptiveSheet<void>(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,

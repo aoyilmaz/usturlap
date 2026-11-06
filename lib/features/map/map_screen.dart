@@ -21,6 +21,8 @@ import '../../providers/layer_providers.dart';
 import '../../providers/location_providers.dart';
 import '../../providers/nav_providers.dart';
 import '../../providers/offline_providers.dart';
+import '../../providers/route_providers.dart';
+import '../../domain/models/route_plan.dart';
 import '../../domain/models/offline_region.dart';
 import '../offline/offline_frame_panel.dart';
 import '../offline/offline_regions_sheet.dart';
@@ -31,6 +33,7 @@ import '../../providers/track_providers.dart';
 import '../../providers/waypoint_providers.dart';
 import '../hud/callsign_hud.dart';
 import '../import/import_action.dart';
+import '../routes/route_widgets.dart';
 import '../shell/coordinate_sheet.dart';
 import '../shell/map_controls.dart';
 import '../shell/missions_sheet.dart';
@@ -51,6 +54,7 @@ import 'base_layer.dart';
 import 'base_layer_resolver.dart';
 import 'engine/map_engine.dart';
 import 'widgets/los_overlay.dart';
+import '../shell/adaptive_sheet.dart';
 
 /// Adım 3 — çevrimdışı/çevrimiçi harita + kendi konum işaretçisi + HUD +
 /// kuzey/track-up modu + takip.
@@ -98,6 +102,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   /// Listeden "haritada göster" denen bölge (sınırı vurgulanır).
   String? _highlightRegionId;
+
+  /// Rota listesinden "haritada göster" denen rota (dokununca kaybolur).
+  RoutePlan? _previewRoute;
 
   @override
   void initState() {
@@ -248,7 +255,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   void _showRepeaterDetail(Repeater r) {
     String fmtFreq(double? f) => f == null ? '—' : '${f.toStringAsFixed(3)} MHz';
-    showModalBottomSheet<void>(
+    showAdaptiveSheet<void>(
       context: context,
       showDragHandle: true,
       builder: (context) => SafeArea(
@@ -389,6 +396,21 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               points: [pts[0], pts[1]], width: 4, color: Colors.blueAccent));
         }
         break;
+      case ToolMode.rangeRings:
+        if (pts.length >= 2) {
+          final r = GeoMath.distance(pts[0], pts[1]);
+          for (final k in const [1, 2, 3]) {
+            out.add(MapCircle(
+              center: pts[0],
+              radiusMeters: r * k,
+              fillColor: amber.withValues(alpha: k == 1 ? 0.10 : 0.0),
+              strokeColor: amber.withValues(alpha: 1.0 - (k - 1) * 0.25),
+              strokeWidth: 2,
+            ));
+          }
+          out.add(MapLine(points: [pts[0], pts[1]], width: 2, color: amber));
+        }
+        break;
       case ToolMode.none:
         break;
     }
@@ -433,7 +455,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   void _showWaypointDetail(Waypoint wp) {
-    showModalBottomSheet<void>(
+    showAdaptiveSheet<void>(
       context: context,
       showDragHandle: true,
       builder: (context) => SafeArea(
@@ -610,7 +632,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// Tek birleşik menü: veri & araçlar + harita katmanı + görünüm ayarları.
   /// ▤ Katmanlar: taban harita, içe aktarılan paketler, çevrimdışı bölgeler.
   void _openLayers() {
-    showModalBottomSheet<void>(
+    showAdaptiveSheet<void>(
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
@@ -732,6 +754,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// imleçteki yere nokta (waypoint) ekleme penceresini açar.
   void _addAtCrosshair() {
     final p = _map.camera.center;
+    if (ref.read(routePlanningProvider).active) {
+      ref.read(routePlanningProvider.notifier).addPoint(p);
+      return;
+    }
     if (ref.read(toolProvider).active) {
       ref.read(toolProvider.notifier).addPoint(p);
     } else {
@@ -744,6 +770,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     showCoordinateSheet(
       context,
       crosshair: _map.camera.center,
+      onShowOnMap: (p) {
+        setState(() => _follow = false);
+        final z = _map.camera.zoom;
+        _map.moveTo(p, zoom: z < 15 ? 15.0 : z);
+      },
       onSaveHere: (p) => showAddWaypointDialog(context, ref, p),
       onNavigateHere: (p) {
         ref.read(navTargetProvider.notifier).set(p, CoordFormat.mgrs(p));
@@ -792,6 +823,20 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         showRepeaters ? ref.watch(selectedRepeaterProvider) : null;
     final navTarget = ref.watch(navTargetProvider);
     final recording = ref.watch(recordingProvider);
+    final planning = ref.watch(routePlanningProvider);
+    final activeRoute = ref.watch(activeRouteProvider);
+    // Rota noktasına varınca titreşim + bilgi.
+    ref.listen<ActiveRouteState?>(activeRouteProvider, (prev, next) {
+      final a = prev?.progress, b = next?.progress;
+      if (a == null || b == null || b.targetIndex <= a.targetIndex) return;
+      HapticFeedback.heavyImpact();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        duration: const Duration(seconds: 2),
+        content: Text(b.finished
+            ? 'Rota tamamlandı: ${next!.route.name}'
+            : 'Nokta ${a.targetIndex + 1} geçildi → sıradaki ${b.targetIndex + 1}'),
+      ));
+    });
     final currentTrack =
         ref.watch(currentTrackPointsProvider).value ?? const <TrackPoint>[];
     final displayedTrack =
@@ -807,9 +852,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             _selected.type == BaseLayerSourceType.vectorPmtiles) &&
         !_resolved.containsKey(_selected.id);
 
-    // Alt çubuğun kapladığı yükseklik (güvenli alan dahil).
-    final safeBottom = MediaQuery.paddingOf(context).bottom;
-    final bottomInset = kBottomBarHeight + safeBottom;
+    // Yerleşim: dikeyde alt çubuk; yatayda (ATAK gibi) sol dikey şerit,
+    // sağdan yan paneller, dar HUD — harita olabildiğince açık kalsın.
+    final landscape = isLandscape(context);
+    final safe = MediaQuery.paddingOf(context);
+    final safeBottom = safe.bottom;
+    // Alt kenarda arayüzün kapladığı yükseklik / sol kenarda şerit genişliği.
+    final bottomInset = landscape ? safeBottom : kBottomBarHeight + safeBottom;
+    final leftInset = landscape ? kSideRailWidth + safe.left : 0.0;
 
     // Harita üstü çizimler — liste sırası = çizim sırası (alttan üste).
     final overlays = <MapOverlay>[
@@ -819,6 +869,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       ..._graphicOverlays(graphics),
       // Aktif ölçüm/çizim aracı.
       ..._toolOverlays(tool),
+      // Rota: planlanan / takip edilen / önizlenen.
+      ..._routeOverlays(planning, activeRoute, self?.position),
       // Navigasyon çizgisi (kendi konum → hedef).
       if (navTarget != null && self != null)
         MapLine(
@@ -890,8 +942,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 return kMapEngine.buildView(
                   terrain3d: _terrain3d && kMapEngine.supportsTerrain,
                   // Logo/atıf alt çubuğun (çerçevelerken panelin) üstünde kalsın.
-                  ornamentPadding: EdgeInsets.only(
-                      bottom: _framing ? safeBottom + 300 : bottomInset),
+                  ornamentPadding: _framing
+                      ? EdgeInsets.only(bottom: landscape ? 0 : safeBottom + 300)
+                      : EdgeInsets.only(left: leftInset, bottom: bottomInset),
                   nightMode: nightMode,
                   controller: _map,
                   baseLayer: _resolved[_selected.id] ?? const NoBaseLayer(),
@@ -911,8 +964,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   },
                   // Tek dokun → araç aktifse nokta koy.
                   onTap: (point) {
-                    if (_highlightRegionId != null) {
-                      setState(() => _highlightRegionId = null);
+                    if (_highlightRegionId != null || _previewRoute != null) {
+                      setState(() {
+                        _highlightRegionId = null;
+                        _previewRoute = null;
+                      });
+                    }
+                    if (ref.read(routePlanningProvider).active) {
+                      HapticFeedback.selectionClick();
+                      ref.read(routePlanningProvider.notifier).addPoint(point);
+                      return;
                     }
                     if (ref.read(toolProvider).active) {
                       HapticFeedback.selectionClick();
@@ -997,15 +1058,24 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             ),
 
           // Üst: kalıcı HUD + (araç aktifse) ölçüm şeridi
-          const Align(
-            alignment: Alignment.topCenter,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CallsignHud(),
-                ToolBanner(),
-                NavBanner(),
-              ],
+          Align(
+            alignment: landscape ? Alignment.topLeft : Alignment.topCenter,
+            child: Padding(
+              padding: EdgeInsets.only(left: _framing ? 0 : leftInset),
+              child: ConstrainedBox(
+                // Yatayda dar: haritanın üst bandını kaplamasın.
+                constraints:
+                    BoxConstraints(maxWidth: landscape ? 380 : double.infinity),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CallsignHud(),
+                    if (planning.active) const RoutePlanInfo(),
+                    const ToolBanner(),
+                    const NavBanner(),
+                  ],
+                ),
+              ),
             ),
           ),
 
@@ -1015,9 +1085,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           // Sağ kenar: harita kontrolleri (Kerteriz tarzı).
           if (!_framing)
             Positioned(
-              right: 12,
-              bottom: bottomInset + 16,
+              right: 12 + (landscape ? safe.right : 0),
+              bottom: bottomInset + (landscape ? 8 : 16),
               child: MapControlsColumn(
+                compact: landscape,
                 night: nightMode,
                 onSettings: () => showSettingsSheet(context),
                 onLayers: _openLayers,
@@ -1034,8 +1105,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               ),
             ),
 
-          // Sağ kenardan içeri kaydır → katmanlar (§8 jest).
-          if (!_framing)
+          // Sağ kenardan içeri kaydır → katmanlar (§8 jest). Yatayda kontrol
+          // sütunu sağ kenarı kapladığı için yok (Katmanlar düğmesi var).
+          if (!_framing && !landscape)
             Positioned(
               right: 0,
               top: 160,
@@ -1055,30 +1127,59 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           // Çevrimdışı indirme ilerlemesi + ağ-kapalı (test) uyarısı.
           if (!_framing)
             Positioned(
-              left: 12,
-              right: 76,
-              bottom: bottomInset + 40,
+              left: leftInset + 12,
+              right: landscape ? null : 76,
+              width: landscape ? 380 : null,
+              bottom: bottomInset +
+                  (activeRoute != null ? 170 : (landscape ? 12 : 40)),
               child: const _OfflineStatusCards(),
             ),
 
-          // Alt çubuk: Koordinat · Araçlar · ● İz · Rota · Görevler.
-          if (!_framing)
+          // Rota takip paneli (alt çubuğun üstünde).
+          if (!_framing && !planning.active && activeRoute != null)
+            Positioned(
+              left: leftInset + 8,
+              right: landscape ? null : 68,
+              width: landscape ? 440 : null,
+              bottom: bottomInset + 8,
+              child: RouteFollowPanel(night: nightMode),
+            ),
+
+          // Rota planlarken alt çubuk planlama düğmelerine dönüşür.
+          if (!_framing && planning.active)
             Positioned(
               left: 0,
-              right: 0,
+              right: landscape ? null : 0,
+              top: landscape ? 0 : null,
+              bottom: 0,
+              child: RoutePlanBar(
+                  onAddAtCrosshair: _addAtCrosshair, vertical: landscape),
+            ),
+
+          // Alt çubuk: Koordinat · Araçlar · ● İz · Rota · Görevler.
+          if (!_framing && !planning.active)
+            Positioned(
+              left: 0,
+              right: landscape ? null : 0,
+              top: landscape ? 0 : null,
               bottom: 0,
               child: TacticalBottomBar(
+                vertical: landscape,
                 night: nightMode,
                 recording: recording.isRecording,
                 toolActive: tool.active,
-                navActive: navTarget != null,
+                navActive: navTarget != null || activeRoute != null,
                 onCoordinate: _openCoordinate,
                 onTools: () => showToolsPalette(context, ref),
                 onRecord: () {
                   final n = ref.read(recordingProvider.notifier);
                   recording.isRecording ? n.stop() : n.start();
                 },
-                onRoute: () => showRouteSheet(context),
+                onRoute: () => showRouteSheet(
+                  context,
+                  onPlanNew: _startRoutePlanning,
+                  onShowRoute: _showRoute,
+                ),
                 onMissions: _openMissions,
               ),
             ),
@@ -1090,10 +1191,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           if (_framing) ...[
             OfflineFrameMask(frame: _frameRect(context)),
             Positioned(
-              left: 0,
+              // Yatayda panel sağda (yan panel), dikeyde altta.
+              left: landscape ? null : 0,
               right: 0,
+              top: landscape ? 0 : null,
               bottom: 0,
+              width: landscape ? sidePanelWidth(context) : null,
               child: OfflineFramePanel(
+                sideways: landscape,
                 defaultName: 'Bölge ${(ref.read(offlineRegionsProvider).value?.length ?? 0) + 1}',
                 frameBounds: () => _map.boundsOfScreenRect(_frameRect(context)),
                 cameraTick: _cameraTick,
@@ -1107,8 +1212,104 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
+  /// Rota planlamayı başlat (ölçüm aracı kapanır; dokunuşlar rotaya gider).
+  void _startRoutePlanning() {
+    ref.read(toolProvider.notifier).reset();
+    setState(() {
+      _follow = false;
+      _previewRoute = null;
+    });
+    ref.read(routePlanningProvider.notifier).start();
+  }
+
+  /// Kayıtlı bir rotayı haritaya sığdırıp önizle.
+  void _showRoute(RoutePlan r) {
+    setState(() {
+      _follow = false;
+      _previewRoute = r;
+    });
+    _map.fitBounds(GeoBounds.fromPoints(r.points),
+        padding: const EdgeInsets.fromLTRB(40, 160, 80, 200));
+  }
+
+  /// Numaralı rota noktası işaretçisi. [style]: plan / next / done / todo.
+  MapMarker _routePoint(int i, LatLng p, String style) {
+    final (Color bg, Color fg, double size) = switch (style) {
+      'next' => (Colors.lightGreenAccent, Colors.black, 30.0),
+      'done' => (Colors.grey.shade700, Colors.white70, 22.0),
+      _ => (Colors.amber, Colors.black, 24.0),
+    };
+    return MapMarker(
+      id: 'rp:$style:$i',
+      imageKey: 'rp:$style:${i + 1}',
+      point: p,
+      width: size,
+      height: size,
+      child: Container(
+        decoration: BoxDecoration(
+          color: bg,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.black, width: 1.5),
+        ),
+        alignment: Alignment.center,
+        child: Text('${i + 1}',
+            style: TextStyle(
+                color: fg, fontSize: size * 0.45, fontWeight: FontWeight.bold)),
+      ),
+    );
+  }
+
+  List<MapOverlay> _routeOverlays(
+      RoutePlanningState planning, ActiveRouteState? active, LatLng? self) {
+    const amber = Colors.amber;
+    final out = <MapOverlay>[];
+    if (planning.active) {
+      final pts = planning.points;
+      if (pts.length >= 2) out.add(MapLine(points: pts, width: 4, color: amber));
+      for (var i = 0; i < pts.length; i++) {
+        out.add(_routePoint(i, pts[i], 'plan'));
+      }
+      return out;
+    }
+    if (active != null) {
+      final pts = active.route.points;
+      final p = active.progress;
+      final t = p == null ? 0 : p.targetIndex.clamp(0, pts.length);
+      // Geçilen ayaklar gri, kalanlar sarı.
+      if (t >= 2) {
+        out.add(MapLine(
+            points: pts.sublist(0, t), width: 4, color: Colors.grey.shade600));
+      }
+      final restStart = t == 0 ? 0 : t - 1;
+      if (pts.length - restStart >= 2) {
+        out.add(MapLine(points: pts.sublist(restStart), width: 5, color: amber));
+      }
+      // Konumdan sıradaki noktaya hat.
+      if (self != null && p != null && !p.finished && t < pts.length) {
+        out.add(MapLine(
+            points: [self, pts[t]], width: 3, color: Colors.lightGreenAccent));
+      }
+      for (var i = 0; i < pts.length; i++) {
+        out.add(_routePoint(
+            i, pts[i], i < t ? 'done' : (i == t ? 'next' : 'todo')));
+      }
+      return out;
+    }
+    final r = _previewRoute;
+    if (r != null) {
+      out.add(MapLine(points: r.points, width: 4, color: amber));
+      for (var i = 0; i < r.points.length; i++) {
+        out.add(_routePoint(i, r.points[i], 'plan'));
+      }
+    }
+    return out;
+  }
+
   Rect _frameRect(BuildContext context) => offlineFrameRect(
-      MediaQuery.sizeOf(context), MediaQuery.paddingOf(context));
+        MediaQuery.sizeOf(context),
+        MediaQuery.paddingOf(context),
+        rightPanel: isLandscape(context) ? sidePanelWidth(context) : 0,
+      );
 
   /// Çerçeveleme modunu aç. İndirilen görüntü Mapbox uydu olduğundan,
   /// kendi paket katmanı seçiliyse uydu katmanına geçilir.

@@ -8,6 +8,7 @@ import '../../providers/settings_providers.dart';
 import '../../providers/waypoint_providers.dart';
 import '../import/import_action.dart';
 import '../symbols/nato_symbol.dart';
+import '../shell/adaptive_sheet.dart';
 
 /// Kayıtlı waypoint'leri listeleyen alt panel. Dokun → haritada ortala,
 /// çöp kutusu → sil. Liste drift akışından canlı güncellenir.
@@ -16,7 +17,7 @@ Future<void> showWaypointListSheet(
   WidgetRef ref, {
   required void Function(Waypoint) onTapWaypoint,
 }) {
-  return showModalBottomSheet<void>(
+  return showAdaptiveSheet<void>(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,

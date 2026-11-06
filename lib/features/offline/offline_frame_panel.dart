@@ -11,7 +11,21 @@ import '../map/engine/map_types.dart';
 import 'offline_regions_sheet.dart' show fmtBytes;
 
 /// Çerçeve modunda ekranın neresinin indirileceği (harita alanına göre).
-Rect offlineFrameRect(Size size, EdgeInsets safe) {
+/// [rightPanel] > 0 → yatay ekran: panel sağda, çerçeve solda kalan alanda.
+Rect offlineFrameRect(Size size, EdgeInsets safe, {double rightPanel = 0}) {
+  if (rightPanel > 0) {
+    const m = 24.0;
+    final left = safe.left + m;
+    final top = safe.top + m;
+    final right = size.width - rightPanel - m;
+    final bottom = size.height - safe.bottom - m;
+    return Rect.fromLTRB(
+      left,
+      top,
+      math.max(left + 120, right),
+      math.max(top + 120, bottom),
+    );
+  }
   const side = 24.0;
   final top = safe.top + 120;
   final bottom = safe.bottom + 300; // alt panel
@@ -42,7 +56,10 @@ class _MaskPainter extends CustomPainter {
       ..fillType = PathFillType.evenOdd
       ..addRect(Offset.zero & size)
       ..addRRect(RRect.fromRectAndRadius(frame, const Radius.circular(6)));
-    canvas.drawPath(outside, Paint()..color = Colors.black.withValues(alpha: 0.45));
+    canvas.drawPath(
+      outside,
+      Paint()..color = Colors.black.withValues(alpha: 0.45),
+    );
     canvas.drawRRect(
       RRect.fromRectAndRadius(frame, const Radius.circular(6)),
       Paint()
@@ -64,7 +81,11 @@ class OfflineFramePanel extends ConsumerStatefulWidget {
     required this.frameBounds,
     required this.cameraTick,
     required this.onClose,
+    this.sideways = false,
   });
+
+  /// true → yatay ekranda sağ yan panel (tam yükseklik, kaydırılabilir).
+  final bool sideways;
 
   final String defaultName;
 
@@ -81,8 +102,9 @@ class OfflineFramePanel extends ConsumerStatefulWidget {
 }
 
 class _OfflineFramePanelState extends ConsumerState<OfflineFramePanel> {
-  late final TextEditingController _name =
-      TextEditingController(text: widget.defaultName);
+  late final TextEditingController _name = TextEditingController(
+    text: widget.defaultName,
+  );
   OfflineDetail _detail = OfflineDetail.terrain;
   GeoBounds? _bounds;
   int? _estimate;
@@ -168,7 +190,8 @@ class _OfflineFramePanelState extends ConsumerState<OfflineFramePanel> {
     final ok = ref.read(offlineDownloadProvider.notifier).start(spec);
     if (!ok) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Zaten bir indirme sürüyor.')));
+        const SnackBar(content: Text('Zaten bir indirme sürüyor.')),
+      );
       return;
     }
     widget.onClose();
@@ -182,84 +205,106 @@ class _OfflineFramePanelState extends ConsumerState<OfflineFramePanel> {
     if (b == null) {
       estimateText = 'Harita hazırlanıyor…';
     } else if (_estimating) {
-      estimateText = '~${_areaKm2(b).toStringAsFixed(1)} km² · boyut hesaplanıyor…';
+      estimateText =
+          '~${_areaKm2(b).toStringAsFixed(1)} km² · boyut hesaplanıyor…';
     } else if (_estimateError != null) {
       estimateText = '~${_areaKm2(b).toStringAsFixed(1)} km² · $_estimateError';
     } else {
-      estimateText = '~${_areaKm2(b).toStringAsFixed(1)} km² · '
+      estimateText =
+          '~${_areaKm2(b).toStringAsFixed(1)} km² · '
           'tahmini ${_estimate == null ? '—' : fmtBytes(_estimate!)}';
     }
 
     return Material(
       color: Theme.of(context).colorScheme.surface,
       elevation: 8,
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+      borderRadius: widget.sideways
+          ? const BorderRadius.horizontal(left: Radius.circular(16))
+          : const BorderRadius.vertical(top: Radius.circular(16)),
       child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text('Bölge indir',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const Text('Haritayı kaydırıp yakınlaştırarak alanı çerçeveye yerleştirin.',
-                  style: TextStyle(fontSize: 12, color: Colors.grey)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _name,
-                decoration: const InputDecoration(
-                    labelText: 'Bölge adı', isDense: true),
-                onChanged: (_) {}, // ad tahmini etkilemez
-              ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                children: [
-                  for (final d in OfflineDetail.values)
-                    ChoiceChip(
-                      label: Text('${d.label} (z${d.maxZoom})'),
-                      selected: _detail == d,
-                      onSelected: (_) {
-                        setState(() => _detail = d);
-                        _scheduleEstimate();
-                      },
-                    ),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(_detail.hint,
-                    style: const TextStyle(fontSize: 12, color: Colors.grey)),
-              ),
-              const SizedBox(height: 6),
-              Text(estimateText,
+        top: widget.sideways,
+        left: !widget.sideways,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Bölge indir',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const Text(
+                  'Haritayı kaydırıp yakınlaştırarak alanı çerçeveye yerleştirin.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _name,
+                  decoration: const InputDecoration(
+                    labelText: 'Bölge adı',
+                    isDense: true,
+                  ),
+                  onChanged: (_) {}, // ad tahmini etkilemez
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    for (final d in OfflineDetail.values)
+                      ChoiceChip(
+                        label: Text('${d.label} (z${d.maxZoom})'),
+                        selected: _detail == d,
+                        onSelected: (_) {
+                          setState(() => _detail = d);
+                          _scheduleEstimate();
+                        },
+                      ),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    _detail.hint,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  estimateText,
                   style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: big ? Colors.orangeAccent : null)),
-              if (big)
-                const Text('Büyük alan: indirme uzun sürer. Yakınlaşarak '
+                    fontWeight: FontWeight.w600,
+                    color: big ? Colors.orangeAccent : null,
+                  ),
+                ),
+                if (big)
+                  const Text(
+                    'Büyük alan: indirme uzun sürer. Yakınlaşarak '
                     'alanı küçültebilir ya da detayı düşürebilirsiniz.',
-                    style: TextStyle(fontSize: 12, color: Colors.orangeAccent)),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                        onPressed: widget.onClose, child: const Text('Vazgeç')),
+                    style: TextStyle(fontSize: 12, color: Colors.orangeAccent),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: b == null ? null : _start,
-                      icon: const Icon(Icons.download),
-                      label: const Text('İndir'),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: widget.onClose,
+                        child: const Text('Vazgeç'),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: b == null ? null : _start,
+                        icon: const Icon(Icons.download),
+                        label: const Text('İndir'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

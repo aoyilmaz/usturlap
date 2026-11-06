@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kerteriz/features/offline/offline_frame_panel.dart';
+import 'package:kerteriz/features/shell/adaptive_sheet.dart';
 import 'package:kerteriz/features/shell/map_controls.dart';
 import 'package:kerteriz/features/shell/tactical_bottom_bar.dart';
 
@@ -79,5 +81,97 @@ void main() {
     )));
     await tester.tap(find.byIcon(Icons.add_location_alt));
     expect(added, 1);
+  });
+
+  testWidgets('yatay: alt çubuk sol dikey şeride dönüşür', (tester) async {
+    tester.view.physicalSize = const Size(2532, 1170); // iPhone yatay
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: Row(children: [
+          TacticalBottomBar(
+            vertical: true,
+            recording: false,
+            toolActive: false,
+            navActive: false,
+            onCoordinate: () {},
+            onTools: () {},
+            onRecord: () {},
+            onRoute: () {},
+            onMissions: () {},
+          ),
+          const Expanded(child: SizedBox()),
+        ]),
+      ),
+    ));
+    final bar = tester.getSize(find.byType(TacticalBottomBar));
+    expect(bar.width, lessThanOrEqualTo(kSideRailWidth + 1));
+    // Sekmeler yukarıdan aşağı sıralı.
+    final yK = tester.getCenter(find.text('Koordinat')).dy;
+    final yG = tester.getCenter(find.text('Görevler')).dy;
+    expect(yK, lessThan(yG));
+  });
+
+  test('yatay: çevrimdışı çerçeve sağ panelin solunda kalır', () {
+    const size = Size(844, 390);
+    const safe = EdgeInsets.only(left: 47, right: 47, bottom: 21);
+    final r = offlineFrameRect(size, safe, rightPanel: 380);
+    expect(r.right, lessThanOrEqualTo(844 - 380));
+    expect(r.left, greaterThanOrEqualTo(47));
+    expect(r.height, greaterThanOrEqualTo(120));
+  });
+
+  testWidgets('yatay ekranda menü sağdan yan panel olarak açılır',
+      (tester) async {
+    tester.view.physicalSize = const Size(2532, 1170);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(MaterialApp(
+      home: Builder(
+        builder: (context) => Scaffold(
+          body: Center(
+            child: TextButton(
+              onPressed: () => showAdaptiveSheet<void>(
+                context: context,
+                builder: (_) => const Text('PANEL'),
+              ),
+              child: const Text('aç'),
+            ),
+          ),
+        ),
+      ),
+    ));
+    await tester.tap(find.text('aç'));
+    await tester.pumpAndSettle();
+    final panel = tester.getRect(find.text('PANEL'));
+    final screenW = 2532 / 3;
+    // Panel ekranın sağ yarısında; alttan sayfa değil.
+    expect(panel.left, greaterThan(screenW / 2));
+    expect(find.byType(BottomSheet), findsNothing);
+  });
+
+  testWidgets('dikey ekranda menü alttan sayfa olarak açılır', (tester) async {
+    tester.view.physicalSize = const Size(1170, 2532);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(MaterialApp(
+      home: Builder(
+        builder: (context) => Scaffold(
+          body: Center(
+            child: TextButton(
+              onPressed: () => showAdaptiveSheet<void>(
+                context: context,
+                builder: (_) => const Text('PANEL'),
+              ),
+              child: const Text('aç'),
+            ),
+          ),
+        ),
+      ),
+    ));
+    await tester.tap(find.text('aç'));
+    await tester.pumpAndSettle();
+    expect(find.byType(BottomSheet), findsOneWidget);
   });
 }

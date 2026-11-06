@@ -4,10 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/coord_format.dart';
 import '../../providers/repeater_providers.dart';
 import '../../providers/settings_providers.dart';
+import 'adaptive_sheet.dart';
 
 /// ⚙ Ayarlar: görünüm, koordinat biçimi, callsign, iz filtresi, röleler.
 Future<void> showSettingsSheet(BuildContext context) {
-  return showModalBottomSheet<void>(
+  return showAdaptiveSheet<void>(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,

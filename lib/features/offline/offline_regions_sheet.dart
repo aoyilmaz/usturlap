@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/offline/mapbox_offline_store.dart';
 import '../../domain/models/offline_region.dart';
 import '../../providers/offline_providers.dart';
+import '../shell/adaptive_sheet.dart';
 
 String fmtBytes(int b) {
   if (b < 1024 * 1024) return '${(b / 1024).toStringAsFixed(0)} KB';
@@ -20,7 +21,7 @@ Future<void> showOfflineRegionsSheet(
   required void Function(OfflineRegion region) onShowRegion,
   required VoidCallback onNewRegion,
 }) {
-  return showModalBottomSheet<void>(
+  return showAdaptiveSheet<void>(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,

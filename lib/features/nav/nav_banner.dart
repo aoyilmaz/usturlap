@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/geo_math.dart';
+import '../../core/nav_math.dart';
 import '../../providers/location_providers.dart';
 import '../../providers/nav_providers.dart';
 import '../../providers/settings_providers.dart';
 
 /// Aktif "Git" hedefine kerteriz + mesafe gösteren şerit (HUD'un altında).
+///
+/// Bloodhound (ATAK) gibi: gidiş yönüne göre dönüş ("sağa 35°") ve tahmini
+/// varış (hız yoksa yürüyüş hızıyla, "~" ile) da gösterilir.
 class NavBanner extends ConsumerWidget {
   const NavBanner({super.key});
 
@@ -20,12 +24,28 @@ class NavBanner extends ConsumerWidget {
     final accent = night ? Colors.redAccent : Colors.limeAccent;
 
     String info;
+    String? detail;
     if (self == null) {
       info = 'Konum bekleniyor…';
     } else {
-      final brg = GeoMath.bearing(self.position, target.position);
-      final dist = GeoMath.distance(self.position, target.position);
+      final brg = NavMath.bearing(self.position, target.position);
+      final dist = NavMath.distance(self.position, target.position);
       info = 'KRT ${GeoMath.fmtBearing(brg)}  ·  ${GeoMath.fmtDistance(dist)}';
+      final parts = <String>[];
+      final moving = (self.speedMps ?? 0) >= 0.5;
+      if (self.headingDeg != null && moving) {
+        parts.add(NavMath.fmtTurn(
+            NavMath.relativeBearing(brg, self.headingDeg!)));
+      }
+      final eta = NavMath.eta(dist, self.speedMps);
+      if (eta != null && dist > 20) {
+        final at = DateTime.now().add(eta);
+        final hhmm = '${at.hour.toString().padLeft(2, '0')}:'
+            '${at.minute.toString().padLeft(2, '0')}';
+        parts.add('${moving ? '' : '~'}${NavMath.fmtDuration(eta)} ($hhmm)');
+      }
+      if (dist <= 20) parts.add('hedefe vardınız');
+      if (parts.isNotEmpty) detail = parts.join('  ·  ');
     }
 
     return Container(
@@ -58,6 +78,12 @@ class NavBanner extends ConsumerWidget {
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                         fontFeatures: [FontFeature.tabularFigures()])),
+                if (detail != null)
+                  Text(detail,
+                      style: TextStyle(
+                          color: accent,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600)),
               ],
             ),
           ),

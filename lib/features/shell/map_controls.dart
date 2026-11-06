@@ -17,7 +17,11 @@ class MapControlsColumn extends StatelessWidget {
     this.onTerrain,
     this.terrainOn = false,
     this.night = false,
+    this.compact = false,
   });
+
+  /// Yatay ekranda daha küçük düğmeler (yükseklik az).
+  final bool compact;
 
   final VoidCallback onSettings;
   final VoidCallback onLayers;
@@ -41,8 +45,10 @@ class MapControlsColumn extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _MapButton(icon: Icons.settings, tooltip: 'Ayarlar', onTap: onSettings),
-        _MapButton(icon: Icons.layers, tooltip: 'Katmanlar', onTap: onLayers),
+        _MapButton(
+            icon: Icons.settings, tooltip: 'Ayarlar', onTap: onSettings, compact: compact),
+        _MapButton(
+            icon: Icons.layers, tooltip: 'Katmanlar', onTap: onLayers, compact: compact),
         if (onTerrain != null)
           _MapButton(
             label: '3B',
@@ -50,12 +56,14 @@ class MapControlsColumn extends StatelessWidget {
             active: terrainOn,
             accent: accent,
             onTap: onTerrain!,
+            compact: compact,
           ),
         _MapButton(
           icon: Icons.add_location_alt,
           tooltip: addLabel,
           accent: accent,
           onTap: onAdd,
+          compact: compact,
         ),
         _MapButton(
           icon: following ? Icons.my_location : Icons.location_searching,
@@ -63,6 +71,7 @@ class MapControlsColumn extends StatelessWidget {
           active: following,
           accent: Colors.lightBlueAccent,
           onTap: onRecenter,
+          compact: compact,
         ),
         _MapButton(
           icon: trackUp ? Icons.navigation : Icons.explore,
@@ -70,6 +79,7 @@ class MapControlsColumn extends StatelessWidget {
           active: trackUp,
           accent: accent,
           onTap: onOrientation,
+          compact: compact,
         ),
       ],
     );
@@ -84,8 +94,10 @@ class _MapButton extends StatelessWidget {
     required this.onTap,
     this.active = false,
     this.accent = Colors.amber,
+    this.compact = false,
   });
 
+  final bool compact;
   final IconData? icon;
   final String? label;
   final String tooltip;
@@ -97,7 +109,7 @@ class _MapButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final fg = active ? Colors.black : Colors.white;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: EdgeInsets.only(bottom: compact ? 6 : 10),
       child: Tooltip(
         message: tooltip,
         child: Material(
@@ -110,8 +122,8 @@ class _MapButton extends StatelessWidget {
               onTap();
             },
             child: SizedBox(
-              width: 48,
-              height: 48,
+              width: compact ? 42 : 48,
+              height: compact ? 42 : 48,
               child: Center(
                 child: icon != null
                     ? Icon(icon, color: fg, size: 24)

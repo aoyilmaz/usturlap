@@ -8,6 +8,7 @@ enum ToolMode {
   polygon, // alan
   sector, // merkez + yarıçap + iki kerteriz
   lineOfSight, // Görüş hattı analizi
+  rangeRings, // merkez + yarıçap → R, 2R, 3R menzil halkaları (ATAK R&B Circle)
 }
 
 class ToolState {
@@ -43,6 +44,11 @@ class ToolNotifier extends Notifier<ToolState> {
   void addPoint(LatLng p) {
     if (state.mode == ToolMode.none) return;
     if (state.mode == ToolMode.sector && state.points.length >= 3) return;
+    // Menzil halkası: merkez sabit, sonraki dokunuşlar yarıçapı değiştirir.
+    if (state.mode == ToolMode.rangeRings && state.points.length >= 2) {
+      state = state.copyWith(points: [state.points.first, p]);
+      return;
+    }
     state = state.copyWith(points: [...state.points, p]);
   }
 

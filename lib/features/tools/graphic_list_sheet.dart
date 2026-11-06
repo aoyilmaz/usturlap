@@ -4,10 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/geo_math.dart';
 import '../../domain/models/map_graphic.dart';
 import '../../providers/graphic_providers.dart';
+import '../shell/adaptive_sheet.dart';
 
 /// Kayıtlı taktik grafikler paneli: renk/tip/ölçü göster, sil.
 Future<void> showGraphicListSheet(BuildContext context, WidgetRef ref) {
-  return showModalBottomSheet<void>(
+  return showAdaptiveSheet<void>(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,

@@ -4,11 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/graphic_providers.dart';
 import '../../providers/tool_providers.dart';
 import 'graphic_list_sheet.dart';
+import '../shell/adaptive_sheet.dart';
 
 /// Ölçüm/çizim araçları paleti. Bir araç seçince haritaya dokunarak nokta
 /// koyulur; üstteki ölçüm şeridi (ToolBanner) değeri gösterir.
 Future<void> showToolsPalette(BuildContext context, WidgetRef ref) {
-  return showModalBottomSheet<void>(
+  return showAdaptiveSheet<void>(
     context: context,
     showDragHandle: true,
     builder: (context) {
@@ -52,6 +53,8 @@ Future<void> showToolsPalette(BuildContext context, WidgetRef ref) {
                 'Köşe koy → alan + çevre'),
             item(ToolMode.sector, Icons.pie_chart_outline, 'Sektör',
                 'Merkez, yarıçap, bitiş kerterizi (3 dokunuş)'),
+            item(ToolMode.rangeRings, Icons.radar, 'Menzil halkası',
+                'Merkez + yarıçap → R, 2R, 3R halkaları'),
             item(ToolMode.lineOfSight, Icons.landscape_outlined, 'Görüş Hattı',
                 'İki nokta seç → Yükseklik profili ve engel analizi'),
             const Divider(),
