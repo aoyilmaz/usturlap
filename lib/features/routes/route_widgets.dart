@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/geo_math.dart';
 import '../../core/nav_math.dart';
-import '../../domain/models/route_plan.dart';
 import '../../providers/location_providers.dart';
 import '../../providers/route_providers.dart';
 import '../../providers/settings_providers.dart';
@@ -132,12 +131,9 @@ class RoutePlanBar extends ConsumerWidget {
       ),
     );
     if (name == null) return;
-    final points = ref.read(routePlanningProvider).points;
     final trimmed = name.trim().isEmpty ? 'Rota ${count + 1}' : name.trim();
-    final id = await ref.read(routePlanningProvider.notifier).save(trimmed);
-    if (id == null || !context.mounted) return;
-    final route = RoutePlan(
-        id: id, name: trimmed, points: points, createdAt: DateTime.now());
+    final route = await ref.read(routePlanningProvider.notifier).save(trimmed);
+    if (route == null || !context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('“$trimmed” kaydedildi · ${GeoMath.fmtDistance(route.length)}'),
       action: SnackBarAction(

@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../core/uuid.dart';
 import '../../domain/models/track.dart';
 import 'app_database.dart';
 
@@ -13,7 +14,11 @@ class TrackRepository {
   /// Yeni iz başlatır (endedAt null), id döndürür.
   Future<int> startTrack(String name) {
     return _db.into(_db.tracks).insert(
-          TracksCompanion.insert(name: name, startedAt: DateTime.now()),
+          TracksCompanion.insert(
+            name: name,
+            startedAt: DateTime.now(),
+            uid: Value(newUuidV4()),
+          ),
         );
   }
 
@@ -40,7 +45,7 @@ class TrackRepository {
   /// Tam bir izi (tüm noktalarıyla) tek transaction'da ekler — GPX/KML içe
   /// aktarma için. Kaydı bitmiş (endedAt dolu) olarak ekler; noktalar 1 sn
   /// aralıkla sıralanır (çizim sırası korunur). İz id'sini döndürür.
-  Future<int> importTrack(String name, List<LatLng> points) {
+  Future<int> importTrack(String name, List<LatLng> points, {String? uid}) {
     return _db.transaction(() async {
       final start = DateTime.now();
       final id = await _db.into(_db.tracks).insert(
@@ -48,6 +53,7 @@ class TrackRepository {
               name: name,
               startedAt: start,
               endedAt: Value(start),
+              uid: Value(uid ?? newUuidV4()),
             ),
           );
       await _db.batch((b) {
@@ -104,6 +110,7 @@ class TrackRepository {
         final count = row.read(countExp) ?? 0;
         return Track(
           id: t.id,
+          uid: t.uid ?? 'local-track-${t.id}',
           name: t.name,
           startedAt: t.startedAt,
           endedAt: t.endedAt,

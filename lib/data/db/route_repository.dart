@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../core/uuid.dart';
 import '../../domain/models/route_plan.dart';
 import 'app_database.dart';
 
@@ -19,12 +20,22 @@ class RouteRepository {
     return q.watch().map((rows) => rows.map(_toDomain).toList());
   }
 
-  Future<int> add({required String name, required List<LatLng> points}) {
-    return _db.into(_db.routePlans).insert(RoutePlansCompanion.insert(
+  /// Rotayı kaydeder ve kaydedilen hâlini döndürür.
+  Future<RoutePlan> add({
+    required String name,
+    required List<LatLng> points,
+    String? uid,
+  }) async {
+    final u = uid ?? newUuidV4();
+    final created = DateTime.now();
+    final id = await _db.into(_db.routePlans).insert(RoutePlansCompanion.insert(
           name: name,
           pointsJson: _encode(points),
-          createdAt: DateTime.now(),
+          createdAt: created,
+          uid: Value(u),
         ));
+    return RoutePlan(
+        id: id, uid: u, name: name, points: points, createdAt: created);
   }
 
   Future<void> rename(int id, String name) {
@@ -46,6 +57,7 @@ class RouteRepository {
 
   RoutePlan _toDomain(RoutePlanRow r) => RoutePlan(
         id: r.id,
+        uid: r.uid ?? 'local-route-${r.id}',
         name: r.name,
         points: _decode(r.pointsJson),
         createdAt: r.createdAt,

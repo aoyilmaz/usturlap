@@ -15,6 +15,8 @@
 > doğrulandı: MIL-STD-2525 kütüphanesi (mil-sym), multicast sohbet (224.10.10.1:17012),
 > TAK Server istemcisi (TLS 8089 / QUIC 8090). WMS/WMTS, .tpk ve KBRN hâlâ doğrulanmadı.
 >
+> **2026-11-06 (Aşama C2):** ATAK nesne modeli (uid, CoT tipi) ve CoT okuma/yazma.
+>
 > **2026-11-06 (Aşama C1):** açı birimleri + manyetik sapma, DM/DMS, ölçek çubuğu, GPS
 > doğruluk dairesi, acil veri silme eklendi; ilgili satırlar güncellendi.
 >
@@ -27,8 +29,8 @@
 |---|---|
 | ✅ ATAK düzeyinde | 8 |
 | 🟢 İyi | 15 |
-| 🟡 Kısmi | 15 |
-| ⬜ Yok | 36 |
+| 🟡 Kısmi | 16 |
+| ⬜ Yok | 35 |
 | ➖ Kapsam dışı | 8 (tabloda 2 + §8'de 6 grup) |
 
 **Pusula'nın ATAK'tan iyi olduğu yerler:** uygulama içi bölge indirmede gerçek
@@ -143,7 +145,7 @@ Türkiye telsiz röleleri.
 | GeoChat (32–34) | Grup sohbeti, konumlu mesaj | Mimari hazır (CommsChannel) | ⬜ | Faz 2 |
 | Encrypted Mesh Comms (35) | Şifreli mesh | — | ⬜ | Faz 2 (Meshtastic) |
 | Team PLI (8) | Kendi konumunu yayınlama + ekip üyelerinin konumu, rol harfleri | — | ⬜ | Faz 2 |
-| Cursor on Target, CoT (9) | ATAK'ın XML mesaj biçimi: konum, işaretçi alışverişi | — | ⬜ | Faz 2 açık kararı. Meshtastic'in ATAK eklentisi CoT taşıyor; Pusula CoT konuşursa ATAK/iTAK kullanıcılarıyla çalışır |
+| Cursor on Target, CoT (9) | ATAK'ın XML mesaj biçimi: konum, işaretçi alışverişi | Her nesnede kalıcı uid + CoT tipi; nokta/çizim/rota ↔ CoT XML okuma-yazma (ATAK örnekleriyle aynı yapı) | 🟡 | Ağ üzerinden gönderme/alma yok (Faz 2) |
 | Yerel ağ / multicast (liste) | Sunucusuz, aynı Wi-Fi'daki cihazları bulma ve mesajlaşma | — | ⬜ | `CommsChannel`'ın ikinci uygulaması olabilir; Meshtastic donanımı gelmeden ekip testi için kolay yol |
 | Alert (53) | Acil durum: 911, Ring the Bell, TIC | — | ⬜ | Faz 2; yerel SOS bile yok |
 | CASEVAC 9-line (20) | Tahliye talebi formu | — | ⬜ | Tek başına da yararlı (paylaş/kopyala) |

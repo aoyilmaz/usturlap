@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
+import '../../core/uuid.dart';
+
 part 'app_database.g.dart';
 
 /// Kalıcı waypoint kayıtları (SQLite tablosu).
@@ -18,6 +20,15 @@ class Waypoints extends Table {
   // APP-6 v2 modifiers: birlik büyüklüğü + ana ikon (enum .name); null = none.
   TextColumn get echelon => text().nullable()();
   TextColumn get role => text().nullable()();
+  // v8: kalıcı, cihazlar arası kimlik (UUID v4, CoT uid). SQLite eski
+  // tabloya NOT NULL sütun ekleyemediği için şemada nullable; ama her satırda
+  // dolu (eklemede repository üretir, yükseltmede backfillUids doldurur) ve
+  // benzersiz indeksli.
+  TextColumn get uid => text().nullable()();
+  // v8: dışarıdan gelen ham CoT tipi (null = sembolden türetilir).
+  TextColumn get cotType => text().nullable()();
+  // v8: elipsoit üstü yükseklik (m), CoT hae.
+  RealColumn get hae => real().nullable()();
 }
 
 /// Kalıcı taktik grafikler (çizgi/alan). Noktalar JSON dizisi olarak saklanır.
@@ -32,6 +43,11 @@ class MapGraphics extends Table {
   // ARGB renk değeri.
   IntColumn get color => integer()();
   DateTimeColumn get createdAt => dateTime()();
+  // v8: kalıcı, cihazlar arası kimlik (UUID v4, CoT uid). SQLite eski
+  // tabloya NOT NULL sütun ekleyemediği için şemada nullable; ama her satırda
+  // dolu (eklemede repository üretir, yükseltmede backfillUids doldurur) ve
+  // benzersiz indeksli.
+  TextColumn get uid => text().nullable()();
 }
 
 /// Uygulama içinden içe-aktarılmış harita paketleri (Documents'taki .pmtiles/
@@ -73,6 +89,11 @@ class Tracks extends Table {
   TextColumn get name => text().withLength(min: 1, max: 80)();
   DateTimeColumn get startedAt => dateTime()();
   DateTimeColumn get endedAt => dateTime().nullable()();
+  // v8: kalıcı, cihazlar arası kimlik (UUID v4, CoT uid). SQLite eski
+  // tabloya NOT NULL sütun ekleyemediği için şemada nullable; ama her satırda
+  // dolu (eklemede repository üretir, yükseltmede backfillUids doldurur) ve
+  // benzersiz indeksli.
+  TextColumn get uid => text().nullable()();
 }
 
 /// Bir ize ait konum noktaları.
@@ -96,6 +117,11 @@ class RoutePlans extends Table {
   // [[lat,lon],...] JSON — sıra = rota sırası.
   TextColumn get pointsJson => text()();
   DateTimeColumn get createdAt => dateTime()();
+  // v8: kalıcı, cihazlar arası kimlik (UUID v4, CoT uid). SQLite eski
+  // tabloya NOT NULL sütun ekleyemediği için şemada nullable; ama her satırda
+  // dolu (eklemede repository üretir, yükseltmede backfillUids doldurur) ve
+  // benzersiz indeksli.
+  TextColumn get uid => text().nullable()();
 }
 
 /// Uygulamanın drift veritabanı. Faz ilerledikçe geofence tabloları
@@ -116,11 +142,14 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) => m.createAll(),
+        onCreate: (m) async {
+          await m.createAll();
+          await _createUidIndexes();
+        },
         onUpgrade: (m, from, to) async {
           // Mevcut veriyi koruyarak yeni tablo/sütun ekle.
           if (from < 2) await m.createTable(settings);
@@ -140,12 +169,62 @@ class AppDatabase extends _$AppDatabase {
           if (from < 6) await m.createTable(importedLayers);
           // v7: planlanmış rotalar.
           if (from < 7) await m.createTable(routePlans);
+          // v8: ATAK nesne modeli — kalıcı uid (+ noktalarda ham CoT tipi, hae).
+          if (from < 8) {
+            await m.addColumn(waypoints, waypoints.uid);
+            await m.addColumn(waypoints, waypoints.cotType);
+            await m.addColumn(waypoints, waypoints.hae);
+            await m.addColumn(mapGraphics, mapGraphics.uid);
+            await m.addColumn(tracks, tracks.uid);
+            await m.addColumn(routePlans, routePlans.uid);
+            await backfillUids();
+            await _createUidIndexes();
+          }
         },
         beforeOpen: (details) async {
           // Cascade delete için foreign key'leri aç.
           await customStatement('PRAGMA foreign_keys = ON');
         },
       );
+
+  /// uid'i boş satırlara yeni UUID verir (v8 yükseltmesi). Tekrar çağrılması
+  /// zararsızdır: yalnızca boş olanları doldurur.
+  Future<void> backfillUids() async {
+    for (final table in const [
+      'waypoints',
+      'map_graphics',
+      'tracks',
+      'route_plans',
+    ]) {
+      final rows = await customSelect(
+        'SELECT id FROM $table WHERE uid IS NULL',
+      ).get();
+      for (final r in rows) {
+        await customUpdate(
+          'UPDATE $table SET uid = ? WHERE id = ?',
+          variables: [
+            Variable.withString(newUuidV4()),
+            Variable.withInt(r.read<int>('id')),
+          ],
+        );
+      }
+    }
+  }
+
+  /// uid benzersizliği (aynı nesne iki kez kaydedilmesin; paylaşımda
+  /// gelen nesne uid ile bulunur).
+  Future<void> _createUidIndexes() async {
+    for (final table in const [
+      'waypoints',
+      'map_graphics',
+      'tracks',
+      'route_plans',
+    ]) {
+      await customStatement(
+        'CREATE UNIQUE INDEX IF NOT EXISTS ${table}_uid ON $table (uid)',
+      );
+    }
+  }
 
   /// Acil veri silme (ATAK "Clear Content"): bütün tabloları boşaltır.
   ///
@@ -163,6 +242,9 @@ class AppDatabase extends _$AppDatabase {
         }
         await delete(t).go();
       }
+      // AUTOINCREMENT sayaçları da sıfırlansın: aksi halde yeni kayıtların
+      // id'si silinmeden önce kaç kayıt oluşturulduğunu ele verir.
+      await customStatement('DELETE FROM sqlite_sequence');
     });
     await customStatement('VACUUM');
     // WAL kipindeyse günlük dosyasını da boşalt (değilse etkisiz).

@@ -87,10 +87,22 @@ bir sorun çıkarsa ayrı düzeltme commit'i atılır.
 
 | Ne | Ayrıntı | Efor |
 |---|---|---|
-| `MapItem` alan modeli | `uid` (UUID), CoT tip kodu (ör. `a-f-G-U-C-I` = dost piyade), ad/callsign, nokta (lat, lon, hae, ce, le), zaman, detay (not, renk, etiketler, ekler) | M |
+| `MapItem` alan modeli | `uid` (UUID), CoT tip kodu (ör. `a-f-G-U-C-I` = dost piyade), ad/callsign, zaman. Etiketler ve ekler kendi aşamalarında (D, G) eklenecek | M |
 | drift v8 | Noktalar, grafikler ve rotalara `uid`, `cotType`, `hae` eklenir. Mevcut APP-6 alanları tip koduna çevrilir, veri kaybolmaz | M |
 | CoT XML okuma/yazma | Saf Dart; ATAK-CIV'in `takcot/examples` örnekleriyle test edilir | M |
 | Tip kodu ↔ sembol | APP-6 çizici tip kodundan beslenir | S |
+
+**Durum (2026-11-06):** kodda tamam, cihaz testi bekliyor.
+- `uid`: paket yerine `lib/core/uuid.dart` (`Random.secure()`, RFC 4122 v4) — bağımlılık eklenmedi.
+- drift v8: dört tabloda `uid` (benzersiz indeks), noktalarda `cot_type` (yalnızca dışarıdan
+  gelen ham tip; yoksa sembolden türetilir) ve `hae`. Yükseltme, telefondaki gerçek v7 şemasından
+  üretilen `test/fixtures/db_v7.sqlite` ile test edildi.
+- CoT: `lib/data/cot/` (olay, XML, eşleyici). Çıktı ATAK-CIV `takcot/examples` dosyalarıyla
+  öğe öğe aynı yapıda. Kademe TAK'ın `<__milsym id=SIDC>` öğesiyle taşınır — ATAK'ın bunu
+  çizdiği doğrulanmadı (?).
+- Bulgu: ATAK-CIV'in `takcot/xsd` şemaları yetkili değil (`link.xsd` bozuk, işaretçi/rota
+  şemaları derlenmiyor, ATAK'ın kendi Circle/R&B örnekleri geçemiyor) → doğrulama örneklerle yapıldı.
+- C1 düzeltmesi: acil silme `sqlite_sequence`'i de sıfırlıyor (yeni id'ler eski kayıt sayısını sızdırmasın).
 
 **Neden önce:** Radyal menü, nesneye bağlı R&B çizgisi, veri paketi, dışa aktarma ve mesh
 paylaşımının hepsi `uid` ve tip koduna dayanıyor. Bu temel sonraya kalırsa veritabanını

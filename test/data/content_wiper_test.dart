@@ -56,6 +56,14 @@ void main() {
       expect(await db.select(db.importedLayers).get(), hasLength(1));
     });
 
+    test('kimlik sayaçları sıfırlanır (silinen kayıt sayısı sızmaz)', () async {
+      await seed();
+      await db.wipeAll();
+      final id = await db.into(db.waypoints).insert(WaypointsCompanion.insert(
+          name: 'Yeni', lat: 0, lon: 0, createdAt: DateTime(2026)));
+      expect(id, 1);
+    });
+
     test('silmeden sonra veritabanı kullanılabilir', () async {
       await seed();
       await db.wipeAll();

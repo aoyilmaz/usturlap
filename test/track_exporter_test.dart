@@ -9,6 +9,7 @@ import 'package:kerteriz/domain/models/track.dart';
 void main() {
   final track = Track(
     id: 1,
+    uid: '00000000-0000-4000-8000-000000000001',
     name: 'TEST İZ',
     startedAt: DateTime.utc(2026, 1, 1, 10),
     endedAt: DateTime.utc(2026, 1, 1, 10, 30),

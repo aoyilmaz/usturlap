@@ -1,5 +1,8 @@
 import 'package:latlong2/latlong.dart';
 
+import 'cot_type.dart';
+import 'map_item.dart';
+
 /// APP-6 / MIL-STD-2525 sadakat (affiliation) — çerçeve şekli + rengini belirler.
 /// dost = mavi dikdörtgen, düşman = kırmızı eşkenar dörtgen, nötr = yeşil kare,
 /// bilinmeyen = sarı dörtyaprak. `waypoint` = sade kırmızı pin (NATO değil).
@@ -65,12 +68,19 @@ enum SymbolRole {
 ///
 /// Saf Dart modeli (drift'e bağımlı değil); data katmanı drift satırlarını
 /// bu modele çevirir (§4.3 katmanlama).
-class Waypoint {
-  /// Veritabanı kimliği. Henüz kaydedilmemişse null.
+class Waypoint implements MapItem {
+  /// Veritabanı kimliği (yalnızca bu cihazda). Henüz kaydedilmemişse null.
   final int? id;
+
+  @override
+  final String uid;
+
   final String name;
   final LatLng position;
+
+  @override
   final DateTime createdAt;
+
   final String? note;
 
   /// APP-6 sadakat; varsayılan sade waypoint (kırmızı pin).
@@ -82,7 +92,16 @@ class Waypoint {
   /// APP-6 ana ikon (çerçeve içi); yalnızca NATO sembollerinde çizilir.
   final SymbolRole role;
 
+  /// Dışarıdan (ör. ATAK'tan) gelen ham CoT tipi. Pusula'nın sembol setinde
+  /// karşılığı olmayan ayrıntıyı korur (ör. `a-h-G-U-C-A-W`). null ise tip
+  /// sembolden türetilir.
+  final String? typeCode;
+
+  /// Elipsoit üstü yükseklik (m) — CoT `hae`. Bilinmiyorsa null.
+  final double? hae;
+
   const Waypoint({
+    required this.uid,
     required this.name,
     required this.position,
     required this.createdAt,
@@ -91,5 +110,13 @@ class Waypoint {
     this.affiliation = Affiliation.waypoint,
     this.echelon = Echelon.none,
     this.role = SymbolRole.none,
+    this.typeCode,
+    this.hae,
   });
+
+  @override
+  String get cotType => typeCode ?? CotType.forSymbol(affiliation, role);
+
+  @override
+  String get title => name;
 }

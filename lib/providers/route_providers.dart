@@ -45,14 +45,14 @@ class RoutePlanningNotifier extends Notifier<RoutePlanningState> {
   void clear() => state = const RoutePlanningState(active: true);
   void cancel() => state = const RoutePlanningState();
 
-  /// Kaydet ve planlamayı kapat. En az 2 nokta gerekir; id döner.
-  Future<int?> save(String name) async {
+  /// Kaydet ve planlamayı kapat. En az 2 nokta gerekir; kaydedilen rota döner.
+  Future<RoutePlan?> save(String name) async {
     if (state.points.length < 2) return null;
-    final id = await ref
+    final route = await ref
         .read(routeRepositoryProvider)
         .add(name: name, points: state.points);
     state = const RoutePlanningState();
-    return id;
+    return route;
   }
 }
 

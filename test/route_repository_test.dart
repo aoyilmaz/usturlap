@@ -17,12 +17,16 @@ void main() {
   test('rota ekle → sıra/noktalar korunur; yeniden adlandır; sil', () async {
     final repo = RouteRepository(db);
     const pts = [LatLng(39.0, 32.0), LatLng(39.01, 32.0), LatLng(39.02, 32.01)];
-    final id = await repo.add(name: 'KEŞİF-1', points: pts);
+    final saved = await repo.add(name: 'KEŞİF-1', points: pts);
+    final id = saved.id!;
 
     var all = await repo.watchAll().first;
     expect(all.single.name, 'KEŞİF-1');
     expect(all.single.points, pts);
     expect(all.single.length, greaterThan(2000));
+    // Kaydedilen rota ile okunan aynı kalıcı kimliği taşır.
+    expect(all.single.uid, saved.uid);
+    expect(saved.uid, matches(RegExp(r'^[0-9a-f-]{36}$')));
 
     await repo.rename(id, 'KEŞİF-2');
     all = await repo.watchAll().first;

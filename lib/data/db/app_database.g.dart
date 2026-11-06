@@ -104,6 +104,35 @@ class $WaypointsTable extends Waypoints
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _uidMeta = const VerificationMeta('uid');
+  @override
+  late final GeneratedColumn<String> uid = GeneratedColumn<String>(
+    'uid',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _cotTypeMeta = const VerificationMeta(
+    'cotType',
+  );
+  @override
+  late final GeneratedColumn<String> cotType = GeneratedColumn<String>(
+    'cot_type',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _haeMeta = const VerificationMeta('hae');
+  @override
+  late final GeneratedColumn<double> hae = GeneratedColumn<double>(
+    'hae',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -115,6 +144,9 @@ class $WaypointsTable extends Waypoints
     affiliation,
     echelon,
     role,
+    uid,
+    cotType,
+    hae,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -190,6 +222,24 @@ class $WaypointsTable extends Waypoints
         role.isAcceptableOrUnknown(data['role']!, _roleMeta),
       );
     }
+    if (data.containsKey('uid')) {
+      context.handle(
+        _uidMeta,
+        uid.isAcceptableOrUnknown(data['uid']!, _uidMeta),
+      );
+    }
+    if (data.containsKey('cot_type')) {
+      context.handle(
+        _cotTypeMeta,
+        cotType.isAcceptableOrUnknown(data['cot_type']!, _cotTypeMeta),
+      );
+    }
+    if (data.containsKey('hae')) {
+      context.handle(
+        _haeMeta,
+        hae.isAcceptableOrUnknown(data['hae']!, _haeMeta),
+      );
+    }
     return context;
   }
 
@@ -235,6 +285,18 @@ class $WaypointsTable extends Waypoints
         DriftSqlType.string,
         data['${effectivePrefix}role'],
       ),
+      uid: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}uid'],
+      ),
+      cotType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cot_type'],
+      ),
+      hae: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}hae'],
+      ),
     );
   }
 
@@ -254,6 +316,9 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
   final String? affiliation;
   final String? echelon;
   final String? role;
+  final String? uid;
+  final String? cotType;
+  final double? hae;
   const WaypointRow({
     required this.id,
     required this.name,
@@ -264,6 +329,9 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
     this.affiliation,
     this.echelon,
     this.role,
+    this.uid,
+    this.cotType,
+    this.hae,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -285,6 +353,15 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
     if (!nullToAbsent || role != null) {
       map['role'] = Variable<String>(role);
     }
+    if (!nullToAbsent || uid != null) {
+      map['uid'] = Variable<String>(uid);
+    }
+    if (!nullToAbsent || cotType != null) {
+      map['cot_type'] = Variable<String>(cotType);
+    }
+    if (!nullToAbsent || hae != null) {
+      map['hae'] = Variable<double>(hae);
+    }
     return map;
   }
 
@@ -303,6 +380,11 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
           ? const Value.absent()
           : Value(echelon),
       role: role == null && nullToAbsent ? const Value.absent() : Value(role),
+      uid: uid == null && nullToAbsent ? const Value.absent() : Value(uid),
+      cotType: cotType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cotType),
+      hae: hae == null && nullToAbsent ? const Value.absent() : Value(hae),
     );
   }
 
@@ -321,6 +403,9 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
       affiliation: serializer.fromJson<String?>(json['affiliation']),
       echelon: serializer.fromJson<String?>(json['echelon']),
       role: serializer.fromJson<String?>(json['role']),
+      uid: serializer.fromJson<String?>(json['uid']),
+      cotType: serializer.fromJson<String?>(json['cotType']),
+      hae: serializer.fromJson<double?>(json['hae']),
     );
   }
   @override
@@ -336,6 +421,9 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
       'affiliation': serializer.toJson<String?>(affiliation),
       'echelon': serializer.toJson<String?>(echelon),
       'role': serializer.toJson<String?>(role),
+      'uid': serializer.toJson<String?>(uid),
+      'cotType': serializer.toJson<String?>(cotType),
+      'hae': serializer.toJson<double?>(hae),
     };
   }
 
@@ -349,6 +437,9 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
     Value<String?> affiliation = const Value.absent(),
     Value<String?> echelon = const Value.absent(),
     Value<String?> role = const Value.absent(),
+    Value<String?> uid = const Value.absent(),
+    Value<String?> cotType = const Value.absent(),
+    Value<double?> hae = const Value.absent(),
   }) => WaypointRow(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -359,6 +450,9 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
     affiliation: affiliation.present ? affiliation.value : this.affiliation,
     echelon: echelon.present ? echelon.value : this.echelon,
     role: role.present ? role.value : this.role,
+    uid: uid.present ? uid.value : this.uid,
+    cotType: cotType.present ? cotType.value : this.cotType,
+    hae: hae.present ? hae.value : this.hae,
   );
   WaypointRow copyWithCompanion(WaypointsCompanion data) {
     return WaypointRow(
@@ -373,6 +467,9 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
           : this.affiliation,
       echelon: data.echelon.present ? data.echelon.value : this.echelon,
       role: data.role.present ? data.role.value : this.role,
+      uid: data.uid.present ? data.uid.value : this.uid,
+      cotType: data.cotType.present ? data.cotType.value : this.cotType,
+      hae: data.hae.present ? data.hae.value : this.hae,
     );
   }
 
@@ -387,7 +484,10 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
           ..write('note: $note, ')
           ..write('affiliation: $affiliation, ')
           ..write('echelon: $echelon, ')
-          ..write('role: $role')
+          ..write('role: $role, ')
+          ..write('uid: $uid, ')
+          ..write('cotType: $cotType, ')
+          ..write('hae: $hae')
           ..write(')'))
         .toString();
   }
@@ -403,6 +503,9 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
     affiliation,
     echelon,
     role,
+    uid,
+    cotType,
+    hae,
   );
   @override
   bool operator ==(Object other) =>
@@ -416,7 +519,10 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
           other.note == this.note &&
           other.affiliation == this.affiliation &&
           other.echelon == this.echelon &&
-          other.role == this.role);
+          other.role == this.role &&
+          other.uid == this.uid &&
+          other.cotType == this.cotType &&
+          other.hae == this.hae);
 }
 
 class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
@@ -429,6 +535,9 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
   final Value<String?> affiliation;
   final Value<String?> echelon;
   final Value<String?> role;
+  final Value<String?> uid;
+  final Value<String?> cotType;
+  final Value<double?> hae;
   const WaypointsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -439,6 +548,9 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
     this.affiliation = const Value.absent(),
     this.echelon = const Value.absent(),
     this.role = const Value.absent(),
+    this.uid = const Value.absent(),
+    this.cotType = const Value.absent(),
+    this.hae = const Value.absent(),
   });
   WaypointsCompanion.insert({
     this.id = const Value.absent(),
@@ -450,6 +562,9 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
     this.affiliation = const Value.absent(),
     this.echelon = const Value.absent(),
     this.role = const Value.absent(),
+    this.uid = const Value.absent(),
+    this.cotType = const Value.absent(),
+    this.hae = const Value.absent(),
   }) : name = Value(name),
        lat = Value(lat),
        lon = Value(lon),
@@ -464,6 +579,9 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
     Expression<String>? affiliation,
     Expression<String>? echelon,
     Expression<String>? role,
+    Expression<String>? uid,
+    Expression<String>? cotType,
+    Expression<double>? hae,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -475,6 +593,9 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
       if (affiliation != null) 'affiliation': affiliation,
       if (echelon != null) 'echelon': echelon,
       if (role != null) 'role': role,
+      if (uid != null) 'uid': uid,
+      if (cotType != null) 'cot_type': cotType,
+      if (hae != null) 'hae': hae,
     });
   }
 
@@ -488,6 +609,9 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
     Value<String?>? affiliation,
     Value<String?>? echelon,
     Value<String?>? role,
+    Value<String?>? uid,
+    Value<String?>? cotType,
+    Value<double?>? hae,
   }) {
     return WaypointsCompanion(
       id: id ?? this.id,
@@ -499,6 +623,9 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
       affiliation: affiliation ?? this.affiliation,
       echelon: echelon ?? this.echelon,
       role: role ?? this.role,
+      uid: uid ?? this.uid,
+      cotType: cotType ?? this.cotType,
+      hae: hae ?? this.hae,
     );
   }
 
@@ -532,6 +659,15 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
     if (role.present) {
       map['role'] = Variable<String>(role.value);
     }
+    if (uid.present) {
+      map['uid'] = Variable<String>(uid.value);
+    }
+    if (cotType.present) {
+      map['cot_type'] = Variable<String>(cotType.value);
+    }
+    if (hae.present) {
+      map['hae'] = Variable<double>(hae.value);
+    }
     return map;
   }
 
@@ -546,7 +682,10 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
           ..write('note: $note, ')
           ..write('affiliation: $affiliation, ')
           ..write('echelon: $echelon, ')
-          ..write('role: $role')
+          ..write('role: $role, ')
+          ..write('uid: $uid, ')
+          ..write('cotType: $cotType, ')
+          ..write('hae: $hae')
           ..write(')'))
         .toString();
   }
@@ -810,8 +949,17 @@ class $TracksTable extends Tracks with TableInfo<$TracksTable, TrackRow> {
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _uidMeta = const VerificationMeta('uid');
   @override
-  List<GeneratedColumn> get $columns => [id, name, startedAt, endedAt];
+  late final GeneratedColumn<String> uid = GeneratedColumn<String>(
+    'uid',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, name, startedAt, endedAt, uid];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -849,6 +997,12 @@ class $TracksTable extends Tracks with TableInfo<$TracksTable, TrackRow> {
         endedAt.isAcceptableOrUnknown(data['ended_at']!, _endedAtMeta),
       );
     }
+    if (data.containsKey('uid')) {
+      context.handle(
+        _uidMeta,
+        uid.isAcceptableOrUnknown(data['uid']!, _uidMeta),
+      );
+    }
     return context;
   }
 
@@ -874,6 +1028,10 @@ class $TracksTable extends Tracks with TableInfo<$TracksTable, TrackRow> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}ended_at'],
       ),
+      uid: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}uid'],
+      ),
     );
   }
 
@@ -888,11 +1046,13 @@ class TrackRow extends DataClass implements Insertable<TrackRow> {
   final String name;
   final DateTime startedAt;
   final DateTime? endedAt;
+  final String? uid;
   const TrackRow({
     required this.id,
     required this.name,
     required this.startedAt,
     this.endedAt,
+    this.uid,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -902,6 +1062,9 @@ class TrackRow extends DataClass implements Insertable<TrackRow> {
     map['started_at'] = Variable<DateTime>(startedAt);
     if (!nullToAbsent || endedAt != null) {
       map['ended_at'] = Variable<DateTime>(endedAt);
+    }
+    if (!nullToAbsent || uid != null) {
+      map['uid'] = Variable<String>(uid);
     }
     return map;
   }
@@ -914,6 +1077,7 @@ class TrackRow extends DataClass implements Insertable<TrackRow> {
       endedAt: endedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(endedAt),
+      uid: uid == null && nullToAbsent ? const Value.absent() : Value(uid),
     );
   }
 
@@ -927,6 +1091,7 @@ class TrackRow extends DataClass implements Insertable<TrackRow> {
       name: serializer.fromJson<String>(json['name']),
       startedAt: serializer.fromJson<DateTime>(json['startedAt']),
       endedAt: serializer.fromJson<DateTime?>(json['endedAt']),
+      uid: serializer.fromJson<String?>(json['uid']),
     );
   }
   @override
@@ -937,6 +1102,7 @@ class TrackRow extends DataClass implements Insertable<TrackRow> {
       'name': serializer.toJson<String>(name),
       'startedAt': serializer.toJson<DateTime>(startedAt),
       'endedAt': serializer.toJson<DateTime?>(endedAt),
+      'uid': serializer.toJson<String?>(uid),
     };
   }
 
@@ -945,11 +1111,13 @@ class TrackRow extends DataClass implements Insertable<TrackRow> {
     String? name,
     DateTime? startedAt,
     Value<DateTime?> endedAt = const Value.absent(),
+    Value<String?> uid = const Value.absent(),
   }) => TrackRow(
     id: id ?? this.id,
     name: name ?? this.name,
     startedAt: startedAt ?? this.startedAt,
     endedAt: endedAt.present ? endedAt.value : this.endedAt,
+    uid: uid.present ? uid.value : this.uid,
   );
   TrackRow copyWithCompanion(TracksCompanion data) {
     return TrackRow(
@@ -957,6 +1125,7 @@ class TrackRow extends DataClass implements Insertable<TrackRow> {
       name: data.name.present ? data.name.value : this.name,
       startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
       endedAt: data.endedAt.present ? data.endedAt.value : this.endedAt,
+      uid: data.uid.present ? data.uid.value : this.uid,
     );
   }
 
@@ -966,13 +1135,14 @@ class TrackRow extends DataClass implements Insertable<TrackRow> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('startedAt: $startedAt, ')
-          ..write('endedAt: $endedAt')
+          ..write('endedAt: $endedAt, ')
+          ..write('uid: $uid')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, startedAt, endedAt);
+  int get hashCode => Object.hash(id, name, startedAt, endedAt, uid);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -980,7 +1150,8 @@ class TrackRow extends DataClass implements Insertable<TrackRow> {
           other.id == this.id &&
           other.name == this.name &&
           other.startedAt == this.startedAt &&
-          other.endedAt == this.endedAt);
+          other.endedAt == this.endedAt &&
+          other.uid == this.uid);
 }
 
 class TracksCompanion extends UpdateCompanion<TrackRow> {
@@ -988,17 +1159,20 @@ class TracksCompanion extends UpdateCompanion<TrackRow> {
   final Value<String> name;
   final Value<DateTime> startedAt;
   final Value<DateTime?> endedAt;
+  final Value<String?> uid;
   const TracksCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.startedAt = const Value.absent(),
     this.endedAt = const Value.absent(),
+    this.uid = const Value.absent(),
   });
   TracksCompanion.insert({
     this.id = const Value.absent(),
     required String name,
     required DateTime startedAt,
     this.endedAt = const Value.absent(),
+    this.uid = const Value.absent(),
   }) : name = Value(name),
        startedAt = Value(startedAt);
   static Insertable<TrackRow> custom({
@@ -1006,12 +1180,14 @@ class TracksCompanion extends UpdateCompanion<TrackRow> {
     Expression<String>? name,
     Expression<DateTime>? startedAt,
     Expression<DateTime>? endedAt,
+    Expression<String>? uid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (startedAt != null) 'started_at': startedAt,
       if (endedAt != null) 'ended_at': endedAt,
+      if (uid != null) 'uid': uid,
     });
   }
 
@@ -1020,12 +1196,14 @@ class TracksCompanion extends UpdateCompanion<TrackRow> {
     Value<String>? name,
     Value<DateTime>? startedAt,
     Value<DateTime?>? endedAt,
+    Value<String?>? uid,
   }) {
     return TracksCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
       startedAt: startedAt ?? this.startedAt,
       endedAt: endedAt ?? this.endedAt,
+      uid: uid ?? this.uid,
     );
   }
 
@@ -1044,6 +1222,9 @@ class TracksCompanion extends UpdateCompanion<TrackRow> {
     if (endedAt.present) {
       map['ended_at'] = Variable<DateTime>(endedAt.value);
     }
+    if (uid.present) {
+      map['uid'] = Variable<String>(uid.value);
+    }
     return map;
   }
 
@@ -1053,7 +1234,8 @@ class TracksCompanion extends UpdateCompanion<TrackRow> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('startedAt: $startedAt, ')
-          ..write('endedAt: $endedAt')
+          ..write('endedAt: $endedAt, ')
+          ..write('uid: $uid')
           ..write(')'))
         .toString();
   }
@@ -1574,6 +1756,15 @@ class $MapGraphicsTable extends MapGraphics
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _uidMeta = const VerificationMeta('uid');
+  @override
+  late final GeneratedColumn<String> uid = GeneratedColumn<String>(
+    'uid',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1582,6 +1773,7 @@ class $MapGraphicsTable extends MapGraphics
     pointsJson,
     color,
     createdAt,
+    uid,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1638,6 +1830,12 @@ class $MapGraphicsTable extends MapGraphics
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
+    if (data.containsKey('uid')) {
+      context.handle(
+        _uidMeta,
+        uid.isAcceptableOrUnknown(data['uid']!, _uidMeta),
+      );
+    }
     return context;
   }
 
@@ -1671,6 +1869,10 @@ class $MapGraphicsTable extends MapGraphics
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      uid: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}uid'],
+      ),
     );
   }
 
@@ -1687,6 +1889,7 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
   final String pointsJson;
   final int color;
   final DateTime createdAt;
+  final String? uid;
   const MapGraphicRow({
     required this.id,
     required this.name,
@@ -1694,6 +1897,7 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
     required this.pointsJson,
     required this.color,
     required this.createdAt,
+    this.uid,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1704,6 +1908,9 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
     map['points_json'] = Variable<String>(pointsJson);
     map['color'] = Variable<int>(color);
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || uid != null) {
+      map['uid'] = Variable<String>(uid);
+    }
     return map;
   }
 
@@ -1715,6 +1922,7 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
       pointsJson: Value(pointsJson),
       color: Value(color),
       createdAt: Value(createdAt),
+      uid: uid == null && nullToAbsent ? const Value.absent() : Value(uid),
     );
   }
 
@@ -1730,6 +1938,7 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
       pointsJson: serializer.fromJson<String>(json['pointsJson']),
       color: serializer.fromJson<int>(json['color']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      uid: serializer.fromJson<String?>(json['uid']),
     );
   }
   @override
@@ -1742,6 +1951,7 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
       'pointsJson': serializer.toJson<String>(pointsJson),
       'color': serializer.toJson<int>(color),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'uid': serializer.toJson<String?>(uid),
     };
   }
 
@@ -1752,6 +1962,7 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
     String? pointsJson,
     int? color,
     DateTime? createdAt,
+    Value<String?> uid = const Value.absent(),
   }) => MapGraphicRow(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -1759,6 +1970,7 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
     pointsJson: pointsJson ?? this.pointsJson,
     color: color ?? this.color,
     createdAt: createdAt ?? this.createdAt,
+    uid: uid.present ? uid.value : this.uid,
   );
   MapGraphicRow copyWithCompanion(MapGraphicsCompanion data) {
     return MapGraphicRow(
@@ -1770,6 +1982,7 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
           : this.pointsJson,
       color: data.color.present ? data.color.value : this.color,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      uid: data.uid.present ? data.uid.value : this.uid,
     );
   }
 
@@ -1781,13 +1994,15 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
           ..write('type: $type, ')
           ..write('pointsJson: $pointsJson, ')
           ..write('color: $color, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('uid: $uid')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, type, pointsJson, color, createdAt);
+  int get hashCode =>
+      Object.hash(id, name, type, pointsJson, color, createdAt, uid);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1797,7 +2012,8 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
           other.type == this.type &&
           other.pointsJson == this.pointsJson &&
           other.color == this.color &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.uid == this.uid);
 }
 
 class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
@@ -1807,6 +2023,7 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
   final Value<String> pointsJson;
   final Value<int> color;
   final Value<DateTime> createdAt;
+  final Value<String?> uid;
   const MapGraphicsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -1814,6 +2031,7 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
     this.pointsJson = const Value.absent(),
     this.color = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.uid = const Value.absent(),
   });
   MapGraphicsCompanion.insert({
     this.id = const Value.absent(),
@@ -1822,6 +2040,7 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
     required String pointsJson,
     required int color,
     required DateTime createdAt,
+    this.uid = const Value.absent(),
   }) : name = Value(name),
        type = Value(type),
        pointsJson = Value(pointsJson),
@@ -1834,6 +2053,7 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
     Expression<String>? pointsJson,
     Expression<int>? color,
     Expression<DateTime>? createdAt,
+    Expression<String>? uid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1842,6 +2062,7 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
       if (pointsJson != null) 'points_json': pointsJson,
       if (color != null) 'color': color,
       if (createdAt != null) 'created_at': createdAt,
+      if (uid != null) 'uid': uid,
     });
   }
 
@@ -1852,6 +2073,7 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
     Value<String>? pointsJson,
     Value<int>? color,
     Value<DateTime>? createdAt,
+    Value<String?>? uid,
   }) {
     return MapGraphicsCompanion(
       id: id ?? this.id,
@@ -1860,6 +2082,7 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
       pointsJson: pointsJson ?? this.pointsJson,
       color: color ?? this.color,
       createdAt: createdAt ?? this.createdAt,
+      uid: uid ?? this.uid,
     );
   }
 
@@ -1884,6 +2107,9 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (uid.present) {
+      map['uid'] = Variable<String>(uid.value);
+    }
     return map;
   }
 
@@ -1895,7 +2121,8 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
           ..write('type: $type, ')
           ..write('pointsJson: $pointsJson, ')
           ..write('color: $color, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('uid: $uid')
           ..write(')'))
         .toString();
   }
@@ -2573,8 +2800,17 @@ class $RoutePlansTable extends RoutePlans
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _uidMeta = const VerificationMeta('uid');
   @override
-  List<GeneratedColumn> get $columns => [id, name, pointsJson, createdAt];
+  late final GeneratedColumn<String> uid = GeneratedColumn<String>(
+    'uid',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, name, pointsJson, createdAt, uid];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -2614,6 +2850,12 @@ class $RoutePlansTable extends RoutePlans
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
+    if (data.containsKey('uid')) {
+      context.handle(
+        _uidMeta,
+        uid.isAcceptableOrUnknown(data['uid']!, _uidMeta),
+      );
+    }
     return context;
   }
 
@@ -2639,6 +2881,10 @@ class $RoutePlansTable extends RoutePlans
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      uid: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}uid'],
+      ),
     );
   }
 
@@ -2653,11 +2899,13 @@ class RoutePlanRow extends DataClass implements Insertable<RoutePlanRow> {
   final String name;
   final String pointsJson;
   final DateTime createdAt;
+  final String? uid;
   const RoutePlanRow({
     required this.id,
     required this.name,
     required this.pointsJson,
     required this.createdAt,
+    this.uid,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2666,6 +2914,9 @@ class RoutePlanRow extends DataClass implements Insertable<RoutePlanRow> {
     map['name'] = Variable<String>(name);
     map['points_json'] = Variable<String>(pointsJson);
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || uid != null) {
+      map['uid'] = Variable<String>(uid);
+    }
     return map;
   }
 
@@ -2675,6 +2926,7 @@ class RoutePlanRow extends DataClass implements Insertable<RoutePlanRow> {
       name: Value(name),
       pointsJson: Value(pointsJson),
       createdAt: Value(createdAt),
+      uid: uid == null && nullToAbsent ? const Value.absent() : Value(uid),
     );
   }
 
@@ -2688,6 +2940,7 @@ class RoutePlanRow extends DataClass implements Insertable<RoutePlanRow> {
       name: serializer.fromJson<String>(json['name']),
       pointsJson: serializer.fromJson<String>(json['pointsJson']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      uid: serializer.fromJson<String?>(json['uid']),
     );
   }
   @override
@@ -2698,6 +2951,7 @@ class RoutePlanRow extends DataClass implements Insertable<RoutePlanRow> {
       'name': serializer.toJson<String>(name),
       'pointsJson': serializer.toJson<String>(pointsJson),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'uid': serializer.toJson<String?>(uid),
     };
   }
 
@@ -2706,11 +2960,13 @@ class RoutePlanRow extends DataClass implements Insertable<RoutePlanRow> {
     String? name,
     String? pointsJson,
     DateTime? createdAt,
+    Value<String?> uid = const Value.absent(),
   }) => RoutePlanRow(
     id: id ?? this.id,
     name: name ?? this.name,
     pointsJson: pointsJson ?? this.pointsJson,
     createdAt: createdAt ?? this.createdAt,
+    uid: uid.present ? uid.value : this.uid,
   );
   RoutePlanRow copyWithCompanion(RoutePlansCompanion data) {
     return RoutePlanRow(
@@ -2720,6 +2976,7 @@ class RoutePlanRow extends DataClass implements Insertable<RoutePlanRow> {
           ? data.pointsJson.value
           : this.pointsJson,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      uid: data.uid.present ? data.uid.value : this.uid,
     );
   }
 
@@ -2729,13 +2986,14 @@ class RoutePlanRow extends DataClass implements Insertable<RoutePlanRow> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('pointsJson: $pointsJson, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('uid: $uid')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, pointsJson, createdAt);
+  int get hashCode => Object.hash(id, name, pointsJson, createdAt, uid);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2743,7 +3001,8 @@ class RoutePlanRow extends DataClass implements Insertable<RoutePlanRow> {
           other.id == this.id &&
           other.name == this.name &&
           other.pointsJson == this.pointsJson &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.uid == this.uid);
 }
 
 class RoutePlansCompanion extends UpdateCompanion<RoutePlanRow> {
@@ -2751,17 +3010,20 @@ class RoutePlansCompanion extends UpdateCompanion<RoutePlanRow> {
   final Value<String> name;
   final Value<String> pointsJson;
   final Value<DateTime> createdAt;
+  final Value<String?> uid;
   const RoutePlansCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.pointsJson = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.uid = const Value.absent(),
   });
   RoutePlansCompanion.insert({
     this.id = const Value.absent(),
     required String name,
     required String pointsJson,
     required DateTime createdAt,
+    this.uid = const Value.absent(),
   }) : name = Value(name),
        pointsJson = Value(pointsJson),
        createdAt = Value(createdAt);
@@ -2770,12 +3032,14 @@ class RoutePlansCompanion extends UpdateCompanion<RoutePlanRow> {
     Expression<String>? name,
     Expression<String>? pointsJson,
     Expression<DateTime>? createdAt,
+    Expression<String>? uid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (pointsJson != null) 'points_json': pointsJson,
       if (createdAt != null) 'created_at': createdAt,
+      if (uid != null) 'uid': uid,
     });
   }
 
@@ -2784,12 +3048,14 @@ class RoutePlansCompanion extends UpdateCompanion<RoutePlanRow> {
     Value<String>? name,
     Value<String>? pointsJson,
     Value<DateTime>? createdAt,
+    Value<String?>? uid,
   }) {
     return RoutePlansCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
       pointsJson: pointsJson ?? this.pointsJson,
       createdAt: createdAt ?? this.createdAt,
+      uid: uid ?? this.uid,
     );
   }
 
@@ -2808,6 +3074,9 @@ class RoutePlansCompanion extends UpdateCompanion<RoutePlanRow> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (uid.present) {
+      map['uid'] = Variable<String>(uid.value);
+    }
     return map;
   }
 
@@ -2817,7 +3086,8 @@ class RoutePlansCompanion extends UpdateCompanion<RoutePlanRow> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('pointsJson: $pointsJson, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('uid: $uid')
           ..write(')'))
         .toString();
   }
@@ -2859,6 +3129,9 @@ typedef $$WaypointsTableCreateCompanionBuilder =
       Value<String?> affiliation,
       Value<String?> echelon,
       Value<String?> role,
+      Value<String?> uid,
+      Value<String?> cotType,
+      Value<double?> hae,
     });
 typedef $$WaypointsTableUpdateCompanionBuilder =
     WaypointsCompanion Function({
@@ -2871,6 +3144,9 @@ typedef $$WaypointsTableUpdateCompanionBuilder =
       Value<String?> affiliation,
       Value<String?> echelon,
       Value<String?> role,
+      Value<String?> uid,
+      Value<String?> cotType,
+      Value<double?> hae,
     });
 
 class $$WaypointsTableFilterComposer
@@ -2924,6 +3200,21 @@ class $$WaypointsTableFilterComposer
 
   ColumnFilters<String> get role => $composableBuilder(
     column: $table.role,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get uid => $composableBuilder(
+    column: $table.uid,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get cotType => $composableBuilder(
+    column: $table.cotType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get hae => $composableBuilder(
+    column: $table.hae,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2981,6 +3272,21 @@ class $$WaypointsTableOrderingComposer
     column: $table.role,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get uid => $composableBuilder(
+    column: $table.uid,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get cotType => $composableBuilder(
+    column: $table.cotType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get hae => $composableBuilder(
+    column: $table.hae,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$WaypointsTableAnnotationComposer
@@ -3020,6 +3326,15 @@ class $$WaypointsTableAnnotationComposer
 
   GeneratedColumn<String> get role =>
       $composableBuilder(column: $table.role, builder: (column) => column);
+
+  GeneratedColumn<String> get uid =>
+      $composableBuilder(column: $table.uid, builder: (column) => column);
+
+  GeneratedColumn<String> get cotType =>
+      $composableBuilder(column: $table.cotType, builder: (column) => column);
+
+  GeneratedColumn<double> get hae =>
+      $composableBuilder(column: $table.hae, builder: (column) => column);
 }
 
 class $$WaypointsTableTableManager
@@ -3062,6 +3377,9 @@ class $$WaypointsTableTableManager
                 Value<String?> affiliation = const Value.absent(),
                 Value<String?> echelon = const Value.absent(),
                 Value<String?> role = const Value.absent(),
+                Value<String?> uid = const Value.absent(),
+                Value<String?> cotType = const Value.absent(),
+                Value<double?> hae = const Value.absent(),
               }) => WaypointsCompanion(
                 id: id,
                 name: name,
@@ -3072,6 +3390,9 @@ class $$WaypointsTableTableManager
                 affiliation: affiliation,
                 echelon: echelon,
                 role: role,
+                uid: uid,
+                cotType: cotType,
+                hae: hae,
               ),
           createCompanionCallback:
               ({
@@ -3084,6 +3405,9 @@ class $$WaypointsTableTableManager
                 Value<String?> affiliation = const Value.absent(),
                 Value<String?> echelon = const Value.absent(),
                 Value<String?> role = const Value.absent(),
+                Value<String?> uid = const Value.absent(),
+                Value<String?> cotType = const Value.absent(),
+                Value<double?> hae = const Value.absent(),
               }) => WaypointsCompanion.insert(
                 id: id,
                 name: name,
@@ -3094,6 +3418,9 @@ class $$WaypointsTableTableManager
                 affiliation: affiliation,
                 echelon: echelon,
                 role: role,
+                uid: uid,
+                cotType: cotType,
+                hae: hae,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -3259,6 +3586,7 @@ typedef $$TracksTableCreateCompanionBuilder =
       required String name,
       required DateTime startedAt,
       Value<DateTime?> endedAt,
+      Value<String?> uid,
     });
 typedef $$TracksTableUpdateCompanionBuilder =
     TracksCompanion Function({
@@ -3266,6 +3594,7 @@ typedef $$TracksTableUpdateCompanionBuilder =
       Value<String> name,
       Value<DateTime> startedAt,
       Value<DateTime?> endedAt,
+      Value<String?> uid,
     });
 
 class $$TracksTableFilterComposer
@@ -3294,6 +3623,11 @@ class $$TracksTableFilterComposer
 
   ColumnFilters<DateTime> get endedAt => $composableBuilder(
     column: $table.endedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get uid => $composableBuilder(
+    column: $table.uid,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3326,6 +3660,11 @@ class $$TracksTableOrderingComposer
     column: $table.endedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get uid => $composableBuilder(
+    column: $table.uid,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$TracksTableAnnotationComposer
@@ -3348,6 +3687,9 @@ class $$TracksTableAnnotationComposer
 
   GeneratedColumn<DateTime> get endedAt =>
       $composableBuilder(column: $table.endedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get uid =>
+      $composableBuilder(column: $table.uid, builder: (column) => column);
 }
 
 class $$TracksTableTableManager
@@ -3382,11 +3724,13 @@ class $$TracksTableTableManager
                 Value<String> name = const Value.absent(),
                 Value<DateTime> startedAt = const Value.absent(),
                 Value<DateTime?> endedAt = const Value.absent(),
+                Value<String?> uid = const Value.absent(),
               }) => TracksCompanion(
                 id: id,
                 name: name,
                 startedAt: startedAt,
                 endedAt: endedAt,
+                uid: uid,
               ),
           createCompanionCallback:
               ({
@@ -3394,11 +3738,13 @@ class $$TracksTableTableManager
                 required String name,
                 required DateTime startedAt,
                 Value<DateTime?> endedAt = const Value.absent(),
+                Value<String?> uid = const Value.absent(),
               }) => TracksCompanion.insert(
                 id: id,
                 name: name,
                 startedAt: startedAt,
                 endedAt: endedAt,
+                uid: uid,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -3662,6 +4008,7 @@ typedef $$MapGraphicsTableCreateCompanionBuilder =
       required String pointsJson,
       required int color,
       required DateTime createdAt,
+      Value<String?> uid,
     });
 typedef $$MapGraphicsTableUpdateCompanionBuilder =
     MapGraphicsCompanion Function({
@@ -3671,6 +4018,7 @@ typedef $$MapGraphicsTableUpdateCompanionBuilder =
       Value<String> pointsJson,
       Value<int> color,
       Value<DateTime> createdAt,
+      Value<String?> uid,
     });
 
 class $$MapGraphicsTableFilterComposer
@@ -3709,6 +4057,11 @@ class $$MapGraphicsTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get uid => $composableBuilder(
+    column: $table.uid,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3751,6 +4104,11 @@ class $$MapGraphicsTableOrderingComposer
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get uid => $composableBuilder(
+    column: $table.uid,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$MapGraphicsTableAnnotationComposer
@@ -3781,6 +4139,9 @@ class $$MapGraphicsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get uid =>
+      $composableBuilder(column: $table.uid, builder: (column) => column);
 }
 
 class $$MapGraphicsTableTableManager
@@ -3820,6 +4181,7 @@ class $$MapGraphicsTableTableManager
                 Value<String> pointsJson = const Value.absent(),
                 Value<int> color = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<String?> uid = const Value.absent(),
               }) => MapGraphicsCompanion(
                 id: id,
                 name: name,
@@ -3827,6 +4189,7 @@ class $$MapGraphicsTableTableManager
                 pointsJson: pointsJson,
                 color: color,
                 createdAt: createdAt,
+                uid: uid,
               ),
           createCompanionCallback:
               ({
@@ -3836,6 +4199,7 @@ class $$MapGraphicsTableTableManager
                 required String pointsJson,
                 required int color,
                 required DateTime createdAt,
+                Value<String?> uid = const Value.absent(),
               }) => MapGraphicsCompanion.insert(
                 id: id,
                 name: name,
@@ -3843,6 +4207,7 @@ class $$MapGraphicsTableTableManager
                 pointsJson: pointsJson,
                 color: color,
                 createdAt: createdAt,
+                uid: uid,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -4178,6 +4543,7 @@ typedef $$RoutePlansTableCreateCompanionBuilder =
       required String name,
       required String pointsJson,
       required DateTime createdAt,
+      Value<String?> uid,
     });
 typedef $$RoutePlansTableUpdateCompanionBuilder =
     RoutePlansCompanion Function({
@@ -4185,6 +4551,7 @@ typedef $$RoutePlansTableUpdateCompanionBuilder =
       Value<String> name,
       Value<String> pointsJson,
       Value<DateTime> createdAt,
+      Value<String?> uid,
     });
 
 class $$RoutePlansTableFilterComposer
@@ -4213,6 +4580,11 @@ class $$RoutePlansTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get uid => $composableBuilder(
+    column: $table.uid,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -4245,6 +4617,11 @@ class $$RoutePlansTableOrderingComposer
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get uid => $composableBuilder(
+    column: $table.uid,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$RoutePlansTableAnnotationComposer
@@ -4269,6 +4646,9 @@ class $$RoutePlansTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get uid =>
+      $composableBuilder(column: $table.uid, builder: (column) => column);
 }
 
 class $$RoutePlansTableTableManager
@@ -4306,11 +4686,13 @@ class $$RoutePlansTableTableManager
                 Value<String> name = const Value.absent(),
                 Value<String> pointsJson = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<String?> uid = const Value.absent(),
               }) => RoutePlansCompanion(
                 id: id,
                 name: name,
                 pointsJson: pointsJson,
                 createdAt: createdAt,
+                uid: uid,
               ),
           createCompanionCallback:
               ({
@@ -4318,11 +4700,13 @@ class $$RoutePlansTableTableManager
                 required String name,
                 required String pointsJson,
                 required DateTime createdAt,
+                Value<String?> uid = const Value.absent(),
               }) => RoutePlansCompanion.insert(
                 id: id,
                 name: name,
                 pointsJson: pointsJson,
                 createdAt: createdAt,
+                uid: uid,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../core/uuid.dart';
 import '../../domain/models/map_graphic.dart';
 import 'app_database.dart';
 
@@ -25,6 +26,7 @@ class MapGraphicRepository {
     required GraphicType type,
     required List<LatLng> points,
     required int colorValue,
+    String? uid,
   }) {
     return _db.into(_db.mapGraphics).insert(
           MapGraphicsCompanion.insert(
@@ -33,6 +35,7 @@ class MapGraphicRepository {
             pointsJson: _encode(points),
             color: colorValue,
             createdAt: DateTime.now(),
+            uid: Value(uid ?? newUuidV4()),
           ),
         );
   }
@@ -56,6 +59,7 @@ class MapGraphicRepository {
 
   MapGraphic _toDomain(MapGraphicRow r) => MapGraphic(
         id: r.id,
+        uid: r.uid ?? 'local-graphic-${r.id}',
         name: r.name,
         type: GraphicType.fromName(r.type),
         points: _decode(r.pointsJson),
