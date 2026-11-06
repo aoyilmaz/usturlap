@@ -3,10 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../core/bearing_format.dart';
 import '../../core/coord_format.dart';
 import '../../core/coord_parse.dart';
 import '../../core/nav_math.dart';
 import '../../providers/location_providers.dart';
+import '../../providers/settings_providers.dart';
 import 'adaptive_sheet.dart';
 
 /// Koordinat: koordinat gir (MGRS/UTM/ondalık-DMS) → haritada göster, nokta
@@ -193,6 +195,7 @@ class _CoordinateSheetState extends ConsumerState<_CoordinateSheet> {
               hasInput: _hasInput,
               entered: entered,
               self: self?.position,
+              fmt: ref.watch(bearingFormatterProvider),
             ),
             const SizedBox(height: 8),
             Text(
@@ -329,11 +332,17 @@ class _CoordinateSheetState extends ConsumerState<_CoordinateSheet> {
 
 /// Girişin çözüm sonucu: geçerliyse diğer biçimler + konumuma göre konum.
 class _Result extends StatelessWidget {
-  const _Result({required this.hasInput, required this.entered, this.self});
+  const _Result({
+    required this.hasInput,
+    required this.entered,
+    this.self,
+    this.fmt = const BearingFormatter(),
+  });
 
   final bool hasInput;
   final LatLng? entered;
   final LatLng? self;
+  final BearingFormatter fmt;
 
   @override
   Widget build(BuildContext context) {
@@ -350,7 +359,7 @@ class _Result extends StatelessWidget {
     final rel = self == null
         ? ''
         : ' · konumumdan ${_fmtDist(NavMath.distance(self!, p))} '
-            '${NavMath.bearing(self!, p).round().toString().padLeft(3, '0')}°';
+            '${fmt.format(NavMath.bearing(self!, p), self!)}';
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

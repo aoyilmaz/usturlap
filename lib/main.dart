@@ -4,6 +4,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 import 'app.dart';
 import 'core/constants.dart';
+import 'core/restart_scope.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,6 +12,7 @@ void main() {
   if (AppConstants.mapboxAccessToken.isNotEmpty) {
     MapboxOptions.setAccessToken(AppConstants.mapboxAccessToken);
   }
+  // RestartScope: acil veri silmeden sonra uygulamayı sıfırdan kurar.
   // ProviderScope: tüm riverpod provider'larının kök kapsayıcısı.
-  runApp(const ProviderScope(child: KerterizApp()));
+  runApp(const RestartScope(child: ProviderScope(child: KerterizApp())));
 }

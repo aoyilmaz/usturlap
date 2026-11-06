@@ -156,6 +156,25 @@ class MapboxOfflineStore {
     await store.removeRegion(id);
   }
 
+  /// Acil veri silme: bütün bölgeler (deneme/tahmin dahil), stil paketi ve
+  /// Mapbox'ın geçici önbelleği. Hatalar yutulur — silme yarıda kalmasın.
+  Future<void> deleteAll() async {
+    try {
+      final store = await _tileStore();
+      for (final r in await store.allTileRegions()) {
+        try {
+          await store.removeRegion(r.id);
+        } catch (_) {}
+      }
+    } catch (_) {}
+    try {
+      await (await _offlineManager()).removeStylePack(styleUri);
+    } catch (_) {}
+    try {
+      await MapboxMapsOptions.clearData();
+    } catch (_) {}
+  }
+
   /// Test için: Mapbox'ın ağ erişimini aç/kapat (uçak modu benzetimi).
   Future<void> setNetworkEnabled(bool enabled) =>
       OfflineSwitch.shared.setMapboxStackConnected(enabled);

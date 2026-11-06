@@ -22,6 +22,7 @@ class NavBanner extends ConsumerWidget {
     final self = ref.watch(selfContactProvider);
     final night = ref.watch(nightModeProvider);
     final accent = night ? Colors.redAccent : Colors.limeAccent;
+    final fmt = ref.watch(bearingFormatterProvider);
 
     String info;
     String? detail;
@@ -30,7 +31,7 @@ class NavBanner extends ConsumerWidget {
     } else {
       final brg = NavMath.bearing(self.position, target.position);
       final dist = NavMath.distance(self.position, target.position);
-      info = 'KRT ${GeoMath.fmtBearing(brg)}  ·  ${GeoMath.fmtDistance(dist)}';
+      info = 'KRT ${fmt.format(brg, self.position)}  ·  ${GeoMath.fmtDistance(dist)}';
       final parts = <String>[];
       final moving = (self.speedMps ?? 0) >= 0.5;
       if (self.headingDeg != null && moving) {

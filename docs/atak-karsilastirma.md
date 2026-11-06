@@ -15,6 +15,9 @@
 > doğrulandı: MIL-STD-2525 kütüphanesi (mil-sym), multicast sohbet (224.10.10.1:17012),
 > TAK Server istemcisi (TLS 8089 / QUIC 8090). WMS/WMTS, .tpk ve KBRN hâlâ doğrulanmadı.
 >
+> **2026-11-06 (Aşama C1):** açı birimleri + manyetik sapma, DM/DMS, ölçek çubuğu, GPS
+> doğruluk dairesi, acil veri silme eklendi; ilgili satırlar güncellendi.
+>
 > **Seviye:** ✅ ATAK düzeyinde · 🟢 iyi (ana işlev var, ATAK'ın ek seçenekleri
 > yok) · 🟡 kısmi/ilkel · ⬜ yok · ➖ kapsam dışı (TAK Server, video, telsiz…)
 
@@ -22,10 +25,10 @@
 
 | | Adet |
 |---|---|
-| ✅ ATAK düzeyinde | 6 |
-| 🟢 İyi | 13 |
-| 🟡 Kısmi | 18 |
-| ⬜ Yok | 37 |
+| ✅ ATAK düzeyinde | 8 |
+| 🟢 İyi | 15 |
+| 🟡 Kısmi | 15 |
+| ⬜ Yok | 36 |
 | ➖ Kapsam dışı | 8 (tabloda 2 + §8'de 6 grup) |
 
 **Pusula'nın ATAK'tan iyi olduğu yerler:** uygulama içi bölge indirmede gerçek
@@ -50,7 +53,7 @@ Türkiye telsiz röleleri.
 | 3D View (6) | Arazi 3B, eğim kilidi | 3B düğmesi (DEM ×1.5, 60°) + iki parmakla eğim | 🟢 | Eğim kilidi ve ayrı kabartma (hillshade) katmanı yok |
 | 3D Models (7) | OBJ model içe aktarma | — | ⬜ | |
 | First Person View (7) | Yer seviyesinden bakış | — | ⬜ | |
-| Map Controls (26) | Zoom düğmeleri, ölçek | Parmakla zoom; ölçek çubuğu kapalı | 🟡 | Ölçek çubuğu açılmalı |
+| Map Controls (26) | Zoom düğmeleri, ölçek | Parmakla zoom; sürekli görünen ölçek çubuğu (gece kırmızı) | 🟢 | Zoom düğmeleri yok (Aşama D) |
 | Gece / NVG (genel) | Karanlık mod | Gece stili: uydu siyah-beyaz + kırmızı yazılar | ✅ | |
 
 ## 2. Pusula, konum, kendi işaretçin
@@ -60,12 +63,12 @@ Türkiye telsiz röleleri.
 | Compass: North Up / Track Up (6) | Kuzey-yukarı / yön-yukarı | [N] düğmesi | ✅ | |
 | Manual Orientation + Lock (6) | Elle döndür, kilitle | Elle döndürme var | 🟡 | Kilit yok |
 | Self-Marker (8) | Yönlü ok, konuma kilitle | Yönlü ok, takip (◎) | 🟢 | |
-| Self radial: GPS Error Overlay | Doğruluk dairesi | Doğruluk yalnızca HUD'da (±m) | 🟡 | Haritada daire yok |
+| Self radial: GPS Error Overlay | Doğruluk dairesi | Haritada ±m doğruluk dairesi + HUD'da değer | 🟢 | Hep açık; aç/kapa radyal menüyle gelecek (Aşama D) |
 | Self radial: Compass Overlay | Konum etrafında pusula gülü | — | ⬜ | |
 | Self radial: Tracking Breadcrumbs | Geçilen yol izi | İz kaydı (başlat/durdur, canlı çizgi) | 🟢 | Kayıt dışı "son 15 dk izi" yok |
 | Self radial: Fine Adjust / Polar Entry | GPS yokken konumu elle düzelt | — | ⬜ | GPS'siz kullanım için önemli |
-| Açı birimleri (13) | Derece/mil, gerçek/manyetik/grid | Yalnızca derece | 🟡 | **Manyetik sapma yok**: pusula manyetik, hesaplar gerçek kuzey |
-| Koordinat biçimleri (39) | MGRS, DD, DM, DMS, UTM, adres | Gösterim: MGRS/UTM/ondalık (HUD'a çift dokunuş); giriş: MGRS/UTM/ondalık/DMS | 🟢 | DMS/DM gösterimi yok; adres araması çevrimdışı yapılamaz |
+| Açı birimleri (13) | Derece/mil, gerçek/manyetik/grid | Derece/mil (6400) × coğrafi/manyetik/grid; sapma cihazda WMM2025 ile (NOAA test değerleriyle doğrulandı) | ✅ | iPhone pusulası zaten coğrafi kuzey veriyor; Android'de sapma eklenir |
+| Koordinat biçimleri (39) | MGRS, DD, DM, DMS, UTM, adres | Gösterim: MGRS/UTM/ondalık/DM/DMS; giriş: MGRS/UTM/ondalık/DMS | ✅ | Adres araması çevrimdışı yapılamaz |
 | Kerteriz kilidi / azimut modu (liste) | Pusulayla hedef yönünü sabitleyip izleme | Pusula sensörü var, taktik pusula ekranı yok | ⬜ | Yol haritasında: [N]'ye uzun basınca taktik pusula |
 
 ## 3. Nokta / işaretçi
@@ -121,7 +124,7 @@ Türkiye telsiz röleleri.
 | Quick Pic / Gallery (45) | Konumlu fotoğraf, galeri | — | ⬜ | |
 | File Editing (26) | Dosyaları düzenle | — | ➖ | |
 | Data Package Tool (29–30) | Görev paketini (zip) paylaş/al | — | ⬜ | |
-| Clear Content (58) / panik düğmesi | **Acil veri silme**: harita, mesaj, sertifika, tüm içerik | — | ⬜ | Taktik açıdan önemli |
+| Clear Content (58) / panik düğmesi | **Acil veri silme**: harita, mesaj, sertifika, tüm içerik | Ayarlar → Acil veri silme: veritabanı (secure_delete + VACUUM), dosyalar, indirilen bölgeler, Mapbox önbelleği; isteğe bağlı haritaları koru; sonra uygulama sıfırdan kurulur | 🟢 | ATAK'taki "öğe seçerek sil" yok (Overlay Manager ile gelecek) |
 | Şifreli veri (5) | Cihazdaki veriyi parola ile şifrele | — | ⬜ | Veritabanı şifresiz |
 
 ## 6. Arazi analizi

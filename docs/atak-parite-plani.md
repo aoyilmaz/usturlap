@@ -69,7 +69,11 @@ bir sorun çıkarsa ayrı düzeltme commit'i atılır.
 
 ### Aşama C: Hızlı kazanımlar + ATAK nesne modeli
 
-**C1. Hızlı kazanımlar** (nesne modelinden bağımsız)
+**C1. Hızlı kazanımlar** (nesne modelinden bağımsız) — **kodda tamam (2026-11-06), cihaz testi bekliyor**
+
+> Bulgu: iPhone'da `flutter_compass` zaten coğrafi kuzey (`trueHeading`) veriyor; manyetik sapma
+> iOS'ta yalnızca gösterim için, Android'de ayrıca pusula düzeltmesi için gerekiyor. Mapbox'ın ölçek
+> çubuğu iOS'ta yalnızca zoom sırasında göründüğü için ölçek çubuğu uygulamada çiziliyor.
 
 | Özellik (ATAK s.) | Ne yapılacak | Efor |
 |---|---|---|

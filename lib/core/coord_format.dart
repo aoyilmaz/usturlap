@@ -5,17 +5,19 @@ import 'package:mgrs_dart/mgrs_dart.dart';
 enum CoordFormatType {
   mgrs('MGRS'),
   utm('UTM'),
-  wgs84('WGS84');
+  wgs84('WGS84'),
+  dm('DM'),
+  dms('DMS');
 
   const CoordFormatType(this.label);
   final String label;
 
-  /// Döngüdeki bir sonraki biçim (MGRS → UTM → WGS84 → MGRS).
+  /// Döngüdeki bir sonraki biçim (MGRS → UTM → WGS84 → DM → DMS → MGRS).
   CoordFormatType get next =>
       CoordFormatType.values[(index + 1) % CoordFormatType.values.length];
 }
 
-/// Koordinat biçimlendirme yardımcıları (MGRS / UTM / WGS84).
+/// Koordinat biçimlendirme yardımcıları (MGRS / UTM / WGS84 / DM / DMS).
 class CoordFormat {
   CoordFormat._();
 
@@ -28,6 +30,10 @@ class CoordFormat {
         return utm(p);
       case CoordFormatType.wgs84:
         return wgs84(p);
+      case CoordFormatType.dm:
+        return dm(p);
+      case CoordFormatType.dms:
+        return dms(p);
     }
   }
 
@@ -49,6 +55,32 @@ class CoordFormat {
     final ew = p.longitude >= 0 ? 'E' : 'W';
     return '${p.latitude.abs().toStringAsFixed(5)}°$ns, '
         '${p.longitude.abs().toStringAsFixed(5)}°$ew';
+  }
+
+  /// Derece + ondalık dakika: 39°55.506'N 32°51.960'E.
+  /// 0.001' ≈ 1.9 m.
+  static String dm(LatLng p) =>
+      '${_dmAxis(p.latitude, 'N', 'S')} ${_dmAxis(p.longitude, 'E', 'W')}';
+
+  /// Derece-dakika-saniye: 39°55'30.4"N 32°51'57.6"E. 0.1 saniye ≈ 3 m.
+  static String dms(LatLng p) =>
+      '${_dmsAxis(p.latitude, 'N', 'S')} ${_dmsAxis(p.longitude, 'E', 'W')}';
+
+  // Yuvarlama tam sayı birimde yapılır: 59.96 saniye "60.0" olmaz, dakikaya taşar.
+  static String _dmAxis(double v, String pos, String neg) {
+    final units = (v.abs() * 60000).round(); // 0.001 dakika
+    final d = units ~/ 60000;
+    final m = (units % 60000) / 1000;
+    return "$d°${m.toStringAsFixed(3).padLeft(6, '0')}'${v >= 0 ? pos : neg}";
+  }
+
+  static String _dmsAxis(double v, String pos, String neg) {
+    final tenths = (v.abs() * 36000).round(); // 0.1 saniye
+    final d = tenths ~/ 36000;
+    final m = (tenths % 36000) ~/ 600;
+    final s = (tenths % 600) / 10;
+    return "$d°${m.toString().padLeft(2, '0')}'"
+        '${s.toStringAsFixed(1).padLeft(4, '0')}"${v >= 0 ? pos : neg}';
   }
 
   /// MGRS dizgisi (boşluklarla gruplanmış), ör. "36S VK 12345 67890".

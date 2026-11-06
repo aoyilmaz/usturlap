@@ -54,6 +54,7 @@ import 'base_layer.dart';
 import 'base_layer_resolver.dart';
 import 'engine/map_engine.dart';
 import 'widgets/los_overlay.dart';
+import 'widgets/scale_bar.dart';
 import '../shell/adaptive_sheet.dart';
 
 /// Adım 3 — çevrimdışı/çevrimiçi harita + kendi konum işaretçisi + HUD +
@@ -99,6 +100,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   /// Harita her hareket ettiğinde artar (çerçeve boyut tahmini için).
   final ValueNotifier<int> _cameraTick = ValueNotifier(0);
+  // Ölçek çubuğu kameranın her değişiminde güncellenir (ekranı yeniden kurmadan).
+  late final ValueNotifier<MapCameraState> _scaleCamera =
+      ValueNotifier(_lastCamera);
 
   /// Listeden "haritada göster" denen bölge (sınırı vurgulanır).
   String? _highlightRegionId;
@@ -176,6 +180,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   @override
   void dispose() {
     _cameraTick.dispose();
+    _scaleCamera.dispose();
     _map.dispose(); // motorun açtığı kaynakları da kapatır
     super.dispose();
   }
@@ -902,6 +907,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         ),
       for (final r in repeaters) _repeaterMarker(r),
       for (final wp in waypoints) _waypointMarker(wp),
+      // GPS doğruluk dairesi (ATAK GPS Error Overlay).
+      if (self != null && (self.accuracyMeters ?? 0) > 0)
+        MapCircle(
+          center: self.position,
+          radiusMeters: self.accuracyMeters!,
+          fillColor: (nightMode ? Colors.redAccent : Colors.lightBlueAccent)
+              .withValues(alpha: 0.12),
+          strokeColor: (nightMode ? Colors.redAccent : Colors.lightBlueAccent)
+              .withValues(alpha: 0.55),
+          strokeWidth: 1,
+        ),
       if (self != null) _selfMarker(self),
     ];
 
@@ -957,6 +973,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   // Kullanıcı elle kaydırınca takibi bırak.
                   onCameraChanged: (camera, byGesture) {
                     _lastCamera = camera;
+                    _scaleCamera.value = camera;
                     if (_framing) _cameraTick.value++;
                     if (byGesture && _follow) {
                       setState(() => _follow = false);
@@ -1054,6 +1071,21 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             Positioned.fill(
               child: IgnorePointer(
                 child: Container(color: Colors.red.withValues(alpha: 0.20)),
+              ),
+            ),
+
+          // Ölçek çubuğu: sol altta, Mapbox logosunun üstünde.
+          if (!_framing)
+            Positioned(
+              left: leftInset + 10,
+              bottom: bottomInset + 38,
+              child: ValueListenableBuilder<MapCameraState>(
+                valueListenable: _scaleCamera,
+                builder: (context, cam, _) => MapScaleBar(
+                  zoom: cam.zoom,
+                  latitude: cam.center.latitude,
+                  night: nightMode,
+                ),
               ),
             ),
 

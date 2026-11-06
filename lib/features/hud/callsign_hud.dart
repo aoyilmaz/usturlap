@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/bearing_format.dart';
 import '../../core/coord_format.dart';
+import '../../core/wmm.dart';
 import '../../domain/models/contact.dart';
 import '../../providers/location_providers.dart';
 import '../../providers/settings_providers.dart';
@@ -30,6 +32,7 @@ class _CallsignHudState extends ConsumerState<CallsignHud> {
     final format = ref.watch(coordFormatProvider);
     final callsign = ref.watch(callsignProvider);
     final night = ref.watch(nightModeProvider);
+    final fmt = ref.watch(bearingFormatterProvider);
 
     return GestureDetector(
       onTap: () => setState(() => _expanded = !_expanded),
@@ -55,6 +58,7 @@ class _CallsignHudState extends ConsumerState<CallsignHud> {
                     contact: self,
                     callsign: callsign,
                     format: format,
+                    fmt: fmt,
                     night: night,
                     expanded: _expanded,
                     onTapCallsign: () => _editCallsign(context, ref, callsign),
@@ -127,6 +131,7 @@ class _HudContent extends StatelessWidget {
     required this.contact,
     required this.callsign,
     required this.format,
+    required this.fmt,
     required this.night,
     required this.expanded,
     required this.onTapCallsign,
@@ -135,6 +140,7 @@ class _HudContent extends StatelessWidget {
   final Contact contact;
   final String callsign;
   final CoordFormatType format;
+  final BearingFormatter fmt;
   final bool night;
   final bool expanded;
   final VoidCallback onTapCallsign;
@@ -189,7 +195,11 @@ class _HudContent extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _stat('KRT', _heading(contact.headingDeg)),
+            _stat(
+                'KRT',
+                contact.headingDeg == null
+                    ? '—'
+                    : fmt.format(contact.headingDeg!, contact.position)),
             _stat('HIZ', _speed(contact.speedMps)),
             _stat('İRT', _altitude(contact.altitudeMsl)),
             Icon(expanded ? Icons.expand_less : Icons.expand_more,
@@ -207,6 +217,10 @@ class _HudContent extends StatelessWidget {
                 ? '—'
                 : '±${contact.accuracyMeters!.round()} m',
           ),
+          // Manyetik sapma (WMM2025) ve grid yakınsaması — bu noktada.
+          _line('SAPMA', _eastWest(Wmm.declination(
+              contact.position.latitude, contact.position.longitude))),
+          _line('GRİD', '${_eastWest(NorthMath.gridConvergence(contact.position))} yakınsama'),
         ],
       ],
     );
@@ -266,8 +280,9 @@ class _HudContent extends StatelessWidget {
     );
   }
 
-  static String _heading(double? deg) =>
-      deg == null ? '—' : '${deg.round().toString().padLeft(3, '0')}°';
+  /// 5.93 → "5.9° D", −1.2 → "1.2° B" (doğu/batı).
+  static String _eastWest(double deg) =>
+      '${deg.abs().toStringAsFixed(1)}° ${deg >= 0 ? 'D' : 'B'}';
 
   static String _speed(double? mps) =>
       mps == null ? '—' : '${(mps * 3.6).toStringAsFixed(1)} km/h';

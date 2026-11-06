@@ -7,6 +7,7 @@ import '../../core/nav_math.dart';
 import '../../domain/models/route_plan.dart';
 import '../../providers/location_providers.dart';
 import '../../providers/route_providers.dart';
+import '../../providers/settings_providers.dart';
 import '../shell/tactical_bottom_bar.dart' show kBottomBarHeight, kSideRailWidth;
 
 // ------------------------------------------------------------- planlama
@@ -219,6 +220,7 @@ class RouteFollowPanel extends ConsumerWidget {
     final active = ref.watch(activeRouteProvider);
     if (active == null) return const SizedBox.shrink();
     final self = ref.watch(selfContactProvider);
+    final fmt = ref.watch(bearingFormatterProvider);
     final p = active.progress;
     final n = ref.read(activeRouteProvider.notifier);
     final ok = night ? Colors.redAccent : Colors.lightGreenAccent;
@@ -348,7 +350,11 @@ class RouteFollowPanel extends ConsumerWidget {
               Row(
                 children: [
                   metric('SONRAKİ', GeoMath.fmtDistance(p.distToNext)),
-                  metric('KERTERİZ', GeoMath.fmtBearing(p.bearingToNext),
+                  metric(
+                      'KERTERİZ',
+                      self == null
+                          ? GeoMath.fmtBearing(p.bearingToNext)
+                          : fmt.format(p.bearingToNext, self.position),
                       sub: turn),
                   metric('KALAN', GeoMath.fmtDistance(p.remaining)),
                   metric('VARIŞ', etaText),

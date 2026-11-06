@@ -7,6 +7,7 @@ import '../../domain/models/waypoint.dart';
 import '../../providers/location_providers.dart';
 import '../../providers/nav_providers.dart';
 import '../../providers/route_providers.dart';
+import '../../providers/settings_providers.dart';
 import '../../providers/waypoint_providers.dart';
 import 'adaptive_sheet.dart';
 
@@ -38,6 +39,7 @@ class _RouteSheet extends ConsumerWidget {
     final routes = ref.watch(routesProvider).value ?? const <RoutePlan>[];
     final self = ref.watch(selfContactProvider);
     final waypoints = [...?ref.watch(waypointsProvider).value];
+    final fmt = ref.watch(bearingFormatterProvider);
     if (self != null) {
       waypoints.sort((a, b) => GeoMath.distance(self.position, a.position)
           .compareTo(GeoMath.distance(self.position, b.position)));
@@ -47,7 +49,7 @@ class _RouteSheet extends ConsumerWidget {
       if (self == null) return '';
       final d = GeoMath.distance(self.position, w.position);
       final b = GeoMath.bearing(self.position, w.position);
-      return '${GeoMath.fmtDistance(d)} · ${GeoMath.fmtBearing((b + 360) % 360)}';
+      return '${GeoMath.fmtDistance(d)} · ${fmt.format(b, self.position)}';
     }
 
     Widget header(String t) => Padding(
@@ -104,7 +106,7 @@ class _RouteSheet extends ConsumerWidget {
                       ? const Text('Konum bekleniyor…')
                       : Text(
                           '${GeoMath.fmtDistance(GeoMath.distance(self.position, target.position))} · '
-                          '${GeoMath.fmtBearing((GeoMath.bearing(self.position, target.position) + 360) % 360)}'),
+                          '${fmt.format(GeoMath.bearing(self.position, target.position), self.position)}'),
                   trailing: TextButton(
                     onPressed: () => ref.read(navTargetProvider.notifier).clear(),
                     child: const Text('Bırak'),

@@ -147,6 +147,28 @@ class AppDatabase extends _$AppDatabase {
         },
       );
 
+  /// Acil veri silme (ATAK "Clear Content"): bütün tabloları boşaltır.
+  ///
+  /// `secure_delete` silinen sayfaların üzerine sıfır yazdırır, `VACUUM`
+  /// dosyayı yeniden kurar; böylece silinen kayıtlar dosyada kalmaz.
+  /// [keepImportedLayers]: içe aktarılan harita kayıtları korunur (haritalar
+  /// silinmeyecekse dosyalar listede görünmeye devam etsin).
+  Future<void> wipeAll({bool keepImportedLayers = false}) async {
+    await customStatement('PRAGMA secure_delete = ON');
+    await transaction(() async {
+      for (final t in allTables) {
+        if (keepImportedLayers &&
+            t.actualTableName == importedLayers.actualTableName) {
+          continue;
+        }
+        await delete(t).go();
+      }
+    });
+    await customStatement('VACUUM');
+    // WAL kipindeyse günlük dosyasını da boşalt (değilse etkisiz).
+    await customStatement('PRAGMA wal_checkpoint(TRUNCATE)');
+  }
+
   /// Veritabanı dosyasını uygulamanın belge dizininde açar (drift_flutter,
   /// path_provider + sqlite3 native kütüphanesini kendi halleder).
   static QueryExecutor _open() => driftDatabase(name: 'pusula');

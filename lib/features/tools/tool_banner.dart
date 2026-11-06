@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/bearing_format.dart';
 import '../../core/geo_math.dart';
 import '../../domain/models/map_graphic.dart';
 import '../../providers/settings_providers.dart';
@@ -20,6 +21,7 @@ class ToolBanner extends ConsumerWidget {
     // Gece modunda kırmızı tonla (gece görüşü).
     final night = ref.watch(nightModeProvider);
     final accent = night ? Colors.redAccent : Colors.amberAccent;
+    final fmt = ref.watch(bearingFormatterProvider);
 
     // Kalıcı grafik olarak kaydedilebilir mi? (v1: çizgi + alan)
     final GraphicType? savable;
@@ -45,7 +47,7 @@ class ToolBanner extends ConsumerWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              _measurement(tool),
+              _measurement(tool, fmt),
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 14,
@@ -98,7 +100,7 @@ class ToolBanner extends ConsumerWidget {
     }
   }
 
-  String _measurement(ToolState tool) {
+  String _measurement(ToolState tool, BearingFormatter fmt) {
     final pts = tool.points;
     switch (tool.mode) {
       case ToolMode.distance:
@@ -107,7 +109,7 @@ class ToolBanner extends ConsumerWidget {
           // Mesafe-kerteriz çizgisi: ileri + ters kerteriz.
           final b = (GeoMath.bearing(pts[0], pts[1]) + 360) % 360;
           return 'Mesafe: ${GeoMath.fmtDistance(GeoMath.distance(pts[0], pts[1]))}'
-              ' · KRT ${GeoMath.fmtBearing(b)} (ters ${GeoMath.fmtBearing(b + 180)})';
+              ' · KRT ${fmt.format(b, pts[0])} (ters ${fmt.format(b + 180, pts[1])})';
         }
         return 'Mesafe: ${GeoMath.fmtDistance(GeoMath.pathLength(pts))}'
             ' · ${pts.length} nokta';

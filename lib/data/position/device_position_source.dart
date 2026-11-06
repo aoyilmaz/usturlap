@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../core/constants.dart';
 import '../../core/utils/kalman_filter.dart';
+import '../../core/wmm.dart';
 import '../../domain/models/contact.dart';
 import '../../domain/ports/position_source.dart';
 
@@ -69,12 +70,26 @@ class DevicePositionSource implements PositionSource {
     final compass = FlutterCompass.events;
     if (compass != null) {
       _headingSub = compass.listen((event) {
-        if (event.heading != null) {
-          _lastHeading = _headingFilter.update(event.heading!);
-          _emit();
-        }
+        final raw = event.heading;
+        // iOS konum yokken trueHeading'i -1 (geçersiz) verir.
+        if (raw == null || raw < 0) return;
+        _lastHeading = _headingFilter.update(_toTrueNorth(raw));
+        _emit();
       });
     }
+  }
+
+  /// Pusula okumasını coğrafi kuzeye çevirir. Uygulamanın bütün hesapları
+  /// coğrafi kuzeye göre yapılır.
+  /// - iOS: flutter_compass zaten `trueHeading` verir (sapmayı iOS uygular).
+  /// - Android: rotation-vector sensörü manyetik kuzey verir → WMM2025
+  ///   sapması eklenir. Konum henüz yoksa manyetik değer kullanılır.
+  double _toTrueNorth(double heading) {
+    if (defaultTargetPlatform != TargetPlatform.android) return heading;
+    final pos = _lastPosition;
+    if (pos == null) return heading;
+    final d = Wmm.declination(pos.latitude, pos.longitude);
+    return ((heading + d) % 360 + 360) % 360;
   }
 
   /// Konum akışına (yeniden) abone olur — güncel ayarlarla.
