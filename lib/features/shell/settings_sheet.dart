@@ -32,6 +32,7 @@ class _SettingsSheet extends ConsumerWidget {
     final repeatersOn = ref.watch(showRepeatersProvider);
     final repeaterCount = ref.watch(repeatersProvider).value?.length ?? 0;
     final band = ref.watch(repeaterBandProvider);
+    final crosshair = ref.watch(crosshairProvider);
     final northRef = ref.watch(northRefProvider);
     final angleUnit = ref.watch(angleUnitProvider);
     final here = ref.watch(selfContactProvider)?.position;
@@ -56,6 +57,15 @@ class _SettingsSheet extends ConsumerWidget {
               subtitle: const Text('Işık disiplini — karartma + kırmızı'),
               value: night,
               onChanged: (_) => ref.read(nightModeProvider.notifier).toggle(),
+            ),
+            SwitchListTile(
+              secondary: const Icon(Icons.center_focus_strong),
+              title: const Text('Artı imleç'),
+              subtitle: const Text(
+                  'Haritanın ortasında; "Nokta bırak" oraya nokta koyar '
+                  '(eldivenle kolay)'),
+              value: crosshair,
+              onChanged: (_) => ref.read(crosshairProvider.notifier).toggle(),
             ),
             ListTile(
               leading: const Icon(Icons.badge_outlined),

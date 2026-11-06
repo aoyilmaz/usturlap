@@ -31,15 +31,16 @@ import '../../providers/settings_providers.dart';
 import '../../providers/tool_providers.dart';
 import '../../providers/track_providers.dart';
 import '../../providers/waypoint_providers.dart';
-import '../hud/callsign_hud.dart';
+import '../hud/self_info_box.dart';
 import '../import/import_action.dart';
 import '../routes/route_widgets.dart';
 import '../shell/coordinate_sheet.dart';
+import '../shell/atak_toolbar.dart';
+import '../shell/clear_content_dialog.dart';
 import '../shell/map_controls.dart';
-import '../shell/missions_sheet.dart';
 import '../shell/route_sheet.dart';
 import '../shell/settings_sheet.dart';
-import '../shell/tactical_bottom_bar.dart';
+import '../shell/tools_grid_sheet.dart';
 import '../tools/graphic_list_sheet.dart';
 import '../layers/import_layer_action.dart';
 import '../nav/nav_banner.dart';
@@ -94,6 +95,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   /// 3B arazi açık mı (yalnızca Mapbox motorunda).
   bool _terrain3d = false;
+
+  /// İki parmakla döndürme kilitli mi (pusula okuna uzun bas → kilit).
+  bool _rotationLocked = false;
+
+  /// Nokta bırakma modu (ATAK Point Dropper): haritaya her dokunuş nokta koyar.
+  bool _dropMode = false;
+
+  /// Araç çubuğu gizli mi (≡'ye uzun bas).
+  bool _toolbarHidden = false;
 
   /// Çevrimdışı bölge çerçeveleme modu açık mı.
   bool _framing = false;
@@ -787,20 +797,113 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
-  void _openMissions() {
-    showMissionsSheet(
-      context,
-      onWaypoints: () => showWaypointListSheet(context, ref,
-          onTapWaypoint: (wp) => _centerOn(wp.position)),
-      onTracks: () => showTrackListSheet(context, ref),
-      onGraphics: () => showGraphicListSheet(context, ref),
-      onOfflineRegions: () => showOfflineRegionsSheet(
-        context,
-        onShowRegion: _showRegion,
-        onNewRegion: _startFraming,
-      ),
-      onImportGpxKml: () => runGpxKmlImport(context, ref),
-    );
+  /// ≡ Bütün araçlar (ATAK Additional Tools). Bugünkü alt çubuk, Görevler ve
+  /// araç paletindeki her şey burada.
+  void _openToolsGrid() {
+    final tool = ref.read(toolProvider);
+    void setTool(ToolMode m) {
+      setState(() => _dropMode = false);
+      ref.read(toolProvider.notifier).setMode(m);
+    }
+
+    ToolGridItem toolItem(ToolMode m, IconData icon, String label) =>
+        ToolGridItem(
+          icon: icon,
+          label: label,
+          active: tool.mode == m,
+          onTap: () => setTool(m),
+        );
+
+    showToolsGridSheet(context, sections: [
+      ToolGridSection('Navigasyon', [
+        ToolGridItem(
+            icon: Icons.travel_explore,
+            label: 'Koordinat / Git',
+            onTap: _openCoordinate),
+        ToolGridItem(
+          icon: Icons.alt_route,
+          label: 'Rotalar',
+          active: ref.read(activeRouteProvider) != null,
+          onTap: () => showRouteSheet(
+            context,
+            onPlanNew: _startRoutePlanning,
+            onShowRoute: _showRoute,
+          ),
+        ),
+      ]),
+      ToolGridSection('Ölçüm', [
+        toolItem(ToolMode.distance, Icons.straighten, 'Mesafe / R&B'),
+        toolItem(ToolMode.polygon, Icons.pentagon_outlined, 'Alan'),
+        toolItem(ToolMode.sector, Icons.pie_chart_outline, 'Sektör'),
+        toolItem(ToolMode.rangeRings, Icons.radar, 'Menzil halkası'),
+        toolItem(ToolMode.lineOfSight, Icons.landscape_outlined, 'Görüş hattı'),
+      ]),
+      ToolGridSection('Veri', [
+        ToolGridItem(
+            icon: Icons.place_outlined,
+            label: 'Noktalar',
+            onTap: () => showWaypointListSheet(context, ref,
+                onTapWaypoint: (wp) => _centerOn(wp.position))),
+        ToolGridItem(
+            icon: Icons.timeline,
+            label: 'İzler',
+            onTap: () => showTrackListSheet(context, ref)),
+        ToolGridItem(
+            icon: Icons.draw_outlined,
+            label: 'Çizimler',
+            onTap: () => showGraphicListSheet(context, ref)),
+        ToolGridItem(
+            icon: Icons.file_open_outlined,
+            label: 'GPX / KML içe aktar',
+            onTap: () => runGpxKmlImport(context, ref)),
+      ]),
+      ToolGridSection('Harita', [
+        ToolGridItem(
+            icon: Icons.map_outlined, label: 'Haritalar', onTap: _openLayers),
+        ToolGridItem(
+          icon: Icons.download_for_offline_outlined,
+          label: 'Çevrimdışı bölgeler',
+          onTap: () => showOfflineRegionsSheet(
+            context,
+            onShowRegion: _showRegion,
+            onNewRegion: _startFraming,
+          ),
+        ),
+        ToolGridItem(
+            icon: Icons.file_download_outlined,
+            label: 'Harita paketi içe aktar',
+            onTap: _importLayer),
+      ]),
+      ToolGridSection('Sistem', [
+        ToolGridItem(
+            icon: Icons.settings,
+            label: 'Ayarlar',
+            onTap: () => showSettingsSheet(context)),
+        ToolGridItem(
+          icon: Icons.delete_forever,
+          label: 'Acil veri silme',
+          color: Colors.redAccent,
+          onTap: () => showClearContentDialog(context, ref),
+        ),
+      ]),
+    ]);
+  }
+
+  /// Araç çubuğu "Nokta bırak": artı imleç açıksa imlecin altına nokta koyar;
+  /// değilse nokta bırakma modunu açar/kapatır (haritaya dokunulan yere).
+  void _onDropPoint() {
+    if (ref.read(crosshairProvider)) {
+      _addAtCrosshair();
+      return;
+    }
+    final on = !_dropMode;
+    if (on) ref.read(toolProvider.notifier).reset();
+    setState(() => _dropMode = on);
+  }
+
+  void _toggleRotationLock() {
+    setState(() => _rotationLocked = !_rotationLocked);
+    _map.setRotationLocked(_rotationLocked);
   }
 
   @override
@@ -859,12 +962,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
     // Yerleşim: dikeyde alt çubuk; yatayda (ATAK gibi) sol dikey şerit,
     // sağdan yan paneller, dar HUD — harita olabildiğince açık kalsın.
+    // ATAK düzeni (kılavuz s.5): sol üstte araç çubuğu, altında pusula/◎/zoom
+    // sütunu; sol altta bilgi kutuları + ölçek; sağ altta konum kutusu.
     final landscape = isLandscape(context);
     final safe = MediaQuery.paddingOf(context);
     final safeBottom = safe.bottom;
-    // Alt kenarda arayüzün kapladığı yükseklik / sol kenarda şerit genişliği.
-    final bottomInset = landscape ? safeBottom : kBottomBarHeight + safeBottom;
-    final leftInset = landscape ? kSideRailWidth + safe.left : 0.0;
+    // Rota planlarken altta planlama çubuğu var; diğer her şey onun üstünde.
+    final bottomInset =
+        safeBottom + (planning.active ? kPlanBarHeight : 0);
+    final crosshairOn = ref.watch(crosshairProvider);
+    // Araç seçilince nokta bırakma modu kapanır (aynı anda tek dokunuş işi).
+    ref.listen<ToolState>(toolProvider, (prev, next) {
+      if (next.active && _dropMode) setState(() => _dropMode = false);
+    });
 
     // Harita üstü çizimler — liste sırası = çizim sırası (alttan üste).
     final overlays = <MapOverlay>[
@@ -925,6 +1035,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       body: _wrapNight(
         nightMode,
         Stack(
+        // Ekranı doldur: bütün kontroller Positioned olduğu için Stack kendini
+        // çocuklarından boyutlandıramaz (yoksa 0×0'a büzülür → siyah ekran).
+        fit: StackFit.expand,
         children: [
           Positioned.fill(
             child: FutureBuilder<void>(
@@ -958,9 +1071,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 return kMapEngine.buildView(
                   terrain3d: _terrain3d && kMapEngine.supportsTerrain,
                   // Logo/atıf alt çubuğun (çerçevelerken panelin) üstünde kalsın.
+                  // Güvenli alana EK olarak haritayı örten arayüz (Mapbox iOS
+                  // kenar boşluklarını güvenli alandan ölçer; bkz. map_engine).
                   ornamentPadding: _framing
-                      ? EdgeInsets.only(bottom: landscape ? 0 : safeBottom + 300)
-                      : EdgeInsets.only(left: leftInset, bottom: bottomInset),
+                      ? EdgeInsets.only(bottom: landscape ? 0 : 300)
+                      : EdgeInsets.only(
+                          bottom: planning.active ? kPlanBarHeight : 0),
                   nightMode: nightMode,
                   controller: _map,
                   baseLayer: _resolved[_selected.id] ?? const NoBaseLayer(),
@@ -990,6 +1106,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     if (ref.read(routePlanningProvider).active) {
                       HapticFeedback.selectionClick();
                       ref.read(routePlanningProvider.notifier).addPoint(point);
+                      return;
+                    }
+                    if (_dropMode) {
+                      HapticFeedback.mediumImpact();
+                      showAddWaypointDialog(context, ref, point);
                       return;
                     }
                     if (ref.read(toolProvider).active) {
@@ -1074,146 +1195,134 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               ),
             ),
 
-          // Ölçek çubuğu: sol altta, Mapbox logosunun üstünde.
+          // ---------------------------------------------- alt bölge (ATAK)
+          // Sol alt: bilgi kutuları (indirme, hedef, rota takibi) + ölçek;
+          // sağ alt: konum kutusu. Dikeyde kutular tam genişlik, konum
+          // kutusunun üstünde; yatayda solda dar sütun.
+          // Yatayda sağdan panel açıkken panelin soluna kayar (ATAK: panel
+          // açılınca harita alanı daralır, köşe kutuları görünür kalır).
           if (!_framing)
-            Positioned(
-              left: leftInset + 10,
-              bottom: bottomInset + 38,
-              child: ValueListenableBuilder<MapCameraState>(
-                valueListenable: _scaleCamera,
-                builder: (context, cam, _) => MapScaleBar(
-                  zoom: cam.zoom,
-                  latitude: cam.center.latitude,
+            ValueListenableBuilder<int>(
+              valueListenable: openSidePanels,
+              builder: (context, open, _) => AnimatedPositioned(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                left: 8 + safe.left,
+                right: 8 +
+                    safe.right +
+                    (landscape && open > 0 ? sidePanelWidth(context) : 0),
+                bottom: bottomInset + 8,
+                child: _bottomCluster(
+                  landscape: landscape,
                   night: nightMode,
+                  showRoutePanel: !planning.active && activeRoute != null,
                 ),
               ),
             ),
 
-          // Üst: kalıcı HUD + (araç aktifse) ölçüm şeridi
-          Align(
-            alignment: landscape ? Alignment.topLeft : Alignment.topCenter,
-            child: Padding(
-              padding: EdgeInsets.only(left: _framing ? 0 : leftInset),
-              child: ConstrainedBox(
-                // Yatayda dar: haritanın üst bandını kaplamasın.
-                constraints:
-                    BoxConstraints(maxWidth: landscape ? 380 : double.infinity),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const CallsignHud(),
-                    if (planning.active) const RoutePlanInfo(),
-                    const ToolBanner(),
-                    const NavBanner(),
-                  ],
+          // Ortadaki artı imleç: Ayarlar'dan açılır; rota planlarken "+ Nokta"
+          // onu hedeflediği için hep görünür.
+          if (!_framing && (crosshairOn || planning.active))
+            MapCrosshair(night: nightMode),
+
+          // Araç çubuğunun altında, sol sütunun yanında: rota planı, nokta
+          // bırakma ipucu, aktif ölçüm aracı.
+          if (!_framing)
+            ValueListenableBuilder<int>(
+              valueListenable: openSidePanels,
+              builder: (context, open, child) => AnimatedPositioned(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                top: safe.top + 6 + kAtakToolbarHeight + 6,
+                left: safe.left + 8 + kToolbarButtonSize + 10,
+                right: safe.right +
+                    8 +
+                    (landscape && open > 0 ? sidePanelWidth(context) : 0),
+                child: child!,
+              ),
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (planning.active) const RoutePlanInfo(),
+                      if (_dropMode)
+                        _DropHint(
+                          night: nightMode,
+                          onClose: () => setState(() => _dropMode = false),
+                        ),
+                      const ToolBanner(),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
 
-          // Ortadaki artı imleç (eldivenle nokta koymak / ölçmek için).
-          if (!_framing) MapCrosshair(night: nightMode),
-
-          // Sağ kenar: harita kontrolleri (Kerteriz tarzı).
+          // Sol sütun: pusula oku · ◎ · zoom (bilgi kutularının üstünde
+          // çizilir; pusulanın ek düğmeleri örtülmesin).
           if (!_framing)
             Positioned(
-              right: 12 + (landscape ? safe.right : 0),
-              bottom: bottomInset + (landscape ? 8 : 16),
-              child: MapControlsColumn(
-                compact: landscape,
+              top: safe.top + 6 + kAtakToolbarHeight + 6,
+              left: safe.left + 8,
+              child: MapSideControls(
+                camera: _scaleCamera,
                 night: nightMode,
-                onSettings: () => showSettingsSheet(context),
-                onLayers: _openLayers,
-                onTerrain: kMapEngine.supportsTerrain
+                trackUp: _trackUp,
+                onToggleOrientation: _toggleOrientation,
+                rotationLocked: _rotationLocked,
+                onToggleRotationLock: _toggleRotationLock,
+                onToggleTerrain: kMapEngine.supportsTerrain
                     ? () => setState(() => _terrain3d = !_terrain3d)
                     : null,
                 terrainOn: _terrain3d,
-                onAdd: _addAtCrosshair,
-                addLabel: tool.active ? 'İmleçe araç noktası' : 'İmleçe nokta ekle',
-                onRecenter: _recenter,
                 following: _follow,
-                onOrientation: _toggleOrientation,
-                trackUp: _trackUp,
+                onRecenter: _recenter,
+                onZoomIn: () => _map.zoomBy(1),
+                onZoomOut: () => _map.zoomBy(-1),
               ),
             ),
 
-          // Sağ kenardan içeri kaydır → katmanlar (§8 jest). Yatayda kontrol
-          // sütunu sağ kenarı kapladığı için yok (Katmanlar düğmesi var).
-          if (!_framing && !landscape)
-            Positioned(
-              right: 0,
-              top: 160,
-              bottom: bottomInset + 380,
-              width: 20,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onHorizontalDragEnd: (d) {
-                  if ((d.primaryVelocity ?? 0) < -100) {
-                    HapticFeedback.selectionClick();
-                    _openLayers();
-                  }
-                },
-              ),
-            ),
-
-          // Çevrimdışı indirme ilerlemesi + ağ-kapalı (test) uyarısı.
+          // Sol üst: araç çubuğu (≡'ye uzun bas → gizle).
           if (!_framing)
             Positioned(
-              left: leftInset + 12,
-              right: landscape ? null : 76,
-              width: landscape ? 380 : null,
-              bottom: bottomInset +
-                  (activeRoute != null ? 170 : (landscape ? 12 : 40)),
-              child: const _OfflineStatusCards(),
+              top: safe.top + 6,
+              left: safe.left + 8,
+              child: _toolbarHidden
+                  ? AtakToolbarHandle(
+                      night: nightMode,
+                      onShow: () => setState(() => _toolbarHidden = false),
+                    )
+                  : AtakToolbar(
+                      night: nightMode,
+                      onMenu: _openToolsGrid,
+                      onHide: () => setState(() => _toolbarHidden = true),
+                      onDropPoint: _onDropPoint,
+                      dropActive: _dropMode,
+                      onMeasure: () {
+                        setState(() => _dropMode = false);
+                        showToolsPalette(context, ref);
+                      },
+                      measureActive: tool.active,
+                      onGoTo: _openCoordinate,
+                      onMaps: _openLayers,
+                      recording: recording.isRecording,
+                      onRecord: () {
+                        final n = ref.read(recordingProvider.notifier);
+                        recording.isRecording ? n.stop() : n.start();
+                      },
+                    ),
             ),
 
-          // Rota takip paneli (alt çubuğun üstünde).
-          if (!_framing && !planning.active && activeRoute != null)
-            Positioned(
-              left: leftInset + 8,
-              right: landscape ? null : 68,
-              width: landscape ? 440 : null,
-              bottom: bottomInset + 8,
-              child: RouteFollowPanel(night: nightMode),
-            ),
-
-          // Rota planlarken alt çubuk planlama düğmelerine dönüşür.
+          // Rota planlarken altta planlama çubuğu.
           if (!_framing && planning.active)
             Positioned(
               left: 0,
-              right: landscape ? null : 0,
-              top: landscape ? 0 : null,
+              right: 0,
               bottom: 0,
-              child: RoutePlanBar(
-                  onAddAtCrosshair: _addAtCrosshair, vertical: landscape),
-            ),
-
-          // Alt çubuk: Koordinat · Araçlar · ● İz · Rota · Görevler.
-          if (!_framing && !planning.active)
-            Positioned(
-              left: 0,
-              right: landscape ? null : 0,
-              top: landscape ? 0 : null,
-              bottom: 0,
-              child: TacticalBottomBar(
-                vertical: landscape,
-                night: nightMode,
-                recording: recording.isRecording,
-                toolActive: tool.active,
-                navActive: navTarget != null || activeRoute != null,
-                onCoordinate: _openCoordinate,
-                onTools: () => showToolsPalette(context, ref),
-                onRecord: () {
-                  final n = ref.read(recordingProvider.notifier);
-                  recording.isRecording ? n.stop() : n.start();
-                },
-                onRoute: () => showRouteSheet(
-                  context,
-                  onPlanNew: _startRoutePlanning,
-                  onShowRoute: _showRoute,
-                ),
-                onMissions: _openMissions,
-              ),
+              child: RoutePlanBar(onAddAtCrosshair: _addAtCrosshair),
             ),
 
           // Görüş hattı profili (alt çubuğun üstünde açılır).
@@ -1335,6 +1444,79 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       }
     }
     return out;
+  }
+
+  /// Alt bölge (ATAK): sol altta bilgi kutuları + ölçek, sağ altta konum
+  /// kutusu. Kutular değişken yükseklikte olduğu için tek sütunda dizilir
+  /// (üst üste binmesinler).
+  Widget _bottomCluster({
+    required bool landscape,
+    required bool night,
+    required bool showRoutePanel,
+  }) {
+    final cards = <Widget>[
+      const _OfflineStatusCards(),
+      const NavBanner(),
+      if (showRoutePanel)
+        Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: RouteFollowPanel(night: night),
+        ),
+    ];
+    final scale = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ValueListenableBuilder<MapCameraState>(
+          valueListenable: _scaleCamera,
+          builder: (context, cam, _) => MapScaleBar(
+            zoom: cam.zoom,
+            latitude: cam.center.latitude,
+            night: night,
+          ),
+        ),
+        // Mapbox logosu (85×21) + atıf düğmesi (44×44) bunun altında,
+        // güvenli alanın 8 pt üstünde (kullanım şartı: görünür olmalı).
+        const SizedBox(height: 36),
+      ],
+    );
+    if (landscape) {
+      // Yatayda ekran alçak: kutular büyüyünce sol sütunla (zoom) çakışmasın
+      // diye sütunun sağından başlar.
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          const SizedBox(width: kToolbarButtonSize + 10),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [...cards, scale],
+            ),
+          ),
+          const Spacer(),
+          const SelfInfoBox(),
+        ],
+      );
+    }
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ...cards,
+        const SizedBox(height: 6),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: Align(alignment: Alignment.bottomLeft, child: scale),
+            ),
+            const SelfInfoBox(),
+          ],
+        ),
+      ],
+    );
   }
 
   Rect _frameRect(BuildContext context) => offlineFrameRect(
@@ -1481,6 +1663,43 @@ class _OfflineStatusCards extends ConsumerWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Nokta bırakma modu açıkken araç çubuğunun altında ipucu (✕ ile kapanır).
+class _DropHint extends StatelessWidget {
+  const _DropHint({required this.onClose, this.night = false});
+
+  final VoidCallback onClose;
+  final bool night;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = night ? Colors.redAccent : Colors.amber;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(left: 12),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.78),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accent.withValues(alpha: 0.7)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.add_location_alt, color: accent, size: 20),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Text('Nokta bırak: haritada dokunduğun yere nokta konur',
+                style: TextStyle(color: Colors.white, fontSize: 13)),
+          ),
+          IconButton(
+            tooltip: 'Nokta bırakmayı kapat',
+            icon: const Icon(Icons.close, color: Colors.white70),
+            onPressed: onClose,
+          ),
+        ],
+      ),
     );
   }
 }

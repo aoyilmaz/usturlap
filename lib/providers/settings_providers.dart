@@ -206,3 +206,28 @@ final bearingFormatterProvider = Provider<BearingFormatter>((ref) {
     unit: ref.watch(angleUnitProvider),
   );
 });
+
+const _crosshairKey = 'show_crosshair';
+
+/// Haritanın ortasında artı imleç (eldivenle nokta koymak için).
+/// ATAK'ta yok → varsayılan kapalı; Ayarlar'dan açılır. Kalıcı.
+class CrosshairNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    _load();
+    return false;
+  }
+
+  Future<void> _load() async {
+    final saved = await ref.read(settingsRepositoryProvider).get(_crosshairKey);
+    if (saved == 'true') state = true;
+  }
+
+  void toggle() {
+    state = !state;
+    ref.read(settingsRepositoryProvider).set(_crosshairKey, state.toString());
+  }
+}
+
+final crosshairProvider =
+    NotifierProvider<CrosshairNotifier, bool>(CrosshairNotifier.new);

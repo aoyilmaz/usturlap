@@ -96,6 +96,25 @@ class MapboxEngineController implements MapEngineController {
   }
 
   @override
+  void zoomBy(double delta) {
+    _map?.easeTo(CameraOptions(zoom: _camera.zoom + delta),
+        MapAnimationOptions(duration: 250));
+  }
+
+  bool _rotationLocked = false;
+
+  @override
+  void setRotationLocked(bool locked) {
+    _rotationLocked = locked;
+    _applyGestureLocks();
+  }
+
+  void _applyGestureLocks() {
+    _map?.gestures
+        .updateSettings(GesturesSettings(rotateEnabled: !_rotationLocked));
+  }
+
+  @override
   void fitBounds(GeoBounds bounds,
       {EdgeInsets padding = const EdgeInsets.all(40)}) {
     final map = _map;
@@ -381,6 +400,7 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
 
   Future<void> _onCreated(MapboxMap map) async {
     _c._map = map;
+    _c._applyGestureLocks();
     await map.setBounds(
         CameraBoundsOptions(minZoom: widget.minZoom, maxZoom: widget.maxZoom));
     // Pusula/ölçek uygulamanın kendi kontrollerinde; Mapbox logo+atıf kalır.

@@ -7,21 +7,20 @@ import '../../core/nav_math.dart';
 import '../../providers/location_providers.dart';
 import '../../providers/route_providers.dart';
 import '../../providers/settings_providers.dart';
-import '../shell/tactical_bottom_bar.dart' show kBottomBarHeight, kSideRailWidth;
 
 // ------------------------------------------------------------- planlama
 
-/// Planlama modunda alt çubuğun yerine geçer:
+/// Rota planlama çubuğunun yüksekliği (güvenli alan hariç).
+const double kPlanBarHeight = 72;
+
+/// Planlama modunda ekranın altında:
 /// Geri al · Temizle · (+ Nokta) · Kaydet · Çık.
+/// (D2'de ATAK tarzı araç alt çubuğuna dönüşecek.)
 class RoutePlanBar extends ConsumerWidget {
-  const RoutePlanBar(
-      {super.key, required this.onAddAtCrosshair, this.vertical = false});
+  const RoutePlanBar({super.key, required this.onAddAtCrosshair});
 
-  /// Artı imleçteki noktayı rotaya ekle.
+  /// Artı imleçteki (haritanın ortası) noktayı rotaya ekle.
   final VoidCallback onAddAtCrosshair;
-
-  /// true → yatay ekranda sol kenarda dikey şerit.
-  final bool vertical;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -60,13 +59,10 @@ class RoutePlanBar extends ConsumerWidget {
     return Material(
       color: Colors.black.withValues(alpha: 0.85),
       child: SafeArea(
-        top: vertical,
-        right: !vertical,
+        top: false,
         child: SizedBox(
-          height: vertical ? double.infinity : kBottomBarHeight,
-          width: vertical ? kSideRailWidth : double.infinity,
-          child: Flex(
-            direction: vertical ? Axis.vertical : Axis.horizontal,
+          height: kPlanBarHeight,
+          child: Row(
             children: [
               btn(Icons.undo, 'Geri al', has ? n.undo : null),
               btn(Icons.layers_clear, 'Temizle', has ? n.clear : null),

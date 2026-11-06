@@ -20,6 +20,13 @@ abstract class MapEngineController {
   /// Haritayı döndürür: ekranın üstü [bearingDeg] yönüne bakar (0 = kuzey).
   void rotateTo(double bearingDeg);
 
+  /// Yumuşak yakınlaştır/uzaklaştır (+1 = bir kademe yakın).
+  void zoomBy(double delta);
+
+  /// İki parmakla döndürmeyi kilitle/aç (ATAK Manual Orientation Lock).
+  /// Harita yeniden kurulsa da korunur.
+  void setRotationLocked(bool locked);
+
   /// [bounds] ekrana sığacak şekilde kamerayı ayarlar.
   void fitBounds(GeoBounds bounds, {EdgeInsets padding = const EdgeInsets.all(40)});
 
@@ -62,8 +69,11 @@ abstract class MapEngine {
     MapPointCallback? onLongPress,
     bool terrain3d = false,
     bool nightMode = false,
-    // Haritanın üstünü kaplayan arayüz (alt çubuk vb.): logo/atıf gibi
+    // Haritanın üstünü kaplayan arayüz (planlama çubuğu vb.): logo/atıf gibi
     // motor süsleri bunun dışında kalsın (Mapbox şartı: görünür olmalı).
+    // GÜVENLİ ALANA EK OLARAK verilir: Mapbox iOS süslerin kenar boşluğunu
+    // safeAreaLayoutGuide'dan ölçer (OrnamentsManager.swift), güvenli alanı
+    // burada tekrar eklemek logoyu fazladan kaydırır.
     EdgeInsets ornamentPadding = EdgeInsets.zero,
   });
 }

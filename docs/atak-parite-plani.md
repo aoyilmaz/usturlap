@@ -118,7 +118,14 @@ Kerteriz tarzı kabuk (alt çubuk, üst HUD, sağ düğme sütunu) kalkar; yerin
 ekranı gelir. Kaynak: kılavuz s.5–6, 8, 55–57. Yerleşim kılavuz metninden ve ekran
 görüntülerinden alınır, ATAK'ın ikonları kullanılmaz.
 
-**D1. Ana ekran düzeni**
+**D1. Ana ekran düzeni** — **kodda tamam (2026-11-06), cihaz testi bekliyor**
+
+> Yapılan: `AtakToolbar` (≡ · Nokta bırak · R&B · Git · Haritalar · İz; ≡'ye uzun bas → gizle),
+> `MapSideControls` (haritayla dönen pusula oku; dokun: kuzey/yön, uzun bas: döndürme kilidi + 3B;
+> ◎; zoom), `SelfInfoBox` (sağ alt; eski HUD), ≡ ızgarası (`tools_grid_sheet.dart`: Navigasyon,
+> Ölçüm, Veri, Harita, Sistem), nokta bırakma modu, artı imleç Ayarlar'da (varsayılan kapalı).
+> Kalkanlar: Kerteriz alt çubuğu, sağ sütun, üst HUD, sağ kenardan kaydırma. Rota planlama çubuğu
+> D2'ye kadar altta. Motor: `zoomBy`, `setRotationLocked`.
 
 | Öğe (ATAK s.) | Ne yapılacak | Efor |
 |---|---|---|

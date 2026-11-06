@@ -8,6 +8,10 @@ bool isLandscape(BuildContext context) {
   return s.width > s.height;
 }
 
+/// Şu an açık yan panel sayısı (yatay ekran). Harita ekranı köşe kutularını
+/// (konum kutusu vb.) panel açıkken panelin soluna kaydırmak için dinler.
+final ValueNotifier<int> openSidePanels = ValueNotifier(0);
+
 /// Yatay ekranda sağ yan panel genişliği.
 double sidePanelWidth(BuildContext context) =>
     math.min(420.0, MediaQuery.sizeOf(context).width * 0.45);
@@ -33,6 +37,7 @@ Future<T?> showAdaptiveSheet<T>({
   }
 
   final width = sidePanelWidth(context);
+  openSidePanels.value++;
   return showGeneralDialog<T>(
     context: context,
     barrierDismissible: true,
@@ -79,5 +84,5 @@ Future<T?> showAdaptiveSheet<T>({
           .animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
       child: child,
     ),
-  );
+  ).whenComplete(() => openSidePanels.value--);
 }

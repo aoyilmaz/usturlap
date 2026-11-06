@@ -54,24 +54,32 @@ void main() {
 
   Finder chip(String label) => find.widgetWithText(ChoiceChip, label);
 
+  /// Liste uzun: öğeye dokunmadan önce görünür olana kadar kaydır.
+  Future<void> reveal(WidgetTester tester, Finder f) => tester
+      .scrollUntilVisible(f, 120, scrollable: find.byType(Scrollable).last);
+
   testWidgets('kuzey, açı birimi ve koordinat seçimi kalıcı kaydedilir', (
     tester,
   ) async {
     await openSheet(tester);
 
-    await tester.tap(chip('Manyetik'));
-    await tester.pumpAndSettle();
-    expect(mem.values['north_ref'], 'magnetic');
-
-    await tester.tap(chip('Mil'));
-    await tester.pumpAndSettle();
-    expect(mem.values['angle_unit'], 'mils');
-
+    await reveal(tester, chip('DMS'));
     await tester.tap(chip('DMS'));
     await tester.pumpAndSettle();
     expect(mem.values['coord_format'], 'dms');
 
+    await reveal(tester, chip('Manyetik'));
+    await tester.tap(chip('Manyetik'));
+    await tester.pumpAndSettle();
+    expect(mem.values['north_ref'], 'magnetic');
+
+    await reveal(tester, chip('Mil'));
+    await tester.tap(chip('Mil'));
+    await tester.pumpAndSettle();
+    expect(mem.values['angle_unit'], 'mils');
+
     // Seçili çip vurgulu.
+    await reveal(tester, chip('Manyetik'));
     expect(tester.widget<ChoiceChip>(chip('Manyetik')).selected, isTrue);
     expect(tester.widget<ChoiceChip>(chip('Coğrafi')).selected, isFalse);
   });
@@ -80,7 +88,9 @@ void main() {
     tester,
   ) async {
     await openSheet(tester);
-    expect(find.textContaining('konum gelince hesaplanır'), findsOneWidget);
+    final info = find.textContaining('konum gelince hesaplanır');
+    await reveal(tester, info);
+    expect(info, findsOneWidget);
   });
 
   testWidgets('acil veri silme: onay sorulur, Vazgeç hiçbir şey silmez', (
