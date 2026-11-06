@@ -131,6 +131,9 @@ TAK Server, video/KLV, telsiz kontrolü, WFS ve eklenti sistemi kapsam dışı.
 
 ## 4. Önerilen sıra
 
+> **2026-11-06:** A ve B'den sonraki sıra (C–F) [atak-parite-plani.md](atak-parite-plani.md)
+> ile değiştirildi. Aşağıdaki tablo tarihsel kayıttır.
+
 | Aşama | İçerik | Neden önce |
 |---|---|---|
 | **A. Menü iskeleti** | Alt çubuk, sağ kontroller, artı imleç, genişleyen HUD, ⚙ Ayarlar, birleşik Görevler ekranı | Sonraki her özellik bu yapıya yerleşir |
