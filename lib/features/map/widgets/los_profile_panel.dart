@@ -7,7 +7,11 @@ class LosProfilePanel extends StatelessWidget {
   final LineOfSightResult result;
   final VoidCallback onClose;
 
-  const LosProfilePanel({Key? key, required this.result, required this.onClose}) : super(key: key);
+  const LosProfilePanel({
+    super.key,
+    required this.result,
+    required this.onClose,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +90,11 @@ class ProfilePainter extends CustomPainter {
 
     // Min/Max değerlerine grafiksel dolgu (padding) ekle
     maxElev += 50;
-    if (minElev > 50) minElev -= 50; else minElev = 0;
+    if (minElev > 50) {
+      minElev -= 50;
+    } else {
+      minElev = 0;
+    }
 
     double elevRange = maxElev - minElev;
     if (elevRange <= 0) elevRange = 1;

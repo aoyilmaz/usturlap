@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:latlong2/latlong.dart';
 
 import '../../data/elevation/hgt_parser.dart';

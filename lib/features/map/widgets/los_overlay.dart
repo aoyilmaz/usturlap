@@ -18,7 +18,7 @@ final losCalculatorProvider = Provider<LineOfSightCalculator>((ref) {
 });
 
 class LosOverlay extends ConsumerStatefulWidget {
-  const LosOverlay({Key? key}) : super(key: key);
+  const LosOverlay({super.key});
 
   @override
   ConsumerState<LosOverlay> createState() => _LosOverlayState();

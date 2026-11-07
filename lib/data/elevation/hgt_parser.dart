@@ -59,7 +59,7 @@ class HgtParser {
           return null; // Yükseklik verisi (dosya) yok
         }
       }
-      _cache[fileName] = data!; // Cache'e al (Performans için)
+      _cache[fileName] = data; // Cache'e al (Performans için)
     }
 
     // Dosya boyutundan çözünürlüğü anla (1201x1201 SRTM3 veya 3601x3601 SRTM1)

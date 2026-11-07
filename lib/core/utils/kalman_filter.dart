@@ -9,13 +9,16 @@ class KalmanFilter {
   final double r;
 
   double _x = double.nan; // Tahmin edilen mevcut değer
+  final double _p0; // Başlangıç tahmin hatası (reset bununla döner)
   double _p; // Tahmin hata kovaryansı
   double _k = 0; // Kalman kazancı
 
   /// [q]: Süreç gürültüsü (Process noise)
   /// [r]: Ölçüm gürültüsü (Measurement noise)
   /// [p]: Başlangıç tahmin hatası (Initial estimation error covariance)
-  KalmanFilter({this.q = 0.05, this.r = 0.5, double p = 1.0}) : _p = p;
+  KalmanFilter({this.q = 0.05, this.r = 0.5, double p = 1.0})
+      : _p0 = p,
+        _p = p;
 
   /// Yeni bir sensör ölçümünü (0-360 derece arası) filtreye besler ve pürüzsüzleştirilmiş yeni tahmini döner.
   double update(double measurement) {
@@ -55,6 +58,6 @@ class KalmanFilter {
   /// Filtreyi sıfırlar. Sensör verisi uzun süre kesildiğinde veya çok ani bir durum değiştiğinde kullanılabilir.
   void reset() {
     _x = double.nan;
-    _p = 1.0;
+    _p = _p0; // kurucudaki başlangıç değeri (eskiden hep 1.0'dı)
   }
 }
