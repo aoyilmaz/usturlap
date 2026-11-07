@@ -152,17 +152,24 @@ class AppDatabase extends _$AppDatabase {
         },
         onUpgrade: (m, from, to) async {
           // Mevcut veriyi koruyarak yeni tablo/sütun ekle.
+          // DİKKAT: createTable tabloyu GÜNCEL tanımla kurar (sonradan eklenen
+          // sütunlar dahil). Bu yüzden sütunlar `_addColumnIfMissing` ile
+          // eklenir; aksi halde eski sürümden atlayarak gelen kurulum
+          // "duplicate column" ile düşer. Yarıda kalan yükseltme de (SQLite
+          // sütun eklemeyi geri almaz) bir sonraki açılışta tamamlanır.
           if (from < 2) await m.createTable(settings);
           if (from < 3) {
             await m.createTable(tracks);
             await m.createTable(trackPoints);
           }
           // v4: waypoint'lere APP-6 sadakat sütunu.
-          if (from < 4) await m.addColumn(waypoints, waypoints.affiliation);
+          if (from < 4) {
+            await _addColumnIfMissing(m, waypoints, waypoints.affiliation);
+          }
           // v5: APP-6 v2 modifiers + kalıcı taktik grafikler.
           if (from < 5) {
-            await m.addColumn(waypoints, waypoints.echelon);
-            await m.addColumn(waypoints, waypoints.role);
+            await _addColumnIfMissing(m, waypoints, waypoints.echelon);
+            await _addColumnIfMissing(m, waypoints, waypoints.role);
             await m.createTable(mapGraphics);
           }
           // v6: uygulama-içi içe-aktarılan harita paketleri.
@@ -171,12 +178,12 @@ class AppDatabase extends _$AppDatabase {
           if (from < 7) await m.createTable(routePlans);
           // v8: ATAK nesne modeli — kalıcı uid (+ noktalarda ham CoT tipi, hae).
           if (from < 8) {
-            await m.addColumn(waypoints, waypoints.uid);
-            await m.addColumn(waypoints, waypoints.cotType);
-            await m.addColumn(waypoints, waypoints.hae);
-            await m.addColumn(mapGraphics, mapGraphics.uid);
-            await m.addColumn(tracks, tracks.uid);
-            await m.addColumn(routePlans, routePlans.uid);
+            await _addColumnIfMissing(m, waypoints, waypoints.uid);
+            await _addColumnIfMissing(m, waypoints, waypoints.cotType);
+            await _addColumnIfMissing(m, waypoints, waypoints.hae);
+            await _addColumnIfMissing(m, mapGraphics, mapGraphics.uid);
+            await _addColumnIfMissing(m, tracks, tracks.uid);
+            await _addColumnIfMissing(m, routePlans, routePlans.uid);
             await backfillUids();
             await _createUidIndexes();
           }
@@ -186,6 +193,19 @@ class AppDatabase extends _$AppDatabase {
           await customStatement('PRAGMA foreign_keys = ON');
         },
       );
+
+  /// Sütun tabloda yoksa ekler (yükseltme adımları tekrar çalışabilsin).
+  Future<void> _addColumnIfMissing(
+    Migrator m,
+    TableInfo<Table, dynamic> table,
+    GeneratedColumn<Object> column,
+  ) async {
+    final cols = await customSelect(
+      'PRAGMA table_info("${table.actualTableName}")',
+    ).get();
+    if (cols.any((c) => c.read<String>('name') == column.name)) return;
+    await m.addColumn(table, column);
+  }
 
   /// uid'i boş satırlara yeni UUID verir (v8 yükseltmesi). Tekrar çağrılması
   /// zararsızdır: yalnızca boş olanları doldurur.

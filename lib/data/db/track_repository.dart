@@ -75,6 +75,14 @@ class TrackRepository {
     });
   }
 
+  /// Kayıtlı iz sayısı (yeni ize sıra numarası vermek için).
+  Future<int> trackCount() async {
+    final count = _db.tracks.id.count();
+    final row = await (_db.selectOnly(_db.tracks)..addColumns([count]))
+        .getSingle();
+    return row.read(count) ?? 0;
+  }
+
   /// İzi sonlandırır (endedAt = now).
   Future<void> endTrack(int trackId) {
     return (_db.update(_db.tracks)..where((t) => t.id.equals(trackId)))

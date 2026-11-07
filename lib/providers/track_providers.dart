@@ -65,10 +65,12 @@ class RecordingNotifier extends Notifier<RecordingState> {
 
   Future<void> start() async {
     if (state.isRecording) return;
-    final n = (ref.read(tracksProvider).value?.length ?? 0) + 1;
-    final id = await ref
-        .read(trackRepositoryProvider)
-        .startTrack('${ref.read(callsignProvider)} İZ-$n');
+    // Sayıyı doğrudan veritabanından al. `tracksProvider` kimse dinlemezken
+    // yüklenmez (Riverpod 3 dinlenmeyen sağlayıcıyı duraklatır) → eskiden
+    // her iz "İZ-1" oluyordu.
+    final repo = ref.read(trackRepositoryProvider);
+    final n = await repo.trackCount() + 1;
+    final id = await repo.startTrack('${ref.read(callsignProvider)} İZ-$n');
     _lastPoint = null;
     state = RecordingState(isRecording: true, trackId: id);
     // Ekran kapalıyken de iz sürsün diye arka plan konumunu aç.
