@@ -41,6 +41,9 @@ Future<void> showToolsGridSheet(
 }) {
   return showAdaptiveSheet<void>(
     context: context,
+    // ≡ ikinci kez basılınca ızgara kapanır.
+    id: 'tools',
+    toggle: true,
     showDragHandle: true,
     isScrollControlled: true,
     builder: (sheetContext) => _ToolsGrid(

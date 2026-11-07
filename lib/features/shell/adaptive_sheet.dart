@@ -1,32 +1,41 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
-/// Ekran yatay mı (genişlik > yükseklik). Yerleşim kararları için tek kaynak.
-bool isLandscape(BuildContext context) {
-  final s = MediaQuery.sizeOf(context);
-  return s.width > s.height;
-}
+import 'panel_host.dart';
 
-/// Şu an açık yan panel sayısı (yatay ekran). Harita ekranı köşe kutularını
-/// (konum kutusu vb.) panel açıkken panelin soluna kaydırmak için dinler.
-final ValueNotifier<int> openSidePanels = ValueNotifier(0);
+export 'panel_host.dart'
+    show PanelHost, PanelHostState, isLandscape, sidePanelWidth;
 
-/// Yatay ekranda sağ yan panel genişliği.
-double sidePanelWidth(BuildContext context) =>
-    math.min(420.0, MediaQuery.sizeOf(context).width * 0.45);
-
-/// Menü/liste açar: **dikeyde alttan sayfa**, **yatayda sağdan yan panel**
-/// (ATAK gibi — haritanın solu görünür kalır).
+/// Menü/liste açar: **dikeyde alttan**, **yatayda sağdan** panel (ATAK gibi).
 ///
-/// `showModalBottomSheet` ile aynı imza (showDragHandle/isScrollControlled
-/// dikey modda aynen uygulanır), böylece çağıranlar yalnızca adı değiştirir.
+/// Harita ekranında ([PanelHost] altında) panel **modal değildir**: harita
+/// kullanılabilir kalır, `Navigator.pop` en üstteki paneli kapatır. Bkz.
+/// [PanelHost] (hangi panelin hangisini kapattığı orada).
+///
+/// Barındırıcı yoksa (ör. bir diyalogdan çağrılırsa) eski davranış: modal
+/// alttan sayfa / sağdan panel.
+///
+/// [id] + [toggle]: aynı düğme ikinci kez basılınca panel kapanır.
 Future<T?> showAdaptiveSheet<T>({
   required BuildContext context,
   required WidgetBuilder builder,
   bool showDragHandle = true,
   bool isScrollControlled = false,
+  String? id,
+  bool toggle = false,
 }) {
+  final host = PanelHost.maybeOf(context);
+  if (host != null) {
+    return host
+        .open(
+          opener: context,
+          builder: builder,
+          id: id,
+          toggle: toggle,
+          showDragHandle: showDragHandle,
+        )
+        .then((_) => null);
+  }
+
   if (!isLandscape(context)) {
     return showModalBottomSheet<T>(
       context: context,
@@ -37,7 +46,6 @@ Future<T?> showAdaptiveSheet<T>({
   }
 
   final width = sidePanelWidth(context);
-  openSidePanels.value++;
   return showGeneralDialog<T>(
     context: context,
     barrierDismissible: true,
@@ -49,10 +57,13 @@ Future<T?> showAdaptiveSheet<T>({
       return Align(
         alignment: Alignment.centerRight,
         child: Material(
-          color: theme.bottomSheetTheme.backgroundColor ??
+          color:
+              theme.bottomSheetTheme.backgroundColor ??
               theme.colorScheme.surfaceContainerLow,
           elevation: 8,
-          borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
+          borderRadius: const BorderRadius.horizontal(
+            left: Radius.circular(16),
+          ),
           clipBehavior: Clip.antiAlias,
           child: SizedBox(
             width: width,
@@ -80,9 +91,11 @@ Future<T?> showAdaptiveSheet<T>({
       );
     },
     transitionBuilder: (context, anim, _, child) => SlideTransition(
-      position: Tween(begin: const Offset(1, 0), end: Offset.zero)
-          .animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
+      position: Tween(
+        begin: const Offset(1, 0),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
       child: child,
     ),
-  ).whenComplete(() => openSidePanels.value--);
+  );
 }

@@ -7,36 +7,51 @@ const double kToolbarButtonSize = 48;
 /// Araç çubuğunun toplam yüksekliği (kenar boşluğu dahil).
 const double kAtakToolbarHeight = kToolbarButtonSize + 8;
 
-/// ATAK araç çubuğu (kılavuz s.5): haritanın üstünde, solda ≡.
+/// Araç çubuğundaki bir düğme. Harita ekranı seçili araçlardan üretir
+/// (bkz. `ToolbarTool`); etiket erişilebilirlik adıdır.
+class ToolbarItem {
+  const ToolbarItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.active = false,
+    this.accent,
+    this.activeForeground = Colors.black,
+    this.haptic = HapticFeedback.selectionClick,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  /// Açık/çalışan araç (vurgulu arka plan).
+  final bool active;
+
+  /// Vurgu rengi (null: gündüz sarı, gece kırmızı).
+  final Color? accent;
+  final Color activeForeground;
+  final Future<void> Function() haptic;
+}
+
+/// ATAK araç çubuğu (kılavuz s.5): haritanın üstünde, solda ≡, yanında
+/// kullanıcının seçtiği araçlar (Toolbar Manager, s.55–57).
 ///
 /// ≡ bütün araçların ızgarasını açar; ≡'ye uzun basınca çubuk gizlenir.
-/// Sıra: ≡ · Nokta bırak · Ölçüm (R&B) · Koordinat/Git · Haritalar · İz kaydı.
+/// Bir araca uzun basınca [onEdit] (Araç çubuğu paneli: ekle/çıkar/sırala).
 class AtakToolbar extends StatelessWidget {
   const AtakToolbar({
     super.key,
     required this.onMenu,
     required this.onHide,
-    required this.onDropPoint,
-    required this.onMeasure,
-    required this.onGoTo,
-    required this.onMaps,
-    required this.onRecord,
-    this.dropActive = false,
-    this.measureActive = false,
-    this.recording = false,
+    required this.items,
+    this.onEdit,
     this.night = false,
   });
 
   final VoidCallback onMenu;
   final VoidCallback onHide;
-  final VoidCallback onDropPoint;
-  final VoidCallback onMeasure;
-  final VoidCallback onGoTo;
-  final VoidCallback onMaps;
-  final VoidCallback onRecord;
-  final bool dropActive;
-  final bool measureActive;
-  final bool recording;
+  final List<ToolbarItem> items;
+  final VoidCallback? onEdit;
   final bool night;
 
   @override
@@ -52,45 +67,19 @@ class AtakToolbar extends StatelessWidget {
           onLongPress: onHide,
           night: night,
         ),
-        const _Divider(),
-        _ToolbarButton(
-          icon: Icons.add_location_alt_outlined,
-          label: 'Nokta bırak',
-          active: dropActive,
-          accent: accent,
-          onTap: onDropPoint,
-          night: night,
-        ),
-        _ToolbarButton(
-          icon: Icons.straighten,
-          label: 'Ölçüm (R&B)',
-          active: measureActive,
-          accent: accent,
-          onTap: onMeasure,
-          night: night,
-        ),
-        _ToolbarButton(
-          icon: Icons.travel_explore,
-          label: 'Koordinat / Git',
-          onTap: onGoTo,
-          night: night,
-        ),
-        _ToolbarButton(
-          icon: Icons.map_outlined,
-          label: 'Haritalar',
-          onTap: onMaps,
-          night: night,
-        ),
-        _ToolbarButton(
-          icon: recording ? Icons.stop_circle : Icons.radio_button_checked,
-          label: recording ? 'İz kaydını durdur' : 'İz kaydını başlat',
-          active: recording,
-          accent: Colors.red.shade700,
-          activeForeground: Colors.white,
-          onTap: onRecord,
-          night: night,
-          haptic: HapticFeedback.mediumImpact,
-        ),
+        if (items.isNotEmpty) const _Divider(),
+        for (final item in items)
+          _ToolbarButton(
+            icon: item.icon,
+            label: item.label,
+            active: item.active,
+            accent: item.accent ?? accent,
+            activeForeground: item.activeForeground,
+            onTap: item.onTap,
+            onLongPress: onEdit,
+            night: night,
+            haptic: item.haptic,
+          ),
       ],
     );
   }

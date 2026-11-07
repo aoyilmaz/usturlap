@@ -6,6 +6,7 @@ import 'package:kerteriz/features/map/engine/map_types.dart';
 import 'package:kerteriz/features/shell/atak_toolbar.dart';
 import 'package:kerteriz/features/shell/map_controls.dart';
 import 'package:kerteriz/features/shell/tools_grid_sheet.dart';
+import 'package:kerteriz/features/shell/toolbar_tools.dart';
 import 'package:latlong2/latlong.dart';
 
 Widget _wrap(Widget child) => MaterialApp(
@@ -17,65 +18,78 @@ Widget _wrap(Widget child) => MaterialApp(
 void main() {
   group('ATAK araç çubuğu', () {
     late Map<String, int> calls;
-    Widget bar({bool recording = false, bool drop = false}) {
+    void c(String k) => calls[k] = (calls[k] ?? 0) + 1;
+
+    Widget bar(List<(IconData, String)> tools, {bool withEdit = true}) {
       calls = {};
-      void c(String k) => calls[k] = (calls[k] ?? 0) + 1;
       return _wrap(
         AtakToolbar(
           onMenu: () => c('menu'),
           onHide: () => c('hide'),
-          onDropPoint: () => c('drop'),
-          onMeasure: () => c('measure'),
-          onGoTo: () => c('goto'),
-          onMaps: () => c('maps'),
-          onRecord: () => c('record'),
-          recording: recording,
-          dropActive: drop,
+          onEdit: withEdit ? () => c('edit') : null,
+          items: [
+            for (final (icon, key) in tools)
+              ToolbarItem(icon: icon, label: key, onTap: () => c(key)),
+          ],
         ),
       );
     }
 
+    const defaults = [
+      (Icons.add_location_alt_outlined, 'drop'),
+      (Icons.straighten, 'measure'),
+      (Icons.travel_explore, 'goto'),
+      (Icons.map_outlined, 'maps'),
+      (Icons.radio_button_checked, 'record'),
+    ];
+
     testWidgets('her düğme kendi işini çağırır', (tester) async {
-      await tester.pumpWidget(bar());
-      for (final (icon, key) in [
-        (Icons.menu, 'menu'),
-        (Icons.add_location_alt_outlined, 'drop'),
-        (Icons.straighten, 'measure'),
-        (Icons.travel_explore, 'goto'),
-        (Icons.map_outlined, 'maps'),
-        (Icons.radio_button_checked, 'record'),
-      ]) {
+      await tester.pumpWidget(bar(defaults));
+      for (final (icon, key) in [(Icons.menu, 'menu'), ...defaults]) {
         await tester.tap(find.byIcon(icon));
         expect(calls[key], 1, reason: key);
       }
+      // Etiket erişilebilirlik adıdır.
+      expect(find.bySemanticsLabel('maps'), findsOneWidget);
     });
 
-    testWidgets('≡ uzun basınca çubuk gizlenir', (tester) async {
-      await tester.pumpWidget(bar());
+    testWidgets('≡ uzun basınca çubuk gizlenir, araca uzun basınca düzenle', (
+      tester,
+    ) async {
+      await tester.pumpWidget(bar(defaults));
       await tester.longPress(find.byIcon(Icons.menu));
       expect(calls['hide'], 1);
       expect(calls['menu'], isNull);
+      await tester.longPress(find.byIcon(Icons.map_outlined));
+      expect(calls['edit'], 1);
+      expect(calls['maps'], isNull);
     });
 
-    testWidgets('kayıt sürerken düğme "durdur" olur', (tester) async {
-      await tester.pumpWidget(bar(recording: true));
-      expect(find.byIcon(Icons.stop_circle), findsOneWidget);
-      expect(find.bySemanticsLabel('İz kaydını durdur'), findsOneWidget);
+    testWidgets('araç yoksa yalnız ≡ kalır', (tester) async {
+      await tester.pumpWidget(bar(const []));
+      expect(find.byType(InkWell), findsOneWidget);
+      expect(find.byIcon(Icons.menu), findsOneWidget);
     });
 
-    testWidgets('dikey iPhone ekranına sığar, düğmeler ≥ 48 pt', (
-      tester,
-    ) async {
-      tester.view.physicalSize = const Size(1170, 2532); // 390 × 844
+    testWidgets('en çok araçla dikey iPhone ekranına sığar', (tester) async {
+      tester.view.physicalSize = const Size(1125, 2436); // 375 × 812 (en dar)
       tester.view.devicePixelRatio = 3;
       addTearDown(tester.view.reset);
-      await tester.pumpWidget(bar());
+      final icons = [
+        Icons.add_location_alt_outlined,
+        Icons.straighten,
+        Icons.travel_explore,
+        Icons.map_outlined,
+        Icons.radio_button_checked,
+        Icons.settings,
+      ];
+      expect(icons.length, ToolbarTool.maxOnBar);
+      await tester.pumpWidget(bar([for (final i in icons) (i, '$i')]));
+      expect(tester.takeException(), isNull);
       expect(
         tester.getSize(find.byType(AtakToolbar)).width,
-        lessThanOrEqualTo(390 - 16),
+        lessThanOrEqualTo(375 - 16),
       );
-      final btn = tester.getSize(find.byIcon(Icons.map_outlined).hitTestable());
-      expect(btn.width, greaterThanOrEqualTo(24)); // ikon
       expect(kToolbarButtonSize, greaterThanOrEqualTo(48));
     });
   });

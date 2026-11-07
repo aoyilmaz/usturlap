@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'core/constants.dart';
 import 'features/map/map_screen.dart';
+import 'features/shell/panel_host.dart';
 
 /// Uygulamanın kök widget'ı. Tema ve ana ekranı bağlar.
 ///
@@ -16,7 +17,8 @@ class KerterizApp extends StatelessWidget {
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(useMaterial3: true),
-      home: const MapScreen(),
+      // Paneller (menüler, listeler) haritanın üstünde, modal olmadan açılır.
+      home: const PanelHost(child: MapScreen()),
     );
   }
 }

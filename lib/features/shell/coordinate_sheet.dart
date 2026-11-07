@@ -24,10 +24,14 @@ Future<void> showCoordinateSheet(
 }) {
   return showAdaptiveSheet<void>(
     context: context,
+    // Araç çubuğundaki "Git" ikinci kez basılınca panel kapanır.
+    id: 'goto',
+    toggle: true,
     showDragHandle: true,
     isScrollControlled: true,
     builder: (context) => Padding(
-      // Klavye açılınca sayfa yukarı kaysın.
+      // Klavye açılınca sayfa yukarı kaysın (harita panelinde panel zaten
+      // klavyenin üstünde durur; orada bu pay 0 gelir).
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: _CoordinateSheet(
         crosshair: crosshair,

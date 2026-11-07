@@ -14,8 +14,10 @@ import 'package:kerteriz/providers/route_providers.dart';
 import 'package:kerteriz/features/shell/adaptive_sheet.dart';
 import 'package:kerteriz/features/shell/atak_toolbar.dart';
 import 'package:kerteriz/features/shell/settings_sheet.dart';
+import 'package:kerteriz/features/shell/toolbar_tools.dart';
 import 'package:kerteriz/providers/location_providers.dart';
 import 'package:kerteriz/providers/repeater_providers.dart';
+import 'package:kerteriz/providers/settings_providers.dart';
 import 'package:kerteriz/providers/waypoint_providers.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -71,7 +73,7 @@ void main() {
           positionSourceProvider.overrideWithValue(_FixedSource(self)),
           repeatersProvider.overrideWith((ref) async => const []),
         ],
-        child: const MaterialApp(home: MapScreen()),
+        child: const MaterialApp(home: PanelHost(child: MapScreen())),
       ),
     );
     await tester.pump(const Duration(milliseconds: 500));
@@ -85,6 +87,14 @@ void main() {
     expect(r.top, greaterThanOrEqualTo(0), reason: '$r');
     expect(r.right, lessThanOrEqualTo(screen.width), reason: '$r');
     expect(r.bottom, lessThanOrEqualTo(screen.height), reason: '$r');
+  }
+
+  /// Panel + kenar payı (kare sonunda yayınlanır) + kayma animasyonu.
+  /// pumpAndSettle olmaz: harita ekranında süren zamanlayıcılar var.
+  Future<void> settle(WidgetTester tester) async {
+    for (var i = 0; i < 8; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
   }
 
   /// drift akışlarının zamanlayıcıları test bitmeden kapansın.
@@ -142,19 +152,51 @@ void main() {
     // Sağdan panel açılınca konum kutusu panelin soluna kayar.
     final ctx = tester.element(find.byType(MapScreen));
     showSettingsSheet(ctx);
-    // Önce kare (panel + kayma animasyonu başlar), sonra animasyon biter.
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+    await settle(tester);
     final panel = sidePanelWidth(ctx);
     expect(
       tester.getRect(find.byType(SelfInfoBox)).right,
       lessThanOrEqualTo(844 - panel - 8 + 0.5),
     );
+    // Panel modal değil: araç çubuğu kullanılabilir.
+    expect(find.bySemanticsLabel('Bütün araçlar').hitTestable(), findsOneWidget);
     Navigator.of(ctx).pop();
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-    expect(openSidePanels.value, 0);
+    await settle(tester);
+    expect(PanelHost.maybeOf(ctx)!.hasOpenPanel, isFalse);
     expect(tester.getRect(find.byType(SelfInfoBox)).right, closeTo(844 - 8, 1));
+    await dispose(tester);
+  });
+
+  testWidgets('dikey + panel: konum kutusu panelin üstüne çıkar, ≡ çalışır', (
+    tester,
+  ) async {
+    const screen = Size(390, 844);
+    await pumpScreen(tester, screen, self: _self);
+    final ctx = tester.element(find.byType(MapScreen));
+    showSettingsSheet(ctx);
+    await settle(tester);
+    expect(tester.takeException(), isNull);
+    final panelTop = 844 - PanelHost.insetsOf(ctx).value.bottom;
+    // Uzun içerik: yarım ekran.
+    expect(panelTop, closeTo(844 / 2, 1));
+    final box = tester.getRect(find.byType(SelfInfoBox));
+    expect(box.bottom, closeTo(panelTop - 8, 1));
+    expect(
+      tester.getRect(find.byType(MapScaleBar)).bottom,
+      lessThanOrEqualTo(panelTop - 36 + 0.5),
+    );
+
+    // Araç çubuğu haritanın üstünde, dokunulabilir: ≡ ayarların yerine
+    // araç ızgarasını açar; ikinci basış kapatır.
+    await tester.tap(find.bySemanticsLabel('Bütün araçlar'));
+    await settle(tester);
+    expect(find.text('Koordinat / Git'), findsOneWidget); // ızgarada
+    expect(find.text('Gece modu'), findsNothing);
+    await tester.tap(find.bySemanticsLabel('Bütün araçlar'));
+    await settle(tester);
+    expect(PanelHost.maybeOf(ctx)!.hasOpenPanel, isFalse);
+    expect(tester.getRect(find.byType(SelfInfoBox)).bottom,
+        closeTo(844 - 34 - 8, 1));
     await dispose(tester);
   });
 
@@ -196,6 +238,58 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Ölçüm (R&B)'));
     await tester.pump();
     expect(find.byType(RangeToolsBar), findsNothing);
+    await dispose(tester);
+  });
+
+  testWidgets('araç çubuğu: seçim çubuğa yansır, çıkan araç ızgarada kalır', (
+    tester,
+  ) async {
+    await pumpScreen(tester, const Size(390, 844), self: _self);
+    final ctx = tester.element(find.byType(MapScreen));
+    final container = ProviderScope.containerOf(ctx);
+    // Varsayılan çubuk.
+    for (final label in [
+      'Nokta bırak',
+      'Ölçüm (R&B)',
+      'Koordinat / Git',
+      'Haritalar',
+      'İz kaydını başlat',
+    ]) {
+      expect(find.bySemanticsLabel(label), findsOneWidget, reason: label);
+    }
+
+    // Kayıt sürerken düğme "durdur" olur.
+    await tester.tap(find.bySemanticsLabel('İz kaydını başlat'));
+    await settle(tester);
+    expect(find.bySemanticsLabel('İz kaydını durdur'), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel('İz kaydını durdur'));
+    await settle(tester);
+
+    // Kayıt düğmesini çıkar, gece modunu ekle.
+    final n = container.read(toolbarToolsProvider.notifier);
+    n.remove(ToolbarTool.record);
+    n.add(ToolbarTool.nightMode);
+    await tester.pump();
+    expect(find.bySemanticsLabel(RegExp('^İz kaydını')), findsNothing);
+    await tester.tap(find.bySemanticsLabel('Gece modu'));
+    await tester.pump();
+    expect(container.read(nightModeProvider), isTrue);
+    await tester.tap(find.bySemanticsLabel('Gece modu'));
+    await tester.pump();
+
+    // Çubuktan çıkan araç ≡ ızgarasında.
+    await tester.tap(find.bySemanticsLabel('Bütün araçlar'));
+    await settle(tester);
+    // Yarım ekran panelde görünen alanın hemen altında (kaydırınca görünür).
+    expect(find.text('İz kaydı', skipOffstage: false), findsOneWidget);
+    Navigator.of(ctx).pop();
+    await settle(tester);
+
+    // Bir araca uzun bas → Araç çubuğu paneli; harita açık kalır.
+    await tester.longPress(find.bySemanticsLabel('Haritalar'));
+    await settle(tester);
+    expect(find.textContaining('Çubukta 5/6 araç'), findsOneWidget);
+    expect(find.bySemanticsLabel('Haritalar').hitTestable(), findsOneWidget);
     await dispose(tester);
   });
 }

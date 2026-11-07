@@ -137,14 +137,33 @@ görüntülerinden alınır, ATAK'ın ikonları kullanılmaz.
 | Sol alt: bildirim ve navigasyon (5, 17–19) | Uyarılar, rota/bloodhound bilgi kutusu ATAK'taki gibi sol altta | S |
 | Ölçek (5) | C1'de açılan ölçek çubuğu ATAK konumuna taşınır | S |
 
-**D2. Paneller ve araç çubukları** — üç adımda: **D2a** araç alt çubukları (kodda tamam, cihaz
-testi bekliyor), **D2b** panel açıkken harita kullanılabilir, **D2c** Toolbar Manager.
+**D2. Paneller ve araç çubukları** — üç adımda: **D2a** araç alt çubukları (tamam, commit
+89423b0), **D2b** panel açıkken harita kullanılabilir (kodda tamam, cihaz testi bekliyor),
+**D2c** Toolbar Manager (kodda tamam, cihaz testi bekliyor).
 
 > D2a: R&B düğmesi ana çubuğun altında **Range Tools** çubuğunu açar (halka · R&B · alan · sektör ·
 > görüş hattı · ✕; seçili araç sarı, tekrar dokununca kapanır) + altında ölçüm şeridi (kaydet ·
 > göster/gizle · geri al · temizle). Rota planlama ATAK'taki gibi üstte tek çubuk (talimat/mesafe +
 > Geri al · Temizle · [+ Nokta yalnız artı imleç açıksa] · Kaydet · Çık); alttaki çubuk kalktı.
 > Kılavuz s.12 (Range Tools), s.15 (rota: End/Draw/Undo). Draw (parmakla çizim) yok.
+>
+> D2b: `PanelHost` (`lib/features/shell/panel_host.dart`) harita sayfasının üstünde, **modal
+> olmayan** paneller: karartma yok, panel açıkken harita kaydırılır/dokunulur. Yatayda sağdan
+> (~%45, tam boy), dikeyde alttan (içerik kadar, en çok yarım ekran; tutamak yukarı → araç
+> çubuğunun altına kadar büyür, aşağı → küçülür/kapanır; ✕). Paneller sayfanın geri yığınına
+> (`LocalHistoryEntry`) girer: içerikteki `Navigator.pop` ve Android geri tuşu en üstteki paneli
+> kapatır, çağıranlar değişmedi. Haritadan/çubuktan açılan panel öncekini kapatır; panel içinden
+> açılan üstüne biner. ≡ · Git · Haritalar ikinci basışta kapanır. Köşe kutuları ve Mapbox logosu
+> panelin yanına/üstüne kayar (tam ekranda gizlenir). Bilgi şeritleri panelin üstünde.
+>
+> D2c: üst çubuktaki araçları kullanıcı seçer (`ToolbarTool`, ayarlarda `toolbar_tools`; en
+> çok 6, varsayılan D1'deki 5). Katalog: nokta bırak · R&B · Git · Haritalar · iz kaydı ·
+> rotalar · noktalar · izler · çizimler · çevrimdışı bölgeler · gece modu · artı imleç · ayarlar.
+> "Araç çubuğu" paneli (≡ → Sistem, ya da çubuktaki bir araca uzun bas): tutamaktan sürükle-sırala,
+> çıkar, ekle, varsayılana dön; panel modal olmadığı için değişiklik çubukta anında görünür.
+> Çubuktan çıkan her araç ≡ ızgarasında da var (ızgaraya Nokta bırak ve İz kaydı eklendi);
+> çubuk ve ızgara aynı eylem tanımını kullanır. ATAK'ın birden çok adlı çubuk / sürükle-bırak
+> ile ızgaradan çubuğa taşıma yok (gerekirse sonra).
 
 | Öğe (ATAK s.) | Ne yapılacak | Efor |
 |---|---|---|

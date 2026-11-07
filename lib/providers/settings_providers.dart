@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/bearing_format.dart';
 import '../core/constants.dart';
 import '../core/coord_format.dart';
+import '../core/toolbar_tool.dart';
 import '../data/db/settings_repository.dart';
 import 'waypoint_providers.dart';
 
@@ -231,3 +232,55 @@ class CrosshairNotifier extends Notifier<bool> {
 
 final crosshairProvider =
     NotifierProvider<CrosshairNotifier, bool>(CrosshairNotifier.new);
+
+const _toolbarToolsKey = 'toolbar_tools';
+
+/// Üst araç çubuğundaki araçlar ve sırası (ATAK Toolbar Manager). Kalıcı.
+class ToolbarToolsNotifier extends Notifier<List<ToolbarTool>> {
+  /// Kayıtlı değer gelmeden kullanıcı değiştirdiyse kayıtlı değer ezmesin.
+  bool _changed = false;
+
+  @override
+  List<ToolbarTool> build() {
+    _load();
+    return ToolbarTool.defaults;
+  }
+
+  Future<void> _load() async {
+    final saved =
+        await ref.read(settingsRepositoryProvider).get(_toolbarToolsKey);
+    if (saved != null && !_changed) state = ToolbarTool.decode(saved);
+  }
+
+  /// Sona ekler (çubuk doluysa ya da zaten varsa bir şey yapmaz).
+  void add(ToolbarTool t) {
+    if (state.contains(t) || state.length >= ToolbarTool.maxOnBar) return;
+    _save([...state, t]);
+  }
+
+  void remove(ToolbarTool t) => _save([...state]..remove(t));
+
+  /// [from] konumundaki aracı [to] konumuna taşır ([to]: çıkarıldıktan
+  /// sonraki dizine göre, ReorderableListView.onReorderItem gibi).
+  void move(int from, int to) {
+    if (from < 0 || from >= state.length) return;
+    final list = [...state];
+    final t = list.removeAt(from);
+    list.insert(to.clamp(0, list.length), t);
+    _save(list);
+  }
+
+  void reset() => _save(ToolbarTool.defaults);
+
+  void _save(List<ToolbarTool> tools) {
+    _changed = true;
+    state = List.unmodifiable(tools);
+    ref
+        .read(settingsRepositoryProvider)
+        .set(_toolbarToolsKey, ToolbarTool.encode(tools));
+  }
+}
+
+final toolbarToolsProvider =
+    NotifierProvider<ToolbarToolsNotifier, List<ToolbarTool>>(
+        ToolbarToolsNotifier.new);

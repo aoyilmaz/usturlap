@@ -449,10 +449,16 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
     final map = _c._map;
     if (map == null) return;
     final p = widget.ornamentPadding;
-    await map.logo.updateSettings(
-        LogoSettings(marginLeft: 8 + p.left, marginBottom: 8 + p.bottom));
+    // Konum açıkça sol alt: iOS'ta atıf düğmesinin varsayılanı sağ alt ve
+    // orada konum kutusunun arkasında kalıyordu (kullanım şartı: görünür).
+    await map.logo.updateSettings(LogoSettings(
+        position: OrnamentPosition.BOTTOM_LEFT,
+        marginLeft: 8 + p.left,
+        marginBottom: 8 + p.bottom));
     await map.attribution.updateSettings(AttributionSettings(
-        marginLeft: 92 + p.left, marginBottom: 8 + p.bottom));
+        position: OrnamentPosition.BOTTOM_LEFT,
+        marginLeft: 92 + p.left,
+        marginBottom: 8 + p.bottom));
   }
 
   Future<void> _onStyleLoaded(StyleLoadedEventData _) async {

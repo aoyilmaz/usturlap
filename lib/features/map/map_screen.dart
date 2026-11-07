@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -41,6 +42,8 @@ import '../shell/map_controls.dart';
 import '../shell/route_sheet.dart';
 import '../shell/settings_sheet.dart';
 import '../shell/tools_grid_sheet.dart';
+import '../shell/toolbar_manager_sheet.dart';
+import '../shell/toolbar_tools.dart';
 import '../tools/graphic_list_sheet.dart';
 import '../layers/import_layer_action.dart';
 import '../nav/nav_banner.dart';
@@ -652,6 +655,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   void _openLayers() {
     showAdaptiveSheet<void>(
       context: context,
+      id: 'layers',
+      toggle: true,
       showDragHandle: true,
       isScrollControlled: true,
       builder: (context) {
@@ -817,22 +822,22 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           onTap: () => setTool(m),
         );
 
+    // Araç çubuğuna konabilen araçlar burada da var (çubuktan çıkan araç
+    // kaybolmasın); görünüm ve iş tek yerden: _toolbarItem.
+    ToolGridItem catalog(ToolbarTool t) {
+      final item = _toolbarItem(t);
+      return ToolGridItem(
+        icon: item.icon,
+        label: t.label,
+        active: item.active,
+        onTap: item.onTap,
+      );
+    }
+
     showToolsGridSheet(context, sections: [
       ToolGridSection('Navigasyon', [
-        ToolGridItem(
-            icon: Icons.travel_explore,
-            label: 'Koordinat / Git',
-            onTap: _openCoordinate),
-        ToolGridItem(
-          icon: Icons.alt_route,
-          label: 'Rotalar',
-          active: ref.read(activeRouteProvider) != null,
-          onTap: () => showRouteSheet(
-            context,
-            onPlanNew: _startRoutePlanning,
-            onShowRoute: _showRoute,
-          ),
-        ),
+        catalog(ToolbarTool.goTo),
+        catalog(ToolbarTool.routes),
       ]),
       ToolGridSection('Ölçüm', [
         toolItem(ToolMode.distance, Icons.straighten, 'Mesafe / R&B'),
@@ -842,46 +847,30 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         toolItem(ToolMode.lineOfSight, Icons.landscape_outlined, 'Görüş hattı'),
       ]),
       ToolGridSection('Veri', [
-        ToolGridItem(
-            icon: Icons.place_outlined,
-            label: 'Noktalar',
-            onTap: () => showWaypointListSheet(context, ref,
-                onTapWaypoint: (wp) => _centerOn(wp.position))),
-        ToolGridItem(
-            icon: Icons.timeline,
-            label: 'İzler',
-            onTap: () => showTrackListSheet(context, ref)),
-        ToolGridItem(
-            icon: Icons.draw_outlined,
-            label: 'Çizimler',
-            onTap: () => showGraphicListSheet(context, ref)),
+        catalog(ToolbarTool.dropPoint),
+        catalog(ToolbarTool.record),
+        catalog(ToolbarTool.waypoints),
+        catalog(ToolbarTool.tracks),
+        catalog(ToolbarTool.graphics),
         ToolGridItem(
             icon: Icons.file_open_outlined,
             label: 'GPX / KML içe aktar',
             onTap: () => runGpxKmlImport(context, ref)),
       ]),
       ToolGridSection('Harita', [
-        ToolGridItem(
-            icon: Icons.map_outlined, label: 'Haritalar', onTap: _openLayers),
-        ToolGridItem(
-          icon: Icons.download_for_offline_outlined,
-          label: 'Çevrimdışı bölgeler',
-          onTap: () => showOfflineRegionsSheet(
-            context,
-            onShowRegion: _showRegion,
-            onNewRegion: _startFraming,
-          ),
-        ),
+        catalog(ToolbarTool.maps),
+        catalog(ToolbarTool.offlineRegions),
         ToolGridItem(
             icon: Icons.file_download_outlined,
             label: 'Harita paketi içe aktar',
             onTap: _importLayer),
       ]),
       ToolGridSection('Sistem', [
+        catalog(ToolbarTool.settings),
         ToolGridItem(
-            icon: Icons.settings,
-            label: 'Ayarlar',
-            onTap: () => showSettingsSheet(context)),
+            icon: Icons.view_week_outlined,
+            label: 'Araç çubuğu',
+            onTap: () => showToolbarManagerSheet(context)),
         ToolGridItem(
           icon: Icons.delete_forever,
           label: 'Acil veri silme',
@@ -890,6 +879,110 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         ),
       ]),
     ]);
+  }
+
+  /// Bir aracın düğmesi: ikon, ad, iş ve açık/kapalı durumu. Araç çubuğu ve
+  /// ≡ ızgarası ikisi de bunu kullanır. Durumları ref.read ile okur: harita
+  /// ekranı kayıt/araç/rota/gece/artı imleç sağlayıcılarını build'de zaten
+  /// izliyor (ref.watch), değişince çubuk yeniden çizilir.
+  ToolbarItem _toolbarItem(ToolbarTool t) {
+    switch (t) {
+      case ToolbarTool.dropPoint:
+        return ToolbarItem(
+            icon: t.icon, label: t.label, active: _dropMode, onTap: _onDropPoint);
+      case ToolbarTool.measure:
+        final tool = ref.read(toolProvider);
+        return ToolbarItem(
+          icon: t.icon,
+          label: t.label,
+          active: _rangeBarOpen || tool.active,
+          // R&B: ölçüm araçları çubuğunu aç/kapat.
+          onTap: () {
+            final open = !(_rangeBarOpen || ref.read(toolProvider).active);
+            if (!open) ref.read(toolProvider.notifier).reset();
+            setState(() {
+              _rangeBarOpen = open;
+              _dropMode = false;
+            });
+          },
+        );
+      case ToolbarTool.goTo:
+        return ToolbarItem(icon: t.icon, label: t.label, onTap: _openCoordinate);
+      case ToolbarTool.maps:
+        return ToolbarItem(icon: t.icon, label: t.label, onTap: _openLayers);
+      case ToolbarTool.record:
+        final on = ref.read(recordingProvider).isRecording;
+        return ToolbarItem(
+          icon: on ? Icons.stop_circle : t.icon,
+          label: on ? 'İz kaydını durdur' : 'İz kaydını başlat',
+          active: on,
+          accent: Colors.red.shade700,
+          activeForeground: Colors.white,
+          haptic: HapticFeedback.mediumImpact,
+          onTap: () {
+            final n = ref.read(recordingProvider.notifier);
+            ref.read(recordingProvider).isRecording ? n.stop() : n.start();
+          },
+        );
+      case ToolbarTool.routes:
+        return ToolbarItem(
+          icon: t.icon,
+          label: t.label,
+          active: ref.read(activeRouteProvider) != null,
+          onTap: () => showRouteSheet(
+            context,
+            onPlanNew: _startRoutePlanning,
+            onShowRoute: _showRoute,
+          ),
+        );
+      case ToolbarTool.waypoints:
+        return ToolbarItem(
+          icon: t.icon,
+          label: t.label,
+          onTap: () => showWaypointListSheet(context, ref,
+              onTapWaypoint: (wp) => _centerOn(wp.position)),
+        );
+      case ToolbarTool.tracks:
+        return ToolbarItem(
+            icon: t.icon,
+            label: t.label,
+            onTap: () => showTrackListSheet(context, ref));
+      case ToolbarTool.graphics:
+        return ToolbarItem(
+            icon: t.icon,
+            label: t.label,
+            onTap: () => showGraphicListSheet(context, ref));
+      case ToolbarTool.offlineRegions:
+        return ToolbarItem(
+          icon: t.icon,
+          label: t.label,
+          onTap: () => showOfflineRegionsSheet(
+            context,
+            onShowRegion: _showRegion,
+            onNewRegion: _startFraming,
+          ),
+        );
+      case ToolbarTool.nightMode:
+        final on = ref.read(nightModeProvider);
+        return ToolbarItem(
+          icon: on ? Icons.nightlight_round : t.icon,
+          label: t.label,
+          active: on,
+          onTap: () => ref.read(nightModeProvider.notifier).toggle(),
+        );
+      case ToolbarTool.crosshair:
+        return ToolbarItem(
+          icon: t.icon,
+          label: t.label,
+          active: ref.read(crosshairProvider),
+          onTap: () => ref.read(crosshairProvider.notifier).toggle(),
+        );
+      case ToolbarTool.settings:
+        return ToolbarItem(
+            icon: t.icon,
+            label: t.label,
+            onTap: () => showSettingsSheet(context));
+    }
   }
 
   /// Araç çubuğu "Nokta bırak": artı imleç açıksa imlecin altına nokta koyar;
@@ -936,7 +1029,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final selectedRepeater =
         showRepeaters ? ref.watch(selectedRepeaterProvider) : null;
     final navTarget = ref.watch(navTargetProvider);
-    final recording = ref.watch(recordingProvider);
+    // Kayıt düğmesi (araç çubuğu / ızgara) kayıt durumunu ref.read ile okur;
+    // değişince çubuk yeniden çizilsin diye burada izlenir.
+    ref.watch(recordingProvider);
     final planning = ref.watch(routePlanningProvider);
     final activeRoute = ref.watch(activeRouteProvider);
     // Rota noktasına varınca titreşim + bilgi.
@@ -971,6 +1066,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     // ATAK düzeni (kılavuz s.5): sol üstte araç çubuğu, altında pusula/◎/zoom
     // sütunu; sol altta bilgi kutuları + ölçek; sağ altta konum kutusu.
     final landscape = isLandscape(context);
+    // Açık panelin haritadan kapladığı kenar (yatay: sağ, dikey: alt).
+    final panelInsets = PanelHost.insetsOf(context);
+    final screenH = MediaQuery.sizeOf(context).height;
     final safe = MediaQuery.paddingOf(context);
     final safeBottom = safe.bottom;
     final bottomInset = safeBottom;
@@ -1072,60 +1170,65 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     ),
                   );
                 }
-                return kMapEngine.buildView(
-                  terrain3d: _terrain3d && kMapEngine.supportsTerrain,
-                  // Logo/atıf alt çubuğun (çerçevelerken panelin) üstünde kalsın.
-                  // Güvenli alana EK olarak haritayı örten arayüz (Mapbox iOS
-                  // kenar boşluklarını güvenli alandan ölçer; bkz. map_engine).
-                  ornamentPadding: _framing
-                      ? EdgeInsets.only(bottom: landscape ? 0 : 300)
-                      : EdgeInsets.zero,
-                  nightMode: nightMode,
-                  controller: _map,
-                  baseLayer: _resolved[_selected.id] ?? const NoBaseLayer(),
-                  overlays: overlays,
-                  initialCamera: _lastCamera,
-                  // Motor değişince yeni harita hazır olunca katman alanına git.
-                  onReady: () => _recenterToLayer(_selected),
-                  minZoom: AppConstants.minZoom,
-                  maxZoom: AppConstants.maxZoom,
-                  // Kullanıcı elle kaydırınca takibi bırak.
-                  onCameraChanged: (camera, byGesture) {
-                    _lastCamera = camera;
-                    _scaleCamera.value = camera;
-                    if (_framing) _cameraTick.value++;
-                    if (byGesture && _follow) {
-                      setState(() => _follow = false);
-                    }
-                  },
-                  // Tek dokun → araç aktifse nokta koy.
-                  onTap: (point) {
-                    if (_highlightRegionId != null || _previewRoute != null) {
-                      setState(() {
-                        _highlightRegionId = null;
-                        _previewRoute = null;
-                      });
-                    }
-                    if (ref.read(routePlanningProvider).active) {
-                      HapticFeedback.selectionClick();
-                      ref.read(routePlanningProvider.notifier).addPoint(point);
-                      return;
-                    }
-                    if (_dropMode) {
+                return ValueListenableBuilder<EdgeInsets>(
+                  valueListenable: panelInsets,
+                  builder: (context, panel, _) => kMapEngine.buildView(
+                    terrain3d: _terrain3d && kMapEngine.supportsTerrain,
+                    // Logo/atıf alttaki panelin (çerçevelerken bölge panelinin)
+                    // üstünde kalsın. Güvenli alana EK olarak haritayı örten
+                    // arayüz (Mapbox iOS kenar boşluklarını güvenli alandan
+                    // ölçer; bkz. map_engine).
+                    ornamentPadding: _framing
+                        ? EdgeInsets.only(bottom: landscape ? 0 : 300)
+                        : EdgeInsets.only(
+                            bottom: math.max(0, panel.bottom - safeBottom)),
+                    nightMode: nightMode,
+                    controller: _map,
+                    baseLayer: _resolved[_selected.id] ?? const NoBaseLayer(),
+                    overlays: overlays,
+                    initialCamera: _lastCamera,
+                    // Motor değişince yeni harita hazır olunca katman alanına git.
+                    onReady: () => _recenterToLayer(_selected),
+                    minZoom: AppConstants.minZoom,
+                    maxZoom: AppConstants.maxZoom,
+                    // Kullanıcı elle kaydırınca takibi bırak.
+                    onCameraChanged: (camera, byGesture) {
+                      _lastCamera = camera;
+                      _scaleCamera.value = camera;
+                      if (_framing) _cameraTick.value++;
+                      if (byGesture && _follow) {
+                        setState(() => _follow = false);
+                      }
+                    },
+                    // Tek dokun → araç aktifse nokta koy.
+                    onTap: (point) {
+                      if (_highlightRegionId != null || _previewRoute != null) {
+                        setState(() {
+                          _highlightRegionId = null;
+                          _previewRoute = null;
+                        });
+                      }
+                      if (ref.read(routePlanningProvider).active) {
+                        HapticFeedback.selectionClick();
+                        ref.read(routePlanningProvider.notifier).addPoint(point);
+                        return;
+                      }
+                      if (_dropMode) {
+                        HapticFeedback.mediumImpact();
+                        showAddWaypointDialog(context, ref, point);
+                        return;
+                      }
+                      if (ref.read(toolProvider).active) {
+                        HapticFeedback.selectionClick();
+                        ref.read(toolProvider.notifier).addPoint(point);
+                      }
+                    },
+                    // Uzun bas → waypoint ekle.
+                    onLongPress: (point) {
                       HapticFeedback.mediumImpact();
                       showAddWaypointDialog(context, ref, point);
-                      return;
-                    }
-                    if (ref.read(toolProvider).active) {
-                      HapticFeedback.selectionClick();
-                      ref.read(toolProvider.notifier).addPoint(point);
-                    }
-                  },
-                  // Uzun bas → waypoint ekle.
-                  onLongPress: (point) {
-                    HapticFeedback.mediumImpact();
-                    showAddWaypointDialog(context, ref, point);
-                  },
+                    },
+                  ),
                 );
               },
             ),
@@ -1202,23 +1305,26 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           // Sol alt: bilgi kutuları (indirme, hedef, rota takibi) + ölçek;
           // sağ alt: konum kutusu. Dikeyde kutular tam genişlik, konum
           // kutusunun üstünde; yatayda solda dar sütun.
-          // Yatayda sağdan panel açıkken panelin soluna kayar (ATAK: panel
-          // açılınca harita alanı daralır, köşe kutuları görünür kalır).
+          // Panel açıkken (ATAK: panel açılınca harita alanı daralır) köşe
+          // kutuları görünür kalır: yatayda panelin soluna, dikeyde üstüne
+          // kayar. Dikey panel tam ekrana büyütülünce kutular gizlenir.
           if (!_framing)
-            ValueListenableBuilder<int>(
-              valueListenable: openSidePanels,
-              builder: (context, open, _) => AnimatedPositioned(
+            ValueListenableBuilder<EdgeInsets>(
+              valueListenable: panelInsets,
+              builder: (context, panel, _) => AnimatedPositioned(
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeOutCubic,
                 left: 8 + safe.left,
-                right: 8 +
-                    safe.right +
-                    (landscape && open > 0 ? sidePanelWidth(context) : 0),
-                bottom: bottomInset + 8,
-                child: _bottomCluster(
-                  landscape: landscape,
-                  night: nightMode,
-                  showRoutePanel: !planning.active && activeRoute != null,
+                right: 8 + safe.right + panel.right,
+                // Alt panel güvenli alanı da kaplar.
+                bottom: (panel.bottom > 0 ? panel.bottom : bottomInset) + 8,
+                child: Offstage(
+                  offstage: panel.bottom > screenH * 0.55,
+                  child: _bottomCluster(
+                    landscape: landscape,
+                    night: nightMode,
+                    showRoutePanel: !planning.active && activeRoute != null,
+                  ),
                 ),
               ),
             ),
@@ -1229,16 +1335,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           // Araç çubuğunun altında, sol sütunun yanında: rota planı, nokta
           // bırakma ipucu, aktif ölçüm aracı.
           if (!_framing)
-            ValueListenableBuilder<int>(
-              valueListenable: openSidePanels,
-              builder: (context, open, child) => AnimatedPositioned(
+            ValueListenableBuilder<EdgeInsets>(
+              valueListenable: panelInsets,
+              builder: (context, panel, child) => AnimatedPositioned(
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeOutCubic,
                 top: safe.top + 6 + kAtakToolbarHeight + 6,
                 left: safe.left + 8 + kToolbarButtonSize + 10,
-                right: safe.right +
-                    8 +
-                    (landscape && open > 0 ? sidePanelWidth(context) : 0),
+                right: safe.right + 8 + panel.right,
                 child: child!,
               ),
               child: Align(
@@ -1314,25 +1418,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       night: nightMode,
                       onMenu: _openToolsGrid,
                       onHide: () => setState(() => _toolbarHidden = true),
-                      onDropPoint: _onDropPoint,
-                      dropActive: _dropMode,
-                      // R&B: ölçüm araçları çubuğunu aç/kapat.
-                      onMeasure: () {
-                        final open = !(_rangeBarOpen || tool.active);
-                        if (!open) ref.read(toolProvider.notifier).reset();
-                        setState(() {
-                          _rangeBarOpen = open;
-                          _dropMode = false;
-                        });
-                      },
-                      measureActive: _rangeBarOpen || tool.active,
-                      onGoTo: _openCoordinate,
-                      onMaps: _openLayers,
-                      recording: recording.isRecording,
-                      onRecord: () {
-                        final n = ref.read(recordingProvider.notifier);
-                        recording.isRecording ? n.stop() : n.start();
-                      },
+                      // Bir araca uzun bas → Araç çubuğu paneli.
+                      onEdit: () => showToolbarManagerSheet(context),
+                      items: [
+                        for (final t in ref.watch(toolbarToolsProvider))
+                          _toolbarItem(t),
+                      ],
                     ),
             ),
 
