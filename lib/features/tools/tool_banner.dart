@@ -8,7 +8,8 @@ import '../../providers/settings_providers.dart';
 import '../../providers/tool_providers.dart';
 import 'save_graphic_dialog.dart';
 
-/// Aktif araç için ölçüm değerini gösteren şerit (HUD'un altında).
+/// Aktif aracın ölçüm şeridi: değer + kaydet · göster/gizle · geri al · temizle.
+/// Range Tools çubuğunun (RangeToolsBar) altında durur.
 class ToolBanner extends ConsumerWidget {
   const ToolBanner({super.key});
 
@@ -34,8 +35,7 @@ class ToolBanner extends ConsumerWidget {
     }
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.72),
         borderRadius: BorderRadius.circular(12),
@@ -65,6 +65,13 @@ class ToolBanner extends ConsumerWidget {
                 ? null
                 : () => showSaveGraphicDialog(context, ref,
                     type: savable!, points: tool.points),
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            icon: Icon(tool.visible ? Icons.visibility : Icons.visibility_off,
+                color: Colors.white70, size: 20),
+            tooltip: tool.visible ? 'Çizimi gizle' : 'Çizimi göster',
+            onPressed: notifier.toggleVisible,
           ),
           IconButton(
             visualDensity: VisualDensity.compact,

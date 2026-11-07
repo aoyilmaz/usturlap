@@ -10,17 +10,14 @@ import '../../providers/settings_providers.dart';
 
 // ------------------------------------------------------------- planlama
 
-/// Rota planlama çubuğunun yüksekliği (güvenli alan hariç).
-const double kPlanBarHeight = 72;
+/// Rota planlama çubuğu — ATAK rota oluşturma (kılavuz s.15): ana araç
+/// çubuğunun altında talimat/mesafe + Geri al · Temizle · (+ Nokta) · Kaydet · ✕.
+/// Haritaya dokunmak nokta ekler; artı imleç açıksa "+ Nokta" imlece ekler.
+class RoutePlanToolbar extends ConsumerWidget {
+  const RoutePlanToolbar({super.key, this.onAddAtCrosshair});
 
-/// Planlama modunda ekranın altında:
-/// Geri al · Temizle · (+ Nokta) · Kaydet · Çık.
-/// (D2'de ATAK tarzı araç alt çubuğuna dönüşecek.)
-class RoutePlanBar extends ConsumerWidget {
-  const RoutePlanBar({super.key, required this.onAddAtCrosshair});
-
-  /// Artı imleçteki (haritanın ortası) noktayı rotaya ekle.
-  final VoidCallback onAddAtCrosshair;
+  /// Artı imleçteki noktayı rotaya ekle (imleç kapalıysa null → düğme yok).
+  final VoidCallback? onAddAtCrosshair;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -29,77 +26,82 @@ class RoutePlanBar extends ConsumerWidget {
     final has = plan.points.isNotEmpty;
 
     Widget btn(IconData icon, String label, VoidCallback? onTap,
-            {Color? color}) =>
-        Expanded(
+            {Color color = Colors.white}) =>
+        // Görünür metin etiket olarak okunur (ayrıca label verme: çift okunur).
+        Semantics(
+          button: true,
+          enabled: onTap != null,
           child: InkWell(
+            borderRadius: BorderRadius.circular(10),
             onTap: onTap == null
                 ? null
                 : () {
                     HapticFeedback.selectionClick();
                     onTap();
                   },
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon,
-                    color: onTap == null ? Colors.white24 : (color ?? Colors.white70),
-                    size: 26),
-                const SizedBox(height: 4),
-                Text(label,
-                    style: TextStyle(
-                        color: onTap == null
-                            ? Colors.white24
-                            : (color ?? Colors.white70),
-                        fontSize: 11)),
-              ],
+            child: SizedBox(
+              width: 56,
+              height: 52,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon,
+                      size: 22, color: onTap == null ? Colors.white24 : color),
+                  const SizedBox(height: 2),
+                  Text(label,
+                      style: TextStyle(
+                          fontSize: 10,
+                          color: onTap == null ? Colors.white24 : color)),
+                ],
+              ),
             ),
           ),
         );
 
-    return Material(
-      color: Colors.black.withValues(alpha: 0.85),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: kPlanBarHeight,
-          child: Row(
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 8, 4, 4),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.78),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.7)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.alt_route, color: Colors.amber, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  plan.points.isEmpty
+                      ? 'Rota: haritaya dokunarak nokta ekleyin'
+                      : 'MESAFE ${GeoMath.fmtDistance(plan.length)}  ·  '
+                          'NOKTA ${plan.points.length}',
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontFeatures: [FontFeature.tabularFigures()]),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Wrap(
             children: [
               btn(Icons.undo, 'Geri al', has ? n.undo : null),
               btn(Icons.layers_clear, 'Temizle', has ? n.clear : null),
-              Expanded(
-                child: Center(
-                  child: GestureDetector(
-                    onTap: () {
-                      HapticFeedback.mediumImpact();
-                      onAddAtCrosshair();
-                    },
-                    child: Container(
-                      width: 64,
-                      height: 64,
-                      decoration: const BoxDecoration(
-                          shape: BoxShape.circle, color: Colors.amber),
-                      child: const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.add, color: Colors.black, size: 28),
-                          Text('Nokta',
-                              style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              if (onAddAtCrosshair != null)
+                btn(Icons.add_location_alt, '+ Nokta', onAddAtCrosshair,
+                    color: Colors.amber),
               btn(Icons.save, 'Kaydet',
                   plan.points.length >= 2 ? () => _save(context, ref) : null,
                   color: Colors.amber),
               btn(Icons.close, 'Çık', () => _exit(context, ref)),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
@@ -160,43 +162,6 @@ class RoutePlanBar extends ConsumerWidget {
       if (ok != true) return;
     }
     ref.read(routePlanningProvider.notifier).cancel();
-  }
-}
-
-/// Planlama sırasında üstte: toplam mesafe + nokta sayısı + ipucu.
-class RoutePlanInfo extends ConsumerWidget {
-  const RoutePlanInfo({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final plan = ref.watch(routePlanningProvider);
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.75),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.amber.withValues(alpha: 0.7)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.alt_route, color: Colors.amber, size: 18),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              plan.points.isEmpty
-                  ? 'Rota planla: imleci yerleştirip "+ Nokta" ya da haritaya dokunun'
-                  : 'MESAFE ${GeoMath.fmtDistance(plan.length)}  ·  '
-                      'NOKTA ${plan.points.length}',
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontFeatures: [FontFeature.tabularFigures()]),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 

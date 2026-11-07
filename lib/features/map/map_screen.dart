@@ -45,8 +45,7 @@ import '../tools/graphic_list_sheet.dart';
 import '../layers/import_layer_action.dart';
 import '../nav/nav_banner.dart';
 import '../symbols/nato_symbol.dart';
-import '../tools/tool_banner.dart';
-import '../tools/tools_palette.dart';
+import '../tools/range_tools_bar.dart';
 import '../tracks/track_list_sheet.dart';
 import '../waypoints/add_waypoint_dialog.dart';
 import '../waypoints/edit_waypoint_dialog.dart';
@@ -104,6 +103,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   /// Araç çubuğu gizli mi (≡'ye uzun bas).
   bool _toolbarHidden = false;
+
+  /// Ölçüm araçları çubuğu (ATAK Range Tools) açık mı. Bir araç seçiliyse
+  /// (ör. ≡ ızgarasından) çubuk zaten görünür.
+  bool _rangeBarOpen = false;
 
   /// Çevrimdışı bölge çerçeveleme modu açık mı.
   bool _framing = false;
@@ -898,7 +901,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
     final on = !_dropMode;
     if (on) ref.read(toolProvider.notifier).reset();
-    setState(() => _dropMode = on);
+    setState(() {
+      _dropMode = on;
+      if (on) _rangeBarOpen = false;
+    });
   }
 
   void _toggleRotationLock() {
@@ -967,9 +973,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final landscape = isLandscape(context);
     final safe = MediaQuery.paddingOf(context);
     final safeBottom = safe.bottom;
-    // Rota planlarken altta planlama çubuğu var; diğer her şey onun üstünde.
-    final bottomInset =
-        safeBottom + (planning.active ? kPlanBarHeight : 0);
+    final bottomInset = safeBottom;
     final crosshairOn = ref.watch(crosshairProvider);
     // Araç seçilince nokta bırakma modu kapanır (aynı anda tek dokunuş işi).
     ref.listen<ToolState>(toolProvider, (prev, next) {
@@ -1075,8 +1079,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   // kenar boşluklarını güvenli alandan ölçer; bkz. map_engine).
                   ornamentPadding: _framing
                       ? EdgeInsets.only(bottom: landscape ? 0 : 300)
-                      : EdgeInsets.only(
-                          bottom: planning.active ? kPlanBarHeight : 0),
+                      : EdgeInsets.zero,
                   nightMode: nightMode,
                   controller: _map,
                   baseLayer: _resolved[_selected.id] ?? const NoBaseLayer(),
@@ -1220,10 +1223,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               ),
             ),
 
-          // Ortadaki artı imleç: Ayarlar'dan açılır; rota planlarken "+ Nokta"
-          // onu hedeflediği için hep görünür.
-          if (!_framing && (crosshairOn || planning.active))
-            MapCrosshair(night: nightMode),
+          // Ortadaki artı imleç (Ayarlar'dan açılır).
+          if (!_framing && crosshairOn) MapCrosshair(night: nightMode),
 
           // Araç çubuğunun altında, sol sütunun yanında: rota planı, nokta
           // bırakma ipucu, aktif ölçüm aracı.
@@ -1248,13 +1249,27 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      if (planning.active) const RoutePlanInfo(),
+                      // ATAK: aktif aracın kendi çubuğu ana çubuğun altında.
+                      if (planning.active)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: RoutePlanToolbar(
+                            onAddAtCrosshair:
+                                crosshairOn ? _addAtCrosshair : null,
+                          ),
+                        ),
                       if (_dropMode)
                         _DropHint(
                           night: nightMode,
                           onClose: () => setState(() => _dropMode = false),
                         ),
-                      const ToolBanner(),
+                      if (!planning.active && (_rangeBarOpen || tool.active))
+                        RangeToolsBar(
+                          onClose: () {
+                            ref.read(toolProvider.notifier).reset();
+                            setState(() => _rangeBarOpen = false);
+                          },
+                        ),
                     ],
                   ),
                 ),
@@ -1301,11 +1316,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       onHide: () => setState(() => _toolbarHidden = true),
                       onDropPoint: _onDropPoint,
                       dropActive: _dropMode,
+                      // R&B: ölçüm araçları çubuğunu aç/kapat.
                       onMeasure: () {
-                        setState(() => _dropMode = false);
-                        showToolsPalette(context, ref);
+                        final open = !(_rangeBarOpen || tool.active);
+                        if (!open) ref.read(toolProvider.notifier).reset();
+                        setState(() {
+                          _rangeBarOpen = open;
+                          _dropMode = false;
+                        });
                       },
-                      measureActive: tool.active,
+                      measureActive: _rangeBarOpen || tool.active,
                       onGoTo: _openCoordinate,
                       onMaps: _openLayers,
                       recording: recording.isRecording,
@@ -1314,15 +1334,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         recording.isRecording ? n.stop() : n.start();
                       },
                     ),
-            ),
-
-          // Rota planlarken altta planlama çubuğu.
-          if (!_framing && planning.active)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: RoutePlanBar(onAddAtCrosshair: _addAtCrosshair),
             ),
 
           // Görüş hattı profili (alt çubuğun üstünde açılır).
@@ -1359,6 +1370,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     setState(() {
       _follow = false;
       _previewRoute = null;
+      _rangeBarOpen = false;
+      _dropMode = false;
     });
     ref.read(routePlanningProvider.notifier).start();
   }

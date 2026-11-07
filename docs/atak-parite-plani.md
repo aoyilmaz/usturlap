@@ -137,7 +137,14 @@ görüntülerinden alınır, ATAK'ın ikonları kullanılmaz.
 | Sol alt: bildirim ve navigasyon (5, 17–19) | Uyarılar, rota/bloodhound bilgi kutusu ATAK'taki gibi sol altta | S |
 | Ölçek (5) | C1'de açılan ölçek çubuğu ATAK konumuna taşınır | S |
 
-**D2. Paneller ve araç çubukları**
+**D2. Paneller ve araç çubukları** — üç adımda: **D2a** araç alt çubukları (kodda tamam, cihaz
+testi bekliyor), **D2b** panel açıkken harita kullanılabilir, **D2c** Toolbar Manager.
+
+> D2a: R&B düğmesi ana çubuğun altında **Range Tools** çubuğunu açar (halka · R&B · alan · sektör ·
+> görüş hattı · ✕; seçili araç sarı, tekrar dokununca kapanır) + altında ölçüm şeridi (kaydet ·
+> göster/gizle · geri al · temizle). Rota planlama ATAK'taki gibi üstte tek çubuk (talimat/mesafe +
+> Geri al · Temizle · [+ Nokta yalnız artı imleç açıksa] · Kaydet · Çık); alttaki çubuk kalktı.
+> Kılavuz s.12 (Range Tools), s.15 (rota: End/Draw/Undo). Draw (parmakla çizim) yok.
 
 | Öğe (ATAK s.) | Ne yapılacak | Efor |
 |---|---|---|

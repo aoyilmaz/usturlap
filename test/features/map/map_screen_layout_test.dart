@@ -8,6 +8,9 @@ import 'package:kerteriz/domain/ports/position_source.dart';
 import 'package:kerteriz/features/hud/self_info_box.dart';
 import 'package:kerteriz/features/map/map_screen.dart';
 import 'package:kerteriz/features/map/widgets/scale_bar.dart';
+import 'package:kerteriz/features/routes/route_widgets.dart';
+import 'package:kerteriz/features/tools/range_tools_bar.dart';
+import 'package:kerteriz/providers/route_providers.dart';
 import 'package:kerteriz/features/shell/adaptive_sheet.dart';
 import 'package:kerteriz/features/shell/atak_toolbar.dart';
 import 'package:kerteriz/features/shell/settings_sheet.dart';
@@ -159,6 +162,40 @@ void main() {
     await pumpScreen(tester, const Size(844, 390));
     expect(tester.takeException(), isNull);
     expect(find.bySemanticsLabel('Bütün araçlar'), findsOneWidget);
+    await dispose(tester);
+  });
+
+  testWidgets('rota planlama: çubuk üstte, altta boşluk yok', (tester) async {
+    const screen = Size(390, 844);
+    await pumpScreen(tester, screen, self: _self);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(MapScreen)),
+    );
+    container.read(routePlanningProvider.notifier).start();
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+    final bar = tester.getRect(find.byType(RoutePlanToolbar));
+    expect(bar.top, lessThan(260)); // ana araç çubuğunun hemen altında
+    expectOnScreen(tester, find.byType(RoutePlanToolbar), screen);
+    // Alttaki eski planlama çubuğu yok → konum kutusu yerinde.
+    expect(
+      tester.getRect(find.byType(SelfInfoBox)).bottom,
+      closeTo(844 - 34 - 8, 1),
+    );
+    await dispose(tester);
+  });
+
+  testWidgets('R&B düğmesi Range Tools çubuğunu açar/kapatır', (tester) async {
+    const screen = Size(390, 844);
+    await pumpScreen(tester, screen, self: _self);
+    expect(find.byType(RangeToolsBar), findsNothing);
+    await tester.tap(find.bySemanticsLabel('Ölçüm (R&B)'));
+    await tester.pump();
+    expect(find.byType(RangeToolsBar), findsOneWidget);
+    expectOnScreen(tester, find.byType(RangeToolsBar), screen);
+    await tester.tap(find.bySemanticsLabel('Ölçüm (R&B)'));
+    await tester.pump();
+    expect(find.byType(RangeToolsBar), findsNothing);
     await dispose(tester);
   });
 }
