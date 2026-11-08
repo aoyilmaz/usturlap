@@ -320,6 +320,16 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
   bool _syncing = false;
   bool _pending = false;
 
+  /// Stil her yüklendiğinde (ve dönüşte) artar. Kaynak/katman kurulumu
+  /// sürerken stil yenilenirse kurulum "tamam" sayılmaz (yarış: eski
+  /// kurulum bayrağı geri açıyordu, yeni stilde katman yoktu → çizgiler
+  /// "Source 'pz-lines' is not in style" ile hiç güncellenmiyordu).
+  int _styleGen = 0;
+  bool _retryScheduled = false;
+
+  /// Uygulama ön plana dönünce motoru toparlar (bkz. [_onResume]).
+  AppLifecycleListener? _lifecycle;
+
   MapboxEngineController get _c => widget.controller;
 
   @override
@@ -335,6 +345,25 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
     _baseKey = _baseKeyOf(widget.baseLayer);
     final b = widget.baseLayer;
     _style = (b is MbtilesBaseLayer || b is PmtilesBaseLayer) ? null : _styleFor(b);
+    _lifecycle = AppLifecycleListener(onResume: _onResume);
+  }
+
+  /// Ekran kilidi/arka plandan dönüş (2026-11-07 saha hatası: kayıt sürerken
+  /// canlı iz çizgisi görünmedi; kayıt tamamdı, sonradan seçince çizildi).
+  /// Mapbox görüntüsü eski karede kalmış ya da kaynaklar düşmüş olabilir →
+  /// kaynak/katmanları yeniden kur, overlay'leri yeniden gönder, yeniden çiz.
+  Future<void> _onResume() async {
+    final map = _c._map;
+    if (map == null) return;
+    _styleGen++;
+    _layersAdded = false;
+    _imagesInStyle.clear();
+    await _scheduleSync();
+    try {
+      await map.triggerRepaint();
+    } catch (e) {
+      debugPrint('Mapbox yeniden çizim hatası: $e');
+    }
   }
 
   @override
@@ -360,6 +389,7 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
 
   @override
   void dispose() {
+    _lifecycle?.dispose();
     for (final s in _subs) {
       s.cancel();
     }
@@ -464,6 +494,7 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
   Future<void> _onStyleLoaded(StyleLoadedEventData _) async {
     // Stil değişince eklediğimiz kaynak/katman/resimler silinir → yeniden kur.
     _styleReady = true;
+    _styleGen++;
     _layersAdded = false;
     _imagesInStyle.clear();
     try {
@@ -555,10 +586,24 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
     try {
       do {
         _pending = false;
-        await _sync();
+        // Askıda kalan bir platform çağrısı bütün sonraki güncellemeleri
+        // kilitlemesin: süre aşılırsa bırak, sıradaki güncelleme yeniden dener.
+        await _sync().timeout(const Duration(seconds: 8));
       } while (_pending && mounted);
     } catch (e) {
       debugPrint('Mapbox overlay senkron hatası: $e');
+      // Kaynak/katman kaybolmuş olabilir (ör. stil yenilendi): baştan kur
+      // ve kısa süre sonra bir kez yeniden dene (yeni bir değişiklik
+      // beklenmeden çizgiler geri gelsin).
+      _layersAdded = false;
+      _imagesInStyle.clear();
+      if (!_retryScheduled && mounted) {
+        _retryScheduled = true;
+        Future<void>.delayed(const Duration(seconds: 1), () {
+          _retryScheduled = false;
+          if (mounted) _scheduleSync();
+        });
+      }
     } finally {
       _syncing = false;
     }
@@ -570,21 +615,30 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
     final data = MapboxOverlayData.from(widget.overlays);
     _data = data;
 
-    // 1) İşaretçi resimleri (yalnızca stilde olmayanlar).
+    // 1) İşaretçi resimleri (yalnızca stilde olmayanlar). Bir resim
+    // üretilemezse (ör. dönüşte GPU henüz hazır değil) çizgi/alan
+    // güncellemesi yine yapılsın; resim bir sonraki senkronda denenir.
     for (final m in data.markerById.values) {
       if (_imagesInStyle.contains(m.imageKey)) continue;
-      final png = _c._png[m.imageKey] ??= Uint8List.fromList(
-        await rasterizeWidgetToPng(m.child,
-            size: Size(m.width, m.height), pixelRatio: _dpr),
-      );
-      await map.addImage(m.imageKey, _dpr, StyleImage.bytes(png));
-      _imagesInStyle.add(m.imageKey);
+      try {
+        final png = _c._png[m.imageKey] ??= Uint8List.fromList(
+          await rasterizeWidgetToPng(m.child,
+              size: Size(m.width, m.height), pixelRatio: _dpr),
+        );
+        await map.addImage(m.imageKey, _dpr, StyleImage.bytes(png));
+        _imagesInStyle.add(m.imageKey);
+      } catch (e) {
+        debugPrint('Mapbox işaretçi resmi hatası (${m.imageKey}): $e');
+      }
     }
 
     // 2) Kaynak + katmanlar (stil başına bir kez), sonra yalnızca veri.
     if (!_layersAdded) {
+      final gen = _styleGen;
       await _addSourcesAndLayers(map, data);
-      _layersAdded = true;
+      // Kurulum sürerken stil yenilendiyse kurulu sayma; yeniden kurulsun.
+      _layersAdded = gen == _styleGen;
+      if (!_layersAdded) _pending = true;
     } else {
       await map.setStyleSourceProperty(_srcAreas, 'data', data.areas);
       await map.setStyleSourceProperty(_srcLines, 'data', data.lines);
