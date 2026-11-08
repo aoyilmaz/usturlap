@@ -5,6 +5,7 @@ import '../core/constants.dart';
 import '../core/coord_format.dart';
 import '../core/toolbar_tool.dart';
 import '../data/db/settings_repository.dart';
+import '../domain/models/waypoint.dart';
 import 'waypoint_providers.dart';
 
 final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
@@ -284,3 +285,91 @@ class ToolbarToolsNotifier extends Notifier<List<ToolbarTool>> {
 final toolbarToolsProvider =
     NotifierProvider<ToolbarToolsNotifier, List<ToolbarTool>>(
         ToolbarToolsNotifier.new);
+
+/// Ayarlarda saklanan aç/kapa seçeneği (kendi işaret menüsündeki seçenekler).
+abstract class PersistedBoolNotifier extends Notifier<bool> {
+  String get key;
+  bool get defaultValue;
+
+  /// Kayıtlı değer gelmeden kullanıcı değiştirdiyse kayıtlı değer ezmesin.
+  bool _changed = false;
+
+  @override
+  bool build() {
+    _load();
+    return defaultValue;
+  }
+
+  Future<void> _load() async {
+    final saved = await ref.read(settingsRepositoryProvider).get(key);
+    if (saved != null && !_changed) state = saved == 'true';
+  }
+
+  void toggle() {
+    _changed = true;
+    state = !state;
+    ref.read(settingsRepositoryProvider).set(key, state.toString());
+  }
+}
+
+/// GPS doğruluk dairesi (ATAK GPS Error Overlay). Varsayılan açık.
+class ShowGpsCircleNotifier extends PersistedBoolNotifier {
+  @override
+  String get key => 'show_gps_circle';
+  @override
+  bool get defaultValue => true;
+}
+
+final showGpsCircleProvider =
+    NotifierProvider<ShowGpsCircleNotifier, bool>(ShowGpsCircleNotifier.new);
+
+/// Kendi konumun etrafında pusula gülü (ATAK s.8). Varsayılan kapalı.
+class ShowCompassRoseNotifier extends PersistedBoolNotifier {
+  @override
+  String get key => 'show_compass_rose';
+  @override
+  bool get defaultValue => false;
+}
+
+final showCompassRoseProvider =
+    NotifierProvider<ShowCompassRoseNotifier, bool>(ShowCompassRoseNotifier.new);
+
+/// Son 15 dakikanın izi (ATAK s.8). Varsayılan kapalı.
+class ShowRecentTrailNotifier extends PersistedBoolNotifier {
+  @override
+  String get key => 'show_recent_trail';
+  @override
+  bool get defaultValue => false;
+}
+
+final showRecentTrailProvider =
+    NotifierProvider<ShowRecentTrailNotifier, bool>(ShowRecentTrailNotifier.new);
+
+const _dropAffiliationKey = 'drop_affiliation';
+
+/// Point Dropper'da son seçilen tür (dost/düşman/nötr/bilinmeyen/nokta).
+class DropAffiliationNotifier extends Notifier<Affiliation> {
+  bool _changed = false;
+
+  @override
+  Affiliation build() {
+    _load();
+    return Affiliation.hostile;
+  }
+
+  Future<void> _load() async {
+    final saved =
+        await ref.read(settingsRepositoryProvider).get(_dropAffiliationKey);
+    if (saved != null && !_changed) state = Affiliation.fromName(saved);
+  }
+
+  void set(Affiliation a) {
+    _changed = true;
+    state = a;
+    ref.read(settingsRepositoryProvider).set(_dropAffiliationKey, a.name);
+  }
+}
+
+final dropAffiliationProvider =
+    NotifierProvider<DropAffiliationNotifier, Affiliation>(
+        DropAffiliationNotifier.new);

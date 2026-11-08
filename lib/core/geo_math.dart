@@ -72,6 +72,20 @@ class GeoMath {
   static double bearing(LatLng from, LatLng to) => _d.bearing(from, to);
   static double distance(LatLng a, LatLng b) => _d(a, b);
 
+  /// [from] noktasından [bearingDeg] kerterizinde [meters] uzaklıktaki nokta.
+  static LatLng destination(LatLng from, double meters, double bearingDeg) =>
+      _d.offset(from, meters, bearingDeg);
+
+  /// Bilinen bir noktayı [bearingToLandmark] (coğrafi) yönünde [meters]
+  /// uzakta görüyorsam benim konumum (ATAK polar giriş): noktadan ters
+  /// yönde aynı mesafe.
+  static LatLng positionFromSighting(
+    LatLng landmark,
+    double bearingToLandmark,
+    double meters,
+  ) =>
+      destination(landmark, meters, (bearingToLandmark + 180) % 360);
+
   static double _rad(double deg) => deg * math.pi / 180.0;
 
   // --- biçimlendirme ---

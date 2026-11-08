@@ -148,6 +148,14 @@ class MapboxEngineController implements MapEngineController {
   }
 
   @override
+  Future<Offset?> screenPointOf(LatLng point) async {
+    final map = _map;
+    if (map == null) return null;
+    final s = await map.pixelForCoordinate(_pt(point));
+    return Offset(s.x, s.y);
+  }
+
+  @override
   void releaseBaseLayer(String layerId) {
     LocalTileServer.instance.unregister(layerId);
   }

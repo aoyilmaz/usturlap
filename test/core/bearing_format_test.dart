@@ -9,6 +9,20 @@ void main() {
   const gaziantep = LatLng(37.06, 37.38); // UTM 37, merkez meridyen 39°
 
   group('NorthMath', () {
+    test('toTrue fromTrue\'nun tersi (manyetik, grid, coğrafi)', () {
+      const at = LatLng(39.9, 32.85);
+      for (final ref in NorthRef.values) {
+        for (final deg in [0.0, 45.0, 181.5, 359.0]) {
+          final shown = NorthMath.fromTrue(deg, at, ref);
+          expect(
+            NorthMath.toTrue(shown, at, ref),
+            closeTo(deg, 1e-9),
+            reason: '$ref $deg',
+          );
+        }
+      }
+    });
+
     test('grid yakınsaması: merkez meridyende ~0', () {
       expect(
         NorthMath.gridConvergence(const LatLng(39.0, 33.0)),

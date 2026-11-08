@@ -11,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../core/constants.dart';
 import '../../core/coord_format.dart';
 import '../../core/geo_math.dart';
+import '../../core/sequential_name.dart';
 import '../../domain/models/contact.dart';
 import '../../domain/models/imported_layer.dart';
 import '../../domain/models/map_graphic.dart';
@@ -32,6 +33,7 @@ import '../../providers/settings_providers.dart';
 import '../../providers/tool_providers.dart';
 import '../../providers/track_providers.dart';
 import '../../providers/waypoint_providers.dart';
+import '../hud/manual_position_sheet.dart';
 import '../hud/self_info_box.dart';
 import '../import/import_action.dart';
 import '../routes/route_widgets.dart';
@@ -39,6 +41,7 @@ import '../shell/coordinate_sheet.dart';
 import '../shell/atak_toolbar.dart';
 import '../shell/clear_content_dialog.dart';
 import '../shell/map_controls.dart';
+import '../shell/radial_menu.dart';
 import '../shell/route_sheet.dart';
 import '../shell/settings_sheet.dart';
 import '../shell/tools_grid_sheet.dart';
@@ -52,10 +55,12 @@ import '../tools/range_tools_bar.dart';
 import '../tracks/track_list_sheet.dart';
 import '../waypoints/add_waypoint_dialog.dart';
 import '../waypoints/edit_waypoint_dialog.dart';
+import '../waypoints/point_dropper_bar.dart';
 import '../waypoints/waypoint_list_sheet.dart';
 import 'base_layer.dart';
 import 'base_layer_resolver.dart';
 import 'engine/map_engine.dart';
+import 'widgets/compass_rose.dart';
 import 'widgets/los_overlay.dart';
 import 'widgets/scale_bar.dart';
 import '../shell/adaptive_sheet.dart';
@@ -113,6 +118,23 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   /// Çevrimdışı bölge çerçeveleme modu açık mı.
   bool _framing = false;
+
+  /// Açık radyal menü (ATAK Radial Menu): hangi nesne, ekranda nerede.
+  _RadialTarget? _radial;
+
+  /// Radyal menü "Taşı": sonraki dokunuş bu noktayı oraya taşır.
+  Waypoint? _moving;
+
+  /// Konumu düzelt → "Haritada göster": sonraki dokunuş elle konum olur.
+  bool _placingSelf = false;
+
+  /// Point Dropper'ın bu oturumda verdiği adlar: hızlı art arda dokunuşta
+  /// veritabanı akışı gelmeden aynı ad iki kez verilmesin.
+  final _droppedNames = <String>[];
+
+  /// Pusula gülünün ölçeklendiği zoom (yarım kademeye yuvarlı; gül ekranda
+  /// aşağı yukarı aynı büyüklükte kalsın diye kademe değişince yenilenir).
+  double? _roseZoom;
 
   /// Harita her hareket ettiğinde artar (çerçeve boyut tahmini için).
   final ValueNotifier<int> _cameraTick = ValueNotifier(0);
@@ -214,6 +236,23 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// Kendi konum işaretçisi: kerteriz varsa ok, yoksa nokta.
   MapMarker _selfMarker(Contact self) {
     final heading = self.headingDeg;
+    // Elle verilen konum turuncu (GPS değil, bir bakışta belli olsun).
+    if (ref.read(manualPositionProvider) != null) {
+      return MapMarker(
+        id: 'self',
+        imageKey: 'self:manual',
+        point: self.position,
+        width: 44,
+        height: 44,
+        onTap: () => _onObjectTap(
+          self.position,
+          title: '${self.callsign} (elle)',
+          actions: () => _selfActions(self),
+        ),
+        child: const Icon(Icons.person_pin_circle,
+            color: Colors.orangeAccent, size: 38),
+      );
+    }
     return MapMarker(
       id: 'self',
       imageKey: heading == null ? 'self:dot' : 'self:arrow',
@@ -221,6 +260,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       width: 44,
       height: 44,
       rotationDeg: heading,
+      onTap: () => _onObjectTap(
+        self.position,
+        title: self.callsign,
+        actions: () => _selfActions(self),
+      ),
       child: heading == null
           ? const Icon(Icons.my_location, color: Colors.lightBlueAccent, size: 28)
           : const Icon(Icons.navigation, color: Colors.lightBlueAccent, size: 34),
@@ -240,7 +284,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       point: wp.position,
       width: isNato ? 34 : 40,
       height: isNato ? 34 : 40,
-      onTap: () => _showWaypointDetail(wp),
+      onTap: () => _onObjectTap(
+        wp.position,
+        title: wp.name,
+        actions: () => _waypointActions(wp),
+      ),
       child: isNato
           ? NatoSymbol(
               affiliation: wp.affiliation,
@@ -259,10 +307,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       point: r.position,
       width: 32,
       height: 32,
-      onTap: () {
-        ref.read(selectedRepeaterProvider.notifier).select(r);
-        _showRepeaterDetail(r);
-      },
+      onTap: () => _onObjectTap(
+        r.position,
+        title: r.name,
+        // Kapsama dairesi menü açıkken de görünsün.
+        onOpen: () => ref.read(selectedRepeaterProvider.notifier).select(r),
+        actions: () => _repeaterActions(r),
+      ),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.55),
@@ -530,23 +581,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     label: const Text('Düzenle'),
                   ),
                   OutlinedButton.icon(
-                    onPressed: () {
-                      final text = '${wp.name}\n'
-                          '${CoordFormat.mgrs(wp.position)}'
-                          '${wp.note != null && wp.note!.isNotEmpty ? "\n${wp.note}" : ""}';
-                      SharePlus.instance
-                          .share(ShareParams(text: text, subject: wp.name));
-                    },
+                    onPressed: () => _shareWaypoint(wp),
                     icon: const Icon(Icons.ios_share),
                     label: const Text('Paylaş'),
                   ),
                   OutlinedButton.icon(
                     onPressed: () {
-                      final target = ref.read(navTargetProvider);
-                      if (target != null && target.position == wp.position) {
-                        ref.read(navTargetProvider.notifier).clear();
-                      }
-                      ref.read(waypointRepositoryProvider).delete(wp.id!);
+                      _deleteWaypoint(wp);
                       Navigator.of(context).pop();
                     },
                     icon: const Icon(Icons.delete_outline),
@@ -559,6 +600,274 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         ),
       ),
     );
+  }
+
+  void _shareWaypoint(Waypoint wp) {
+    final text = '${wp.name}\n'
+        '${CoordFormat.mgrs(wp.position)}'
+        '${wp.note != null && wp.note!.isNotEmpty ? "\n${wp.note}" : ""}';
+    SharePlus.instance.share(ShareParams(text: text, subject: wp.name));
+  }
+
+  void _deleteWaypoint(Waypoint wp) {
+    final target = ref.read(navTargetProvider);
+    if (target != null && target.position == wp.position) {
+      ref.read(navTargetProvider.notifier).clear();
+    }
+    ref.read(waypointRepositoryProvider).delete(wp.id!);
+  }
+
+  // ------------------------------------------------ radyal menü (ATAK s.11)
+
+  /// Haritadaki bir nesneye dokunuldu. Ölçüm, rota planlama ya da taşıma
+  /// sürüyorsa nokta nesnenin tam üstüne konur (ATAK: nesneye yapışma);
+  /// değilse nesnenin radyal menüsü açılır.
+  void _onObjectTap(
+    LatLng p, {
+    required String title,
+    required List<RadialAction> Function() actions,
+    VoidCallback? onOpen,
+  }) {
+    if (_moving != null) {
+      _finishMove(p);
+      return;
+    }
+    // Bilinen bir noktanın üstündeysem konumum tam orası.
+    if (_placingSelf) {
+      _setManualPosition(p);
+      return;
+    }
+    if (ref.read(routePlanningProvider).active) {
+      HapticFeedback.selectionClick();
+      ref.read(routePlanningProvider.notifier).addPoint(p);
+      return;
+    }
+    if (ref.read(toolProvider).active) {
+      HapticFeedback.selectionClick();
+      ref.read(toolProvider.notifier).addPoint(p);
+      return;
+    }
+    onOpen?.call();
+    _openRadial(p, title, actions());
+  }
+
+  Future<void> _openRadial(
+    LatLng point,
+    String title,
+    List<RadialAction> actions,
+  ) async {
+    final screen = await _map.screenPointOf(point);
+    if (!mounted || screen == null) return;
+    HapticFeedback.selectionClick();
+    setState(() => _radial = _RadialTarget(point, title, actions, screen));
+  }
+
+  void _closeRadial() {
+    if (_radial != null) setState(() => _radial = null);
+  }
+
+  /// Kamera değişince (elle ya da takipte) menü nesneyle birlikte kayar;
+  /// nesne ekrandan çıkarsa kapanır.
+  Future<void> _repositionRadial() async {
+    final r = _radial;
+    if (r == null) return;
+    final screen = await _map.screenPointOf(r.point);
+    if (!mounted || _radial?.point != r.point) return;
+    final size = MediaQuery.sizeOf(context);
+    if (screen == null || !(Offset.zero & size).contains(screen)) {
+      setState(() => _radial = null);
+      return;
+    }
+    setState(() => _radial = _radial!.at(screen));
+  }
+
+  List<RadialAction> _waypointActions(Waypoint wp) => [
+        RadialAction(
+            icon: Icons.info_outline,
+            label: 'Detay',
+            onTap: () => _showWaypointDetail(wp)),
+        RadialAction(
+            icon: Icons.navigation_outlined,
+            label: 'Git',
+            onTap: () => ref
+                .read(navTargetProvider.notifier)
+                .set(wp.position, wp.name)),
+        RadialAction(
+            icon: Icons.straighten,
+            label: 'R&B',
+            onTap: () => _startToolAt(ToolMode.distance, wp.position)),
+        RadialAction(
+            icon: Icons.radar,
+            label: 'Halka',
+            onTap: () => _startToolAt(ToolMode.rangeRings, wp.position)),
+        RadialAction(
+            icon: Icons.open_with, label: 'Taşı', onTap: () => _startMove(wp)),
+        RadialAction(
+            icon: Icons.ios_share,
+            label: 'Paylaş',
+            onTap: () => _shareWaypoint(wp)),
+        RadialAction(
+            icon: Icons.delete_outline,
+            label: 'Sil',
+            color: Colors.redAccent,
+            onTap: () => _confirmDeleteWaypoint(wp)),
+        RadialAction(
+            icon: Icons.center_focus_strong,
+            label: 'Ortala',
+            onTap: () => _centerOn(wp.position)),
+      ];
+
+  /// Kendi işaretinin menüsü (ATAK self-marker, kılavuz s.8). Açık
+  /// seçenekler yeşil.
+  List<RadialAction> _selfActions(Contact self) {
+    const on = Colors.lightGreenAccent;
+    final circle = ref.read(showGpsCircleProvider);
+    final rose = ref.read(showCompassRoseProvider);
+    final trail = ref.read(showRecentTrailProvider);
+    final manual = ref.read(manualPositionProvider) != null;
+    return [
+      RadialAction(
+          icon: Icons.my_location, label: 'Ortala', onTap: _recenter),
+      RadialAction(
+          icon: Icons.edit_location_alt_outlined,
+          label: 'Düzelt',
+          color: manual ? Colors.orangeAccent : null,
+          onTap: _openManualPosition),
+      if (manual)
+        RadialAction(
+            icon: Icons.gps_fixed,
+            label: 'GPS\'e dön',
+            color: Colors.orangeAccent,
+            onTap: () => ref.read(manualPositionProvider.notifier).clear()),
+      RadialAction(
+          icon: Icons.gps_fixed,
+          label: 'Daire',
+          color: circle ? on : null,
+          onTap: () => ref.read(showGpsCircleProvider.notifier).toggle()),
+      RadialAction(
+          icon: Icons.explore_outlined,
+          label: 'Pusula',
+          color: rose ? on : null,
+          onTap: () => ref.read(showCompassRoseProvider.notifier).toggle()),
+      RadialAction(
+          icon: Icons.history,
+          label: '15 dk',
+          color: trail ? on : null,
+          onTap: () => ref.read(showRecentTrailProvider.notifier).toggle()),
+      RadialAction(
+          icon: Icons.ios_share,
+          label: 'Paylaş',
+          onTap: () => _shareSelf(self)),
+    ];
+  }
+
+  void _openManualPosition() {
+    showManualPositionSheet(
+      context,
+      onPickOnMap: () => setState(() {
+        _placingSelf = true;
+        _moving = null;
+        _dropMode = false;
+      }),
+      onApplied: (p) {
+        setState(() => _follow = true);
+        _map.moveTo(p);
+      },
+    );
+  }
+
+  void _setManualPosition(LatLng p) {
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _placingSelf = false;
+      _follow = true;
+    });
+    ref.read(manualPositionProvider.notifier).set(p);
+  }
+
+  void _shareSelf(Contact self) {
+    final text = '${self.callsign}\n'
+        '${CoordFormat.mgrs(self.position)}\n'
+        '${CoordFormat.wgs84(self.position)}';
+    SharePlus.instance.share(ShareParams(text: text, subject: self.callsign));
+  }
+
+  List<RadialAction> _repeaterActions(Repeater r) => [
+        RadialAction(
+            icon: Icons.info_outline,
+            label: 'Detay',
+            onTap: () => _showRepeaterDetail(r)),
+        RadialAction(
+            icon: Icons.navigation_outlined,
+            label: 'Git',
+            onTap: () =>
+                ref.read(navTargetProvider.notifier).set(r.position, r.name)),
+        RadialAction(
+            icon: Icons.straighten,
+            label: 'R&B',
+            onTap: () => _startToolAt(ToolMode.distance, r.position)),
+        RadialAction(
+            icon: Icons.center_focus_strong,
+            label: 'Ortala',
+            onTap: () => _centerOn(r.position)),
+      ];
+
+  /// Ölçüm aracını nesneden başlat (R&B: ikinci nokta için haritaya dokun;
+  /// halka: dokunulan yer yarıçapı belirler).
+  void _startToolAt(ToolMode mode, LatLng p) {
+    final n = ref.read(toolProvider.notifier);
+    n.setMode(mode);
+    n.addPoint(p);
+    setState(() {
+      _rangeBarOpen = true;
+      _dropMode = false;
+      _moving = null;
+    });
+  }
+
+  void _startMove(Waypoint wp) {
+    ref.read(toolProvider.notifier).reset();
+    setState(() {
+      _moving = wp;
+      _dropMode = false;
+      _rangeBarOpen = false;
+      _placingSelf = false;
+    });
+  }
+
+  Future<void> _finishMove(LatLng p) async {
+    final wp = _moving;
+    if (wp == null) return;
+    setState(() => _moving = null);
+    HapticFeedback.mediumImpact();
+    await ref.read(waypointRepositoryProvider).move(wp.id!, p);
+    // Git hedefi bu noktaysa hedef de taşınır.
+    final target = ref.read(navTargetProvider);
+    if (target != null && target.position == wp.position) {
+      ref.read(navTargetProvider.notifier).set(p, wp.name);
+    }
+  }
+
+  /// Radyal "Sil": eldivenle yanlış dilime basılabilir → onay sorulur.
+  Future<void> _confirmDeleteWaypoint(Waypoint wp) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('“${wp.name}” silinsin mi?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red.shade700),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Sil'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true && mounted) _deleteWaypoint(wp);
   }
 
   void _recenter() {
@@ -777,6 +1086,18 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// imleçteki yere nokta (waypoint) ekleme penceresini açar.
   void _addAtCrosshair() {
     final p = _map.camera.center;
+    if (_moving != null) {
+      _finishMove(p);
+      return;
+    }
+    if (_placingSelf) {
+      _setManualPosition(p);
+      return;
+    }
+    if (_dropMode) {
+      _dropPoint(p);
+      return;
+    }
     if (ref.read(routePlanningProvider).active) {
       ref.read(routePlanningProvider.notifier).addPoint(p);
       return;
@@ -985,18 +1306,35 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
   }
 
-  /// Araç çubuğu "Nokta bırak": artı imleç açıksa imlecin altına nokta koyar;
-  /// değilse nokta bırakma modunu açar/kapatır (haritaya dokunulan yere).
+  String _nextDropName(Affiliation a, List<Waypoint> waypoints) =>
+      nextSequentialName(
+          dropPrefix(a), [for (final w in waypoints) w.name, ..._droppedNames]);
+
+  /// Point Dropper: seçili türde, sıra numaralı adla, diyalogsuz nokta.
+  Future<void> _dropPoint(LatLng p) async {
+    HapticFeedback.mediumImpact();
+    final a = ref.read(dropAffiliationProvider);
+    final name = _nextDropName(
+        a, ref.read(waypointsProvider).value ?? const <Waypoint>[]);
+    _droppedNames.add(name);
+    await ref
+        .read(waypointRepositoryProvider)
+        .add(name: name, position: p, affiliation: a);
+  }
+
+  /// Araç çubuğu "Nokta bırak": Point Dropper paletini açar/kapatır.
+  /// Palet açıkken haritaya her dokunuş nokta bırakır; artı imleç açıksa
+  /// palette "İmlece bırak" da var.
   void _onDropPoint() {
-    if (ref.read(crosshairProvider)) {
-      _addAtCrosshair();
-      return;
-    }
     final on = !_dropMode;
     if (on) ref.read(toolProvider.notifier).reset();
     setState(() {
       _dropMode = on;
-      if (on) _rangeBarOpen = false;
+      if (on) {
+        _rangeBarOpen = false;
+        _moving = null;
+        _placingSelf = false;
+      }
     });
   }
 
@@ -1053,6 +1391,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final tool = ref.watch(toolProvider);
     final graphics = ref.watch(mapGraphicsProvider).value ?? const <MapGraphic>[];
     final nightMode = ref.watch(nightModeProvider);
+    final showGpsCircle = ref.watch(showGpsCircleProvider);
+    final dropAffiliation = ref.watch(dropAffiliationProvider);
+    final showRose = ref.watch(showCompassRoseProvider);
+    final showTrail = ref.watch(showRecentTrailProvider);
+    // Her zaman izlenir: seçenek kapalıyken de son 15 dk toplansın.
+    final recentTrail = ref.watch(recentTrailProvider);
     // Seçili katmanın dosyası cihazda yok (ör. Türkiye paketi kopyalanmamış).
     final layerMissing = _missingFiles.contains(_selected.id);
     // Seçili çevrimdışı katman henüz çözülmediyse (tembel) göstergede uyar.
@@ -1075,7 +1419,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final crosshairOn = ref.watch(crosshairProvider);
     // Araç seçilince nokta bırakma modu kapanır (aynı anda tek dokunuş işi).
     ref.listen<ToolState>(toolProvider, (prev, next) {
-      if (next.active && _dropMode) setState(() => _dropMode = false);
+      if (next.active && (_dropMode || _moving != null || _placingSelf)) {
+        setState(() {
+          _dropMode = false;
+          _moving = null;
+          _placingSelf = false;
+        });
+      }
     });
 
     // Harita üstü çizimler — liste sırası = çizim sırası (alttan üste).
@@ -1119,8 +1469,26 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         ),
       for (final r in repeaters) _repeaterMarker(r),
       for (final wp in waypoints) _waypointMarker(wp),
+      // Son 15 dakikanın izi (kendi işaret menüsünden açılır).
+      if (showTrail && self != null && recentTrail.isNotEmpty)
+        MapLine(
+          points: [...recentTrail, self.position],
+          width: 3,
+          color: (nightMode ? Colors.redAccent : Colors.lightBlueAccent)
+              .withValues(alpha: 0.7),
+        ),
+      // Pusula gülü (kendi işaret menüsünden açılır).
+      if (showRose && self != null)
+        ...compassRoseOverlays(
+          self.position,
+          roseRadiusMeters(
+            _roseZoom ?? (_map.camera.zoom * 2).round() / 2,
+            self.position.latitude,
+          ),
+          night: nightMode,
+        ),
       // GPS doğruluk dairesi (ATAK GPS Error Overlay).
-      if (self != null && (self.accuracyMeters ?? 0) > 0)
+      if (showGpsCircle && self != null && (self.accuracyMeters ?? 0) > 0)
         MapCircle(
           center: self.position,
           radiusMeters: self.accuracyMeters!,
@@ -1196,6 +1564,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       _lastCamera = camera;
                       _scaleCamera.value = camera;
                       if (_framing) _cameraTick.value++;
+                      if (_radial != null) _repositionRadial();
+                      final roseZoom = (camera.zoom * 2).round() / 2;
+                      if (roseZoom != _roseZoom &&
+                          ref.read(showCompassRoseProvider)) {
+                        setState(() => _roseZoom = roseZoom);
+                      }
                       if (byGesture && _follow) {
                         setState(() => _follow = false);
                       }
@@ -1208,14 +1582,21 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                           _previewRoute = null;
                         });
                       }
+                      if (_moving != null) {
+                        _finishMove(point);
+                        return;
+                      }
+                      if (_placingSelf) {
+                        _setManualPosition(point);
+                        return;
+                      }
                       if (ref.read(routePlanningProvider).active) {
                         HapticFeedback.selectionClick();
                         ref.read(routePlanningProvider.notifier).addPoint(point);
                         return;
                       }
                       if (_dropMode) {
-                        HapticFeedback.mediumImpact();
-                        showAddWaypointDialog(context, ref, point);
+                        _dropPoint(point);
                         return;
                       }
                       if (ref.read(toolProvider).active) {
@@ -1363,9 +1744,44 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                           ),
                         ),
                       if (_dropMode)
-                        _DropHint(
+                        PointDropperBar(
                           night: nightMode,
+                          selected: dropAffiliation,
+                          nextName: _nextDropName(dropAffiliation, waypoints),
+                          onSelect: (a) => ref
+                              .read(dropAffiliationProvider.notifier)
+                              .set(a),
                           onClose: () => setState(() => _dropMode = false),
+                          onDropAtCrosshair:
+                              crosshairOn ? _addAtCrosshair : null,
+                        ),
+                      if (_placingSelf)
+                        _ModeHint(
+                          night: nightMode,
+                          icon: Icons.edit_location_alt,
+                          text: 'Konumunu haritada dokunarak göster',
+                          closeTooltip: 'Konum düzeltmeyi iptal et',
+                          onClose: () => setState(() => _placingSelf = false),
+                          action: crosshairOn
+                              ? TextButton(
+                                  onPressed: _addAtCrosshair,
+                                  child: const Text('İmlece'),
+                                )
+                              : null,
+                        ),
+                      if (_moving != null)
+                        _ModeHint(
+                          night: nightMode,
+                          icon: Icons.open_with,
+                          text: '“${_moving!.name}”: yeni yerine dokun',
+                          closeTooltip: 'Taşımayı iptal et',
+                          onClose: () => setState(() => _moving = null),
+                          action: crosshairOn
+                              ? TextButton(
+                                  onPressed: _addAtCrosshair,
+                                  child: const Text('İmlece taşı'),
+                                )
+                              : null,
                         ),
                       if (!planning.active && (_rangeBarOpen || tool.active))
                         RangeToolsBar(
@@ -1449,6 +1865,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               ),
             ),
           ],
+
+          // Radyal menü en üstte: dışına dokunuş menüyü kapatır ve alttaki
+          // haritaya / düğmelere geçer.
+          if (_radial != null && !_framing)
+            Positioned.fill(
+              child: RadialMenu(
+                center: _radial!.screen,
+                title: _radial!.title,
+                actions: _radial!.actions,
+                onDismiss: _closeRadial,
+                night: nightMode,
+              ),
+            ),
         ],
         ),
       ),
@@ -1463,6 +1892,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       _previewRoute = null;
       _rangeBarOpen = false;
       _dropMode = false;
+      _moving = null;
+      _placingSelf = false;
     });
     ref.read(routePlanningProvider.notifier).start();
   }
@@ -1772,10 +2203,23 @@ class _OfflineStatusCards extends ConsumerWidget {
 }
 
 /// Nokta bırakma modu açıkken araç çubuğunun altında ipucu (✕ ile kapanır).
-class _DropHint extends StatelessWidget {
-  const _DropHint({required this.onClose, this.night = false});
+/// Haritaya dokunuşun anlamını değiştiren modların ipucu şeridi (nokta
+/// bırak, taşı): ne olacağı + isteğe bağlı eylem + kapat.
+class _ModeHint extends StatelessWidget {
+  const _ModeHint({
+    required this.icon,
+    required this.text,
+    required this.closeTooltip,
+    required this.onClose,
+    this.action,
+    this.night = false,
+  });
 
+  final IconData icon;
+  final String text;
+  final String closeTooltip;
   final VoidCallback onClose;
+  final Widget? action;
   final bool night;
 
   @override
@@ -1791,14 +2235,15 @@ class _DropHint extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.add_location_alt, color: accent, size: 20),
+          Icon(icon, color: accent, size: 20),
           const SizedBox(width: 8),
-          const Expanded(
-            child: Text('Nokta bırak: haritada dokunduğun yere nokta konur',
-                style: TextStyle(color: Colors.white, fontSize: 13)),
+          Expanded(
+            child: Text(text,
+                style: const TextStyle(color: Colors.white, fontSize: 13)),
           ),
+          ?action,
           IconButton(
-            tooltip: 'Nokta bırakmayı kapat',
+            tooltip: closeTooltip,
             icon: const Icon(Icons.close, color: Colors.white70),
             onPressed: onClose,
           ),
@@ -1806,4 +2251,18 @@ class _DropHint extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Açık radyal menünün nesnesi.
+class _RadialTarget {
+  const _RadialTarget(this.point, this.title, this.actions, this.screen);
+
+  final LatLng point;
+  final String title;
+  final List<RadialAction> actions;
+
+  /// Nesnenin ekran konumu (kamera değişince güncellenir).
+  final Offset screen;
+
+  _RadialTarget at(Offset s) => _RadialTarget(point, title, actions, s);
 }

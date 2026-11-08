@@ -10,6 +10,8 @@ import 'package:kerteriz/features/map/map_screen.dart';
 import 'package:kerteriz/features/map/widgets/scale_bar.dart';
 import 'package:kerteriz/features/routes/route_widgets.dart';
 import 'package:kerteriz/features/tools/range_tools_bar.dart';
+import 'package:kerteriz/features/waypoints/point_dropper_bar.dart';
+import 'package:kerteriz/domain/models/waypoint.dart';
 import 'package:kerteriz/providers/route_providers.dart';
 import 'package:kerteriz/features/shell/adaptive_sheet.dart';
 import 'package:kerteriz/features/shell/atak_toolbar.dart';
@@ -290,6 +292,32 @@ void main() {
     await settle(tester);
     expect(find.textContaining('Çubukta 5/6 araç'), findsOneWidget);
     expect(find.bySemanticsLabel('Haritalar').hitTestable(), findsOneWidget);
+    await dispose(tester);
+  });
+
+  testWidgets('Nokta bırak: palet açılır, tür seçimi sıradaki adı değiştirir', (
+    tester,
+  ) async {
+    await pumpScreen(tester, const Size(390, 844), self: _self);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(MapScreen)),
+    );
+    await tester.tap(find.bySemanticsLabel('Nokta bırak'));
+    await tester.pump();
+    expect(find.byType(PointDropperBar), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    expectOnScreen(tester, find.byType(PointDropperBar), const Size(390, 844));
+    expect(find.text('Haritaya dokun → DÜŞMAN-1'), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel('Dost'));
+    await tester.pump();
+    expect(container.read(dropAffiliationProvider), Affiliation.friend);
+    expect(find.text('Haritaya dokun → DOST-1'), findsOneWidget);
+
+    // Araç çubuğundaki düğme paleti kapatır.
+    await tester.tap(find.bySemanticsLabel('Nokta bırak'));
+    await tester.pump();
+    expect(find.byType(PointDropperBar), findsNothing);
     await dispose(tester);
   });
 }

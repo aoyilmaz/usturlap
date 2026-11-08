@@ -36,6 +36,18 @@ class _SelfInfoBoxState extends ConsumerState<SelfInfoBox> {
     final callsign = ref.watch(callsignProvider);
     final night = ref.watch(nightModeProvider);
     final fmt = ref.watch(bearingFormatterProvider);
+    // Elle verilen konum GPS beklemeden gösterilir.
+    final manual = ref.watch(manualPositionProvider) != null;
+    Widget content(Contact c) => _Content(
+      contact: c,
+      callsign: callsign,
+      format: format,
+      fmt: fmt,
+      night: night,
+      expanded: _expanded,
+      manual: manual,
+      onTapCallsign: () => _editCallsign(context, callsign),
+    );
 
     return GestureDetector(
       onTap: () => setState(() => _expanded = !_expanded),
@@ -51,25 +63,19 @@ class _SelfInfoBoxState extends ConsumerState<SelfInfoBox> {
             color: night ? Colors.red.withValues(alpha: 0.55) : Colors.white24,
           ),
         ),
-        child: async.when(
-          data: (_) => self == null
-              ? _status('Konum bekleniyor…', night: night)
-              : _Content(
-                  contact: self,
-                  callsign: callsign,
-                  format: format,
-                  fmt: fmt,
+        child: manual && self != null
+            ? content(self)
+            : async.when(
+                data: (_) => self == null
+                    ? _status('Konum bekleniyor…', night: night)
+                    : content(self),
+                loading: () => _status('Konum bekleniyor…', night: night),
+                error: (e, _) => _status(
+                  e is StateError ? e.message : 'Konum alınamadı',
+                  warn: true,
                   night: night,
-                  expanded: _expanded,
-                  onTapCallsign: () => _editCallsign(context, callsign),
                 ),
-          loading: () => _status('Konum bekleniyor…', night: night),
-          error: (e, _) => _status(
-            e is StateError ? e.message : 'Konum alınamadı',
-            warn: true,
-            night: night,
-          ),
-        ),
+              ),
       ),
     );
   }
@@ -134,9 +140,13 @@ class _Content extends StatelessWidget {
     required this.night,
     required this.expanded,
     required this.onTapCallsign,
+    this.manual = false,
   });
 
   final Contact contact;
+
+  /// Elle verilen konum: doğruluk yerine "MANUEL".
+  final bool manual;
   final String callsign;
   final CoordFormatType format;
   final BearingFormatter fmt;
@@ -195,7 +205,10 @@ class _Content extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         _pair(_altitude(contact.altitudeMsl), heading),
-        _pair(_speed(contact.speedMps), _accuracy(contact.accuracyMeters)),
+        _pair(
+          _speed(contact.speedMps),
+          manual ? 'MANUEL' : _accuracy(contact.accuracyMeters),
+        ),
         if (expanded) ...[
           const Divider(color: Colors.white24, height: 12),
           for (final f in CoordFormatType.values)

@@ -36,7 +36,8 @@ class RecordingNotifier extends Notifier<RecordingState> {
   @override
   RecordingState build() {
     // Konum geldikçe, kayıttaysak noktayı ekle.
-    ref.listen<Contact?>(selfContactProvider, (prev, next) {
+    // Ham GPS: elle verilen konum ize girmez.
+    ref.listen<Contact?>(gpsSelfContactProvider, (prev, next) {
       _onPosition(next);
     });
     return const RecordingState();
@@ -76,7 +77,7 @@ class RecordingNotifier extends Notifier<RecordingState> {
     // Ekran kapalıyken de iz sürsün diye arka plan konumunu aç.
     await ref.read(positionSourceProvider).setBackgroundEnabled(true);
     // İlk noktayı hemen ekle (varsa).
-    _onPosition(ref.read(selfContactProvider));
+    _onPosition(ref.read(gpsSelfContactProvider));
   }
 
   Future<void> stop() async {

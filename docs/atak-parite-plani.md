@@ -171,7 +171,35 @@ görüntülerinden alınır, ATAK'ın ikonları kullanılmaz.
 | Araç alt çubukları (12–13) | Aktif araç kendi küçük araç çubuğunu açar (ATAK'taki Range Tools gibi); bugünkü ToolBanner'ın yerini alır | M |
 | Toolbar Manager (55–57) | Üst çubuğa hangi araçların konacağını kullanıcı seçer | M |
 
-**D3. Etkileşim**
+**D3. Etkileşim** — adım adım: **D3a** radyal menü, **D3b** kendi işaret menüsü, **D3c** GPS'siz
+konum düzeltme, **D3d** Point Dropper (dördü de cihazda ✓, 2026-11-08); sırada **D3e** nokta detayı
+(yükseklik + fotoğraf).
+
+> D3a: noktaya / röleye dokununca etrafında 64 pt düğmelerden halka (`shell/radial_menu.dart`).
+> Nokta: Detay · Git · R&B (noktadan ölçüm) · Halka (noktayı merkez alan menzil halkası) ·
+> Taşı (sonraki dokunuş / "İmlece taşı") · Paylaş · Sil (onaylı) · Ortala. Röle: Detay · Git ·
+> R&B · Ortala. Dışına dokunuş kapatır ve haritaya geçer; kamera değişince menü nesneyle kayar.
+> Ölçüm / rota planlama / taşıma sürerken nesneye dokunuş noktayı nesnenin üstüne koyar
+> (nesneye yapışma). Tehdit halkası ve Kilitlen E'de (R&B/halka kaydı, hareketli nesne).
+>
+> D3b: kendi işaretine dokununca: Ortala · Daire (GPS hata dairesi aç/kapa) · Pusula (kendi
+> konumun etrafında gül; haritayla döner, zoom yarım kademede yeniden ölçeklenir) · 15 dk (son
+> 15 dakikanın izi; kayıttan bağımsız, bellekte, 5 m aralık, >50 m doğruluk atlanır) · Paylaş
+> (callsign + MGRS + WGS84). Seçimler ayarlarda kalıcı. Ölçüm açıkken kendi işaretine dokunuş
+> ölçümü kendi konumundan başlatır.
+>
+> D3c: kendi işaret menüsü → Düzelt: haritada dokun (ya da İmlece; bir nesneye dokunursan tam
+> onun yeri), koordinat yaz, ya da bilinen noktadan kerteriz + mesafe (ayarlardaki kuzey/birim;
+> `NorthMath.toTrue`, `GeoMath.positionFromSighting`). Elle konum harita/konum kutusu/navigasyonda
+> kullanılır (turuncu işaret, kutuda "MANUEL"); iz kaydı ve son 15 dk izi ham GPS'le
+> (`gpsSelfContactProvider`). "GPS'e dön" ile biter; bellekte (yeniden açılışta GPS).
+>
+> D3d: "Nokta bırak" → palet (Dost · Düşman · Nötr · Bilinmeyen · Nokta; son seçim kalıcı,
+> varsayılan Düşman). Haritaya her dokunuş diyalogsuz, sıra numaralı adla (DÜŞMAN-3; silinen
+> numara yeniden verilmez) nokta bırakır; artı imleç açıksa "İmlece bırak". Uzun basma eskisi
+> gibi diyalogla ekler. **Görev seti (OP, CP, sensör, toplanma) sembol kütüphanesine kaldı:**
+> ATAK CoT kodları doğrulanamadı (`b-m-p-s-p-op` trafikte görülüyor ama tanımı yok); yanlış
+> kodla dışa aktarmak Faz 2'de sessiz uyumsuzluk yaratır.
 
 | Özellik (ATAK s.) | Ne yapılacak | Efor |
 |---|---|---|

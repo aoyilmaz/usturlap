@@ -77,6 +77,26 @@ class NorthMath {
     return _norm(v);
   }
 
+  /// [ref] kuzeyine göre okunan kerterizi coğrafiye çevirir (0–360);
+  /// [fromTrue]'nun tersi (ör. el pusulasıyla alınan manyetik kerteriz).
+  static double toTrue(
+    double deg,
+    LatLng at,
+    NorthRef ref, {
+    DateTime? date,
+  }) {
+    final double v;
+    switch (ref) {
+      case NorthRef.trueNorth:
+        v = deg;
+      case NorthRef.magnetic:
+        v = deg + Wmm.declination(at.latitude, at.longitude, date: date);
+      case NorthRef.grid:
+        v = deg + gridConvergence(at);
+    }
+    return _norm(v);
+  }
+
   static double _norm(double d) => ((d % 360) + 360) % 360;
 }
 
