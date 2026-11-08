@@ -30,6 +30,7 @@ import '../offline/offline_frame_panel.dart';
 import '../offline/offline_regions_sheet.dart';
 import '../overlays/overlay_manager_sheet.dart';
 import '../../providers/overlay_providers.dart';
+import '../../domain/models/saved_view.dart';
 import '../../providers/repeater_providers.dart';
 import '../../providers/settings_providers.dart';
 import '../../providers/tool_providers.dart';
@@ -63,6 +64,7 @@ import '../waypoints/waypoint_list_sheet.dart';
 import 'base_layer.dart';
 import 'base_layer_resolver.dart';
 import 'engine/map_engine.dart';
+import 'saved_views_sheet.dart';
 import 'widgets/compass_rose.dart';
 import 'widgets/los_overlay.dart';
 import 'widgets/scale_bar.dart';
@@ -857,6 +859,63 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     _recenterToLayer(layer);
   }
 
+  // ----------------------------------------- kayıtlı görünümler (ATAK s.22)
+
+  void _openSavedViews() {
+    showSavedViewsSheet(
+      context,
+      current: (name) {
+        final cam = _map.camera;
+        return SavedView(
+          id: '',
+          name: name,
+          center: cam.center,
+          zoom: cam.zoom,
+          bearing: cam.bearing,
+          layerId: _selected.id,
+          createdAt: DateTime.now(),
+        );
+      },
+      onApply: _applySavedView,
+      layerLabel: (id) => _layerById(id)?.label,
+    );
+  }
+
+  /// Katman kimliğinden tanım: gömülü ya da içe aktarılmış.
+  BaseLayerDef? _layerById(String? id) {
+    if (id == null) return null;
+    for (final l in kBaseLayers) {
+      if (l.id == id) return l;
+    }
+    for (final l in ref.read(importedLayersProvider).value ??
+        const <ImportedLayer>[]) {
+      if (l.id == id) return _importedToDef(l);
+    }
+    return null;
+  }
+
+  /// Görünüme dön: harita kaynağını seç (yüklenmesini bekle), sonra kamera.
+  /// Takip ve yön-yukarı kapanır (açık kalsa kamerayı geri çekerdi).
+  Future<void> _applySavedView(SavedView v) async {
+    final layer = _layerById(v.layerId);
+    final usable = layer != null && layer.isAvailable;
+    setState(() {
+      _follow = false;
+      _trackUp = false;
+      if (usable) _selected = layer;
+    });
+    if (usable) await _ensureResolved(layer);
+    if (!mounted) return;
+    _map.moveTo(v.center, zoom: v.zoom);
+    _map.rotateTo(v.bearing);
+    if (!usable) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Görünümün harita kaynağı bulunamadı; mevcut haritada '
+            'açıldı.'),
+      ));
+    }
+  }
+
   /// İçe-aktarılmış katmanı (drift modeli) harita BaseLayerDef'ine çevirir.
   BaseLayerDef _importedToDef(ImportedLayer l) {
     return BaseLayerDef(
@@ -1127,6 +1186,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       ToolGridSection('Harita', [
         catalog(ToolbarTool.maps),
         catalog(ToolbarTool.overlays),
+        catalog(ToolbarTool.savedViews),
         catalog(ToolbarTool.offlineRegions),
         ToolGridItem(
             icon: Icons.file_download_outlined,
@@ -1241,6 +1301,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             onShowRoute: _showRoute,
           ),
         );
+      case ToolbarTool.savedViews:
+        return ToolbarItem(
+            icon: t.icon, label: t.label, onTap: _openSavedViews);
       case ToolbarTool.nightMode:
         final on = ref.read(nightModeProvider);
         return ToolbarItem(

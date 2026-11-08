@@ -173,8 +173,8 @@ görüntülerinden alınır, ATAK'ın ikonları kullanılmaz.
 
 **D3. Etkileşim** — adım adım: **D3a** radyal menü, **D3b** kendi işaret menüsü, **D3c** GPS'siz
 konum düzeltme, **D3d** Point Dropper (dördü de cihazda ✓, 2026-11-08), **D3e** nokta detayı
-(yükseklik + fotoğraf; cihazda ✓, 2026-11-08), **D3f** Overlay Manager + #etiket (cihazda ✓);
-sırada kayıtlı görünümler.
+(yükseklik + fotoğraf; cihazda ✓, 2026-11-08), **D3f** Overlay Manager + #etiket (cihazda ✓),
+**D3g** kayıtlı görünümler (cihazda ✓); sırada sembol kütüphanesi.
 
 > D3a: noktaya / röleye dokununca etrafında 64 pt düğmelerden halka (`shell/radial_menu.dart`).
 > Nokta: Detay · Git · R&B (noktadan ölçüm) · Halka (noktayı merkez alan menzil halkası) ·
@@ -217,6 +217,11 @@ sırada kayıtlı görünümler.
 > dokununca haritada yalnız o etiketli noktalar/çizimler kalır, haritada "Yalnız #x" şeridi (✕).
 > Seçimler ayarlarda JSON (`OverlayVisibility`). İz/rota çoklu görünürlük ve harita katmanları
 > aç/kapa sonra.
+>
+> D3g: kayıtlı görünümler (≡ → Harita; araç çubuğuna eklenebilir). "Bu görünümü kaydet": merkez,
+> zoom, yön, harita kaynağı (ayarlarda JSON `saved_views`; acil silmede gider). Dokununca kaynak
+> seçilir ve yüklenince kamera oraya gider; takip ve yön-yukarı kapanır. Kaynak silinmişse mevcut
+> haritada açılır (uyarı). Yeniden adlandır / sil.
 
 | Özellik (ATAK s.) | Ne yapılacak | Efor |
 |---|---|---|
