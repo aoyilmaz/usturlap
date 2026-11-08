@@ -29,6 +29,15 @@ class CotMapper {
   /// Sade işaretçi rengi (Pusula'daki kırmızı iğne).
   static const spotColor = 0xFFFF0000;
 
+  /// Görev noktası işaretçi rengi (Pusula'daki mor rozet, `missionColor`
+  /// `features/symbols/nato_symbol.dart`).
+  static const missionColor = 0xFFB04CFF;
+
+  /// Pusula'ya özgü ayrıntı: görev noktasının türü (`<__pusula kind=…/>`).
+  /// ATAK tanımadığı ayrıntıyı yok sayar; Pusula'dan Pusula'ya paylaşımda
+  /// gözetleme / kontrol / toplanma / sensör türü kaybolmaz.
+  static const pusulaTag = '__pusula';
+
   // ------------------------------------------------------------- yazma
 
   CotEvent toEvent(MapItem item) => switch (item) {
@@ -42,21 +51,24 @@ class CotMapper {
     final now = _now();
     final type = w.cotType;
     final spot = type == CotType.spotMarker;
+    final mission = w.affiliation.isMission;
+    final color = mission ? missionColor : spotColor;
     final d = _detail([
       _el('status', {'readiness': 'true'}),
       _el('archive'),
       ?_creatorLink(now),
       _el('contact', {'callsign': w.name}),
       _text('remarks', w.note ?? ''),
-      _el('color', {'argb': '${toSigned(spot ? spotColor : 0xFFFFFFFF)}'}),
+      _el('color', {'argb': '${toSigned(spot ? color : 0xFFFFFFFF)}'}),
       _el('precisionlocation', {'altsrc': '???'}),
       _el('usericon', {
         'iconsetpath': spot
-            ? 'COT_MAPPING_SPOTMAP/$type/${toSigned(spotColor)}'
+            ? 'COT_MAPPING_SPOTMAP/$type/${toSigned(color)}'
             : 'COT_MAPPING_2525B/${_prefix2(type)}/$type',
       }),
       // Birlik büyüklüğü CoT tipinde yok → TAK'ın 2525 sembol kimliği (SIDC).
       if (sidc(w) case final id?) _el('__milsym', {'id': id}),
+      if (mission) _el(pusulaTag, {'kind': w.affiliation.name}),
     ]);
     return _event(
       now: now,
@@ -180,7 +192,14 @@ class CotMapper {
     }
     if (CotType.isAtom(e.type) || e.type.startsWith('b-m-p-')) {
       final sym = CotType.parse(e.type);
-      final derived = CotType.forSymbol(sym.affiliation, sym.role);
+      // Pusula'dan gelen görev noktası (sade işaretçi + tür ayrıntısı).
+      final kind = Affiliation.fromName(
+        e.child(pusulaTag)?.getAttribute('kind'),
+      );
+      final affiliation = e.type == CotType.spotMarker && kind.isMission
+          ? kind
+          : sym.affiliation;
+      final derived = CotType.forSymbol(affiliation, sym.role);
       final remarks = e.child('remarks')?.innerText.trim() ?? '';
       return Waypoint(
         uid: e.uid,
@@ -188,7 +207,7 @@ class CotMapper {
         position: LatLng(e.lat, e.lon),
         createdAt: e.time,
         note: remarks.isEmpty ? null : remarks,
-        affiliation: sym.affiliation,
+        affiliation: affiliation,
         role: sym.role,
         echelon: echelonFromSidc(e.child('__milsym')?.getAttribute('id')),
         // Sembolümüze tam oturmayan tip (ör. a-h-G-U-C-A-W, b-m-p-w) korunur.
@@ -209,9 +228,12 @@ class CotMapper {
     Echelon.battalion: 'F',
   };
 
+  // 2525C kimlik kodu (SIDC 2. karakter).
   static const _affiliationCode = {
     Affiliation.friend: 'F',
+    Affiliation.assumedFriend: 'A',
     Affiliation.hostile: 'H',
+    Affiliation.suspect: 'S',
     Affiliation.neutral: 'N',
     Affiliation.unknown: 'U',
   };
@@ -229,6 +251,8 @@ class CotMapper {
     final e = _echelonCode[w.echelon];
     final a = _affiliationCode[w.affiliation];
     if (e == null || a == null) return null;
+    // Kademe yalnız birliklerde anlamlı; tehlike ikonlarında SIDC yazılmaz.
+    if (w.role.isHazard) return null;
     final fn = _functionCode[w.role] ?? 'U-----';
     return 'S${a}GP$fn-$e---';
   }

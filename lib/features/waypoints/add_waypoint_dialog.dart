@@ -3,22 +3,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/coord_format.dart';
+import '../../core/sequential_name.dart';
 import '../../domain/models/waypoint.dart';
 import '../../providers/settings_providers.dart';
 import '../../providers/waypoint_providers.dart';
-import '../symbols/nato_symbol.dart';
 import '../symbols/symbol_modifier_fields.dart';
 
-/// Haritaya uzun basınca açılan "waypoint / NATO sembolü ekle" diyaloğu.
-/// İsim, isteğe bağlı not ve APP-6 sadakati (dost/düşman/nötr/bilinmeyen) alır.
+/// Haritaya uzun basınca açılan "işaret ekle" diyaloğu. İsim, isteğe bağlı
+/// not ve tür alır: sade nokta, görev noktası ya da APP-6 sadakati.
 Future<void> showAddWaypointDialog(
   BuildContext context,
   WidgetRef ref,
   LatLng point,
 ) async {
-  final count = ref.read(waypointsProvider).value?.length ?? 0;
   final format = ref.read(coordFormatProvider);
-  final nameCtrl = TextEditingController(text: 'WP-${count + 1}');
+  // Point Dropper'daki gibi Türkçe sıra numaralı ad: NOKTA-1, NOKTA-2…
+  final defaultName = nextSequentialName('NOKTA', [
+    for (final w in ref.read(waypointsProvider).value ?? const <Waypoint>[])
+      w.name,
+  ]);
+  final nameCtrl = TextEditingController(text: defaultName);
   final noteCtrl = TextEditingController();
   var selected = Affiliation.waypoint;
   var echelon = Echelon.none;
@@ -53,29 +57,9 @@ Future<void> showAddWaypointDialog(
                     decoration: const InputDecoration(
                         labelText: 'Not (isteğe bağlı)'),
                   ),
-                  const SizedBox(height: 14),
-                  const Text('Sadakat (APP-6)',
-                      style: TextStyle(fontSize: 12, color: Colors.grey)),
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    children: [
-                      for (final a in Affiliation.values)
-                        ChoiceChip(
-                          avatar: a == Affiliation.waypoint
-                              ? const Icon(Icons.location_on,
-                                  color: Colors.redAccent, size: 18)
-                              : SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child:
-                                      NatoSymbol(affiliation: a, size: 20)),
-                          label: Text(a.label),
-                          selected: selected == a,
-                          onSelected: (_) => setLocal(() => selected = a),
-                        ),
-                    ],
+                  PointKindChips(
+                    selected: selected,
+                    onSelected: (a) => setLocal(() => selected = a),
                   ),
                   SymbolModifierFields(
                     affiliation: selected,
@@ -95,10 +79,8 @@ Future<void> showAddWaypointDialog(
               FilledButton(
                 onPressed: () async {
                   final name = nameCtrl.text.trim().isEmpty
-                      ? 'WP-${count + 1}'
+                      ? defaultName
                       : nameCtrl.text.trim();
-                  // Sade waypoint'te modifier saklamayalım.
-                  final isNato = selected != Affiliation.waypoint;
                   await ref.read(waypointRepositoryProvider).add(
                         name: name,
                         position: point,
@@ -106,8 +88,9 @@ Future<void> showAddWaypointDialog(
                             ? null
                             : noteCtrl.text.trim(),
                         affiliation: selected,
-                        echelon: isNato ? echelon : Echelon.none,
-                        role: isNato ? role : SymbolRole.none,
+                        echelon: SymbolModifierFields.echelonToSave(
+                          selected, echelon, role),
+                        role: SymbolModifierFields.roleToSave(selected, role),
                       );
                   if (context.mounted) Navigator.of(context).pop();
                 },

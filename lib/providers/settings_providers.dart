@@ -5,7 +5,7 @@ import '../core/constants.dart';
 import '../core/coord_format.dart';
 import '../core/toolbar_tool.dart';
 import '../data/db/settings_repository.dart';
-import '../domain/models/waypoint.dart';
+import '../domain/models/drop_kind.dart';
 import 'waypoint_providers.dart';
 
 final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
@@ -345,31 +345,32 @@ class ShowRecentTrailNotifier extends PersistedBoolNotifier {
 final showRecentTrailProvider =
     NotifierProvider<ShowRecentTrailNotifier, bool>(ShowRecentTrailNotifier.new);
 
-const _dropAffiliationKey = 'drop_affiliation';
+// Anahtar adı eski sürümle aynı: eskiden türün adı saklanırdı ("hostile"),
+// bu değerler DropKind.id olarak da geçerli.
+const _dropKindKey = 'drop_affiliation';
 
-/// Point Dropper'da son seçilen tür (dost/düşman/nötr/bilinmeyen/nokta).
-class DropAffiliationNotifier extends Notifier<Affiliation> {
+/// Point Dropper'da son seçilen ön ayar (tür + tehlike ikonu + ad öneki).
+class DropKindNotifier extends Notifier<DropKind> {
   bool _changed = false;
 
   @override
-  Affiliation build() {
+  DropKind build() {
     _load();
-    return Affiliation.hostile;
+    return DropKind.defaultKind;
   }
 
   Future<void> _load() async {
-    final saved =
-        await ref.read(settingsRepositoryProvider).get(_dropAffiliationKey);
-    if (saved != null && !_changed) state = Affiliation.fromName(saved);
+    final saved = await ref.read(settingsRepositoryProvider).get(_dropKindKey);
+    if (saved != null && !_changed) state = DropKind.byId(saved);
   }
 
-  void set(Affiliation a) {
+  void set(DropKind k) {
     _changed = true;
-    state = a;
-    ref.read(settingsRepositoryProvider).set(_dropAffiliationKey, a.name);
+    state = k;
+    ref.read(settingsRepositoryProvider).set(_dropKindKey, k.id);
   }
 }
 
-final dropAffiliationProvider =
-    NotifierProvider<DropAffiliationNotifier, Affiliation>(
-        DropAffiliationNotifier.new);
+final dropKindProvider = NotifierProvider<DropKindNotifier, DropKind>(
+  DropKindNotifier.new,
+);

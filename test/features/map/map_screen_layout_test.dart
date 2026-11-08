@@ -312,7 +312,7 @@ void main() {
 
     await tester.tap(find.bySemanticsLabel('Dost'));
     await tester.pump();
-    expect(container.read(dropAffiliationProvider), Affiliation.friend);
+    expect(container.read(dropKindProvider).affiliation, Affiliation.friend);
     expect(find.text('Haritaya dokun → DOST-1'), findsOneWidget);
 
     // Araç çubuğundaki düğme paleti kapatır.

@@ -277,30 +277,30 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   /// Kayıtlı bir waypoint'in işaretçisi (dokun → detay/sil).
-  /// APP-6 sadakati varsa NATO çerçevesi, yoksa kırmızı pin.
+  /// APP-6 sadakati varsa NATO çerçevesi, görev noktasında mor rozet,
+  /// sade noktada kırmızı pin.
   MapMarker _waypointMarker(Waypoint wp) {
-    final isNato = wp.affiliation != Affiliation.waypoint;
+    final isPin = wp.affiliation == Affiliation.waypoint;
     return MapMarker(
       id: 'wp:${wp.id}',
       // Aynı görünen semboller tek resmi paylaşır.
-      imageKey: isNato
-          ? 'wp:nato:${wp.affiliation.name}:${wp.echelon}:${wp.role}'
-          : 'wp:pin',
+      imageKey: isPin
+          ? 'wp:pin'
+          : 'wp:${wp.affiliation.name}:${wp.echelon.name}:${wp.role.name}',
       point: wp.position,
-      width: isNato ? 34 : 40,
-      height: isNato ? 34 : 40,
+      width: isPin ? 40 : 34,
+      height: isPin ? 40 : 34,
       onTap: () => _onObjectTap(
         wp.position,
         title: wp.name,
         actions: () => _waypointActions(wp),
       ),
-      child: isNato
-          ? NatoSymbol(
-              affiliation: wp.affiliation,
-              echelon: wp.echelon,
-              role: wp.role,
-              size: 34)
-          : const Icon(Icons.location_on, color: Colors.redAccent, size: 36),
+      child: PointSymbol(
+        affiliation: wp.affiliation,
+        echelon: wp.echelon,
+        role: wp.role,
+        size: isPin ? 36 : 34,
+      ),
     );
   }
 
@@ -1327,20 +1327,20 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
   }
 
-  String _nextDropName(Affiliation a, List<Waypoint> waypoints) =>
+  String _nextDropName(DropKind k, List<Waypoint> waypoints) =>
       nextSequentialName(
-          dropPrefix(a), [for (final w in waypoints) w.name, ..._droppedNames]);
+          k.prefix, [for (final w in waypoints) w.name, ..._droppedNames]);
 
   /// Point Dropper: seçili türde, sıra numaralı adla, diyalogsuz nokta.
   Future<void> _dropPoint(LatLng p) async {
     HapticFeedback.mediumImpact();
-    final a = ref.read(dropAffiliationProvider);
+    final k = ref.read(dropKindProvider);
     final name = _nextDropName(
-        a, ref.read(waypointsProvider).value ?? const <Waypoint>[]);
+        k, ref.read(waypointsProvider).value ?? const <Waypoint>[]);
     _droppedNames.add(name);
     await ref
         .read(waypointRepositoryProvider)
-        .add(name: name, position: p, affiliation: a);
+        .add(name: name, position: p, affiliation: k.affiliation, role: k.role);
   }
 
   /// Araç çubuğu "Nokta bırak": Point Dropper paletini açar/kapatır.
@@ -1415,7 +1415,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final visibility = ref.watch(overlayVisibilityProvider);
     final nightMode = ref.watch(nightModeProvider);
     final showGpsCircle = ref.watch(showGpsCircleProvider);
-    final dropAffiliation = ref.watch(dropAffiliationProvider);
+    final dropKind = ref.watch(dropKindProvider);
     final showRose = ref.watch(showCompassRoseProvider);
     final showTrail = ref.watch(showRecentTrailProvider);
     // Her zaman izlenir: seçenek kapalıyken de son 15 dk toplansın.
@@ -1773,11 +1773,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       if (_dropMode)
                         PointDropperBar(
                           night: nightMode,
-                          selected: dropAffiliation,
-                          nextName: _nextDropName(dropAffiliation, waypoints),
-                          onSelect: (a) => ref
-                              .read(dropAffiliationProvider.notifier)
-                              .set(a),
+                          selected: dropKind,
+                          nextName: _nextDropName(dropKind, waypoints),
+                          onSelect: (k) =>
+                              ref.read(dropKindProvider.notifier).set(k),
                           onClose: () => setState(() => _dropMode = false),
                           onDropAtCrosshair:
                               crosshairOn ? _addAtCrosshair : null,

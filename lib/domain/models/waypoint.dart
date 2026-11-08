@@ -3,18 +3,49 @@ import 'package:latlong2/latlong.dart';
 import 'cot_type.dart';
 import 'map_item.dart';
 
-/// APP-6 / MIL-STD-2525 sadakat (affiliation) — çerçeve şekli + rengini belirler.
-/// dost = mavi dikdörtgen, düşman = kırmızı eşkenar dörtgen, nötr = yeşil kare,
-/// bilinmeyen = sarı dörtyaprak. `waypoint` = sade kırmızı pin (NATO değil).
+/// Noktanın türü: sade nokta, Pusula'ya özgü görev noktaları ve APP-6 /
+/// MIL-STD-2525 sadakatleri (çerçeve şekli + rengi).
+///
+/// Sadakat: dost = mavi dikdörtgen, düşman = kırmızı eşkenar dörtgen,
+/// nötr = yeşil kare, bilinmeyen = sarı dörtyaprak. "Varsayılan dost" ve
+/// "şüpheli" kesinleşmemiş kimliktir: dost / düşman çerçevesi kesik çizgiyle.
+///
+/// Görev noktaları (gözetleme, kontrol, toplanma, sensör) NATO sembolü
+/// değildir; ATAK'ın güncel CoT kataloğunda karşılıkları olmadığı için
+/// ATAK'a adıyla sade işaretçi olarak gider (bkz. `CotType.forSymbol`).
+///
+/// Veritabanında `.name` ile saklanır: sırayı değiştirmek güvenli, adları
+/// değiştirmek değil.
 enum Affiliation {
-  waypoint('Waypoint'),
+  waypoint('Nokta'),
+  observationPost('Gözetleme noktası'),
+  checkpoint('Kontrol noktası'),
+  rallyPoint('Toplanma noktası'),
+  sensor('Sensör'),
   friend('Dost'),
+  assumedFriend('Varsayılan dost'),
   hostile('Düşman'),
+  suspect('Şüpheli'),
   neutral('Nötr'),
   unknown('Bilinmeyen');
 
   const Affiliation(this.label);
   final String label;
+
+  /// APP-6 sadakat çerçeveli NATO sembolü mü (büyüklük / ana ikon alır).
+  bool get isNato => switch (this) {
+    friend || assumedFriend || hostile || suspect || neutral || unknown => true,
+    _ => false,
+  };
+
+  /// Pusula'ya özgü görev noktası mı.
+  bool get isMission => switch (this) {
+    observationPost || checkpoint || rallyPoint || sensor => true,
+    _ => false,
+  };
+
+  /// Kimlik kesinleşmemiş (çerçeve kesik çizgi).
+  bool get isUncertain => this == assumedFriend || this == suspect;
 
   static Affiliation fromName(String? name) {
     for (final a in Affiliation.values) {
@@ -44,17 +75,24 @@ enum Echelon {
   }
 }
 
-/// APP-6 ana ikon / birlik tipi — çerçeve içine çizilen sembol.
-/// piyade(✕) / zırhlı(oval) / topçu(●) / keşif(/).
+/// APP-6 ana ikon — çerçeve içine çizilen sembol.
+/// Birlik: piyade(✕) / zırhlı(oval) / topçu(●) / keşif(/).
+/// Tehlike: mayın / KBRN / bariyer (CoT kodları `CotType`'ta).
 enum SymbolRole {
   none('Yok'),
   infantry('Piyade'),
   armor('Zırhlı'),
   artillery('Topçu'),
-  recon('Keşif');
+  recon('Keşif'),
+  mine('Mayın'),
+  cbrn('KBRN'),
+  barrier('Bariyer');
 
   const SymbolRole(this.label);
   final String label;
+
+  /// Tehlike ikonu (birlik değil): büyüklük (echelon) anlamsızdır.
+  bool get isHazard => this == mine || this == cbrn || this == barrier;
 
   static SymbolRole fromName(String? name) {
     for (final r in SymbolRole.values) {

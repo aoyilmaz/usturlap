@@ -174,7 +174,7 @@ görüntülerinden alınır, ATAK'ın ikonları kullanılmaz.
 **D3. Etkileşim** — adım adım: **D3a** radyal menü, **D3b** kendi işaret menüsü, **D3c** GPS'siz
 konum düzeltme, **D3d** Point Dropper (dördü de cihazda ✓, 2026-11-08), **D3e** nokta detayı
 (yükseklik + fotoğraf; cihazda ✓, 2026-11-08), **D3f** Overlay Manager + #etiket (cihazda ✓),
-**D3g** kayıtlı görünümler (cihazda ✓); sırada sembol kütüphanesi.
+**D3g** kayıtlı görünümler (cihazda ✓), **D3h** sembol kütüphanesi + görev seti (cihazda ✓). **D3 tamam.**
 
 > D3a: noktaya / röleye dokununca etrafında 64 pt düğmelerden halka (`shell/radial_menu.dart`).
 > Nokta: Detay · Git · R&B (noktadan ölçüm) · Halka (noktayı merkez alan menzil halkası) ·
@@ -222,6 +222,19 @@ konum düzeltme, **D3d** Point Dropper (dördü de cihazda ✓, 2026-11-08), **D
 > zoom, yön, harita kaynağı (ayarlarda JSON `saved_views`; acil silmede gider). Dokununca kaynak
 > seçilir ve yüklenince kamera oraya gider; takip ve yön-yukarı kapanır. Kaynak silinmişse mevcut
 > haritada açılır (uyarı). Yeniden adlandır / sil.
+>
+> D3h: Türkçe kodlama kararı (2026-11-08): ekranda ve adlarda her şey Türkçe; CoT kodu yalnız
+> dışa/içe aktarımda tercüman (veritabanında türün adı saklanır, şema değişmedi). Yeni türler:
+> **varsayılan dost** / **şüpheli** (dost / düşman çerçevesi kesik çizgi, 2525D; CoT `a-a-` /
+> `a-s-`, SIDC A / S), tehlike ikonları **mayın** `a-?-G-E-X-M`, **KBRN** `a-?-G-E-X-N` (okurken
+> `I-R-N…` tesisleri de), **bariyer** `a-?-G-I-c-bar` (TAK CoTtypes.xml'den doğrulandı; `I-R-M`
+> maden ocağıdır, alınmadı; genel "engel" için tek tip yok, eklenmedi). **Görev seti** Pusula'ya
+> özgü: Gözetleme (GN), Kontrol (KN), Toplanma (TN) noktası, Sensör (SN) — mor rozet; ATAK'ta
+> güncel CoT tipi olmadığı için (yalnız DEPRECATED `b-g-…`) adıyla mor `b-m-p-s-m` gider, tür
+> `<__pusula kind=…/>` ayrıntısıyla Pusula'ya geri döner. Point Dropper üç sekme: Sadakat (6) ·
+> Görev (Nokta, GN, KN, TN, SN) · Tehlike (MAYIN, KBRN, BARİYER; düşman olarak düşer).
+> Ekle/Düzenle'de tür seçimi iki grup (Nokta/görev · Sadakat); tehlike ikonunda büyüklük gizli.
+> Uzun basarak eklenen noktanın varsayılan adı WP-n yerine NOKTA-n.
 
 | Özellik (ATAK s.) | Ne yapılacak | Efor |
 |---|---|---|

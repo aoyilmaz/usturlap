@@ -98,6 +98,79 @@ void main() {
       expect(back.typeCode, 'a-h-G-U-C-A-W');
       expect(back.role, SymbolRole.armor);
     });
+
+    test('görev noktası: mor spot marker, Pusula\'ya türüyle döner', () {
+      for (final a in Affiliation.values.where((a) => a.isMission)) {
+        final gn = Waypoint(
+          uid: 'gn-${a.name}',
+          name: 'GN-1',
+          position: const LatLng(37, 37),
+          createdAt: DateTime.utc(2026),
+          affiliation: a,
+        );
+        final e = mapper.fromWaypoint(gn);
+        expect(e.type, 'b-m-p-s-m', reason: a.name);
+        final purple = '${CotMapper.toSigned(CotMapper.missionColor)}';
+        expect(e.child('color')!.getAttribute('argb'), purple);
+        expect(
+          e.child('usericon')!.getAttribute('iconsetpath'),
+          'COT_MAPPING_SPOTMAP/b-m-p-s-m/$purple',
+        );
+        expect(e.child('__pusula')!.getAttribute('kind'), a.name);
+        final back = roundTrip(gn) as Waypoint;
+        expect(back.affiliation, a);
+        expect(back.typeCode, isNull);
+        expect(back.name, 'GN-1');
+      }
+      // Sade noktada Pusula ayrıntısı yok.
+      expect(mapper.fromWaypoint(spot).child('__pusula'), isNull);
+    });
+
+    test('tür ayrıntısı yalnız spot marker\'da geçerli', () {
+      // Biri NATO sembolüne yanlışlıkla eklese de sembol bozulmaz.
+      final e = mapper.fromWaypoint(
+        Waypoint(
+          uid: 'h',
+          name: 'D',
+          position: const LatLng(37, 37),
+          createdAt: DateTime.utc(2026),
+          affiliation: Affiliation.hostile,
+        ),
+      );
+      e.detail.children.add(
+        XmlElement(XmlName('__pusula'), [
+          XmlAttribute(XmlName('kind'), 'sensor'),
+        ]),
+      );
+      expect((mapper.toItem(e) as Waypoint).affiliation, Affiliation.hostile);
+    });
+
+    test('şüpheli / varsayılan dost ve tehlike ikonları gidip döner', () {
+      for (final (a, r, type) in [
+        (Affiliation.suspect, SymbolRole.infantry, 'a-s-G-U-C-I'),
+        (Affiliation.assumedFriend, SymbolRole.none, 'a-a-G'),
+        (Affiliation.hostile, SymbolRole.mine, 'a-h-G-E-X-M'),
+        (Affiliation.unknown, SymbolRole.cbrn, 'a-u-G-E-X-N'),
+        (Affiliation.neutral, SymbolRole.barrier, 'a-n-G-I-c-bar'),
+      ]) {
+        final w = Waypoint(
+          uid: type,
+          name: 'T',
+          position: const LatLng(37, 37),
+          createdAt: DateTime.utc(2026),
+          affiliation: a,
+          role: r,
+        );
+        final e = mapper.fromWaypoint(w);
+        expect(e.type, type);
+        expect(
+          e.child('usericon')!.getAttribute('iconsetpath'),
+          'COT_MAPPING_2525B/${type.substring(0, 3)}/$type',
+        );
+        final back = roundTrip(w) as Waypoint;
+        expect((back.affiliation, back.role, back.typeCode), (a, r, null));
+      }
+    });
   });
 
   group('grafik', () {
@@ -325,6 +398,28 @@ void main() {
     );
     expect(
       CotMapper.sidc(w(Affiliation.waypoint, Echelon.squad, SymbolRole.none)),
+      isNull,
+    );
+    // Yeni kimlikler (2525C: A varsayılan dost, S şüpheli).
+    expect(
+      CotMapper.sidc(
+        w(Affiliation.suspect, Echelon.squad, SymbolRole.infantry),
+      ),
+      'SSGPUCI----B---',
+    );
+    expect(
+      CotMapper.sidc(
+        w(Affiliation.assumedFriend, Echelon.team, SymbolRole.none),
+      ),
+      'SAGPU------A---',
+    );
+    // Tehlike ikonunda kademe anlamsız → SIDC yok; görev noktasında da.
+    expect(
+      CotMapper.sidc(w(Affiliation.hostile, Echelon.squad, SymbolRole.mine)),
+      isNull,
+    );
+    expect(
+      CotMapper.sidc(w(Affiliation.sensor, Echelon.squad, SymbolRole.none)),
       isNull,
     );
     for (final e in Echelon.values) {

@@ -42,9 +42,6 @@ class OverlayManager extends ConsumerWidget {
   final ValueChanged<LatLng> onCenter;
   final ValueChanged<RoutePlan> onShowRoute;
 
-  static String _affLabel(Affiliation a) =>
-      a == Affiliation.waypoint ? 'Nokta' : a.label;
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final vis = ref.watch(overlayVisibilityProvider);
@@ -195,13 +192,13 @@ class OverlayManager extends ConsumerWidget {
           if (wps.any((w) => w.affiliation == a))
             _Group(
               title:
-                  '${_affLabel(a)} (${wps.where((w) => w.affiliation == a).length})',
+                  '${a.label} (${wps.where((w) => w.affiliation == a).length})',
               leading: _waypointIcon(a),
               trailing: eye(
                 visible: !vis.hiddenGroups.contains(
                   OverlayVisibility.waypointGroup(a),
                 ),
-                name: _affLabel(a),
+                name: a.label,
                 onPressed: () => notifier.update(
                   (v) => v.toggleGroup(OverlayVisibility.waypointGroup(a)),
                 ),
@@ -307,13 +304,8 @@ class OverlayManager extends ConsumerWidget {
     );
   }
 
-  static Widget _waypointIcon(Affiliation a) => a == Affiliation.waypoint
-      ? const Icon(Icons.location_on, color: Colors.redAccent)
-      : SizedBox(
-          width: 24,
-          height: 24,
-          child: NatoSymbol(affiliation: a, size: 22),
-        );
+  static Widget _waypointIcon(Affiliation a) =>
+      PointSymbol(affiliation: a, size: 24);
 
   static LatLng _middle(List<LatLng> pts) {
     var lat = 0.0, lon = 0.0;

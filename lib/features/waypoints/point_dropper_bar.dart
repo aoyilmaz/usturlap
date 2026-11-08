@@ -1,31 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../domain/models/waypoint.dart';
+import '../../domain/models/drop_kind.dart';
 import '../symbols/nato_symbol.dart';
 
-/// Point Dropper türleri, paletteki sırayla.
-const kDropAffiliations = [
-  Affiliation.friend,
-  Affiliation.hostile,
-  Affiliation.neutral,
-  Affiliation.unknown,
-  Affiliation.waypoint,
-];
-
-/// Bırakılan noktanın ad öneki (sıra numarası eklenir: DÜŞMAN-3).
-String dropPrefix(Affiliation a) => switch (a) {
-  Affiliation.friend => 'DOST',
-  Affiliation.hostile => 'DÜŞMAN',
-  Affiliation.neutral => 'NÖTR',
-  Affiliation.unknown => 'BİLİNMEYEN',
-  Affiliation.waypoint => 'NOKTA',
-};
+export '../../domain/models/drop_kind.dart';
 
 /// ATAK Point Dropper (kılavuz s.9–10): tür seç, haritaya dokun, nokta
 /// diyalogsuz ve sıra numaralı adla düşer. Ad sonra radyal menü → Detay →
 /// Düzenle'den değiştirilir.
-class PointDropperBar extends StatelessWidget {
+///
+/// Türler üç sekmede: Sadakat (APP-6), Görev (nokta, GN, KN, TN, SN) ve
+/// Tehlike (mayın, KBRN, bariyer). Açılışta seçili türün sekmesi görünür.
+class PointDropperBar extends StatefulWidget {
   const PointDropperBar({
     super.key,
     required this.selected,
@@ -36,11 +23,11 @@ class PointDropperBar extends StatelessWidget {
     this.night = false,
   });
 
-  final Affiliation selected;
+  final DropKind selected;
 
   /// Bir sonraki dokunuşta verilecek ad.
   final String nextName;
-  final ValueChanged<Affiliation> onSelect;
+  final ValueChanged<DropKind> onSelect;
   final VoidCallback onClose;
 
   /// Artı imleç açıksa: imlecin altına bırak.
@@ -48,8 +35,25 @@ class PointDropperBar extends StatelessWidget {
   final bool night;
 
   @override
+  State<PointDropperBar> createState() => _PointDropperBarState();
+}
+
+class _PointDropperBarState extends State<PointDropperBar> {
+  late DropGroup _group = widget.selected.group;
+
+  @override
+  void didUpdateWidget(PointDropperBar old) {
+    super.didUpdateWidget(old);
+    // Seçim dışarıdan değiştiyse (ör. kayıtlı ayar sonradan yüklendi)
+    // onun sekmesine geç.
+    if (old.selected.group != widget.selected.group) {
+      _group = widget.selected.group;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final accent = night ? Colors.redAccent : Colors.amber;
+    final accent = widget.night ? Colors.redAccent : Colors.amber;
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.fromLTRB(4, 4, 0, 4),
@@ -64,15 +68,25 @@ class PointDropperBar extends StatelessWidget {
         children: [
           Row(
             children: [
-              for (final a in kDropAffiliations)
-                _choice(a, selected: a == selected, accent: accent),
-              const Spacer(),
+              for (final g in DropGroup.values)
+                Expanded(child: _tab(g, accent)),
               IconButton(
                 tooltip: 'Nokta bırakmayı kapat',
                 icon: const Icon(Icons.close, color: Colors.white70),
-                onPressed: onClose,
+                onPressed: widget.onClose,
               ),
             ],
+          ),
+          const SizedBox(height: 2),
+          // Dar ekranda sığmazsa yana kaydırılır (sekmede en çok 6 tür).
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (final k in DropKind.inGroup(_group))
+                  _choice(k, selected: k == widget.selected, accent: accent),
+              ],
+            ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(8, 2, 8, 2),
@@ -80,13 +94,13 @@ class PointDropperBar extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'Haritaya dokun → $nextName',
+                    'Haritaya dokun → ${widget.nextName}',
                     style: const TextStyle(color: Colors.white, fontSize: 13),
                   ),
                 ),
-                if (onDropAtCrosshair != null)
+                if (widget.onDropAtCrosshair != null)
                   TextButton(
-                    onPressed: onDropAtCrosshair,
+                    onPressed: widget.onDropAtCrosshair,
                     child: const Text('İmlece bırak'),
                   ),
               ],
@@ -97,15 +111,45 @@ class PointDropperBar extends StatelessWidget {
     );
   }
 
-  Widget _choice(
-    Affiliation a, {
-    required bool selected,
-    required Color accent,
-  }) {
+  /// Sekme başlığı (eldivenle dokunulabilir: 44 pt yükseklik, tam genişlik).
+  Widget _tab(DropGroup g, Color accent) {
+    final on = g == _group;
+    return Semantics(
+      button: true,
+      selected: on,
+      label: 'Sekme: ${g.label}',
+      excludeSemantics: true,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () => setState(() => _group = g),
+        child: Container(
+          height: 44,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: on ? accent : Colors.transparent,
+                width: 2,
+              ),
+            ),
+          ),
+          child: Text(
+            g.label,
+            style: TextStyle(
+              color: on ? accent : Colors.white70,
+              fontWeight: on ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _choice(DropKind k, {required bool selected, required Color accent}) {
     return Semantics(
       button: true,
       selected: selected,
-      label: a == Affiliation.waypoint ? 'Nokta' : a.label,
+      label: k.label,
       excludeSemantics: true,
       child: Material(
         color: selected ? accent.withValues(alpha: 0.35) : Colors.transparent,
@@ -120,19 +164,17 @@ class PointDropperBar extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           onTap: () {
             HapticFeedback.selectionClick();
-            onSelect(a);
+            widget.onSelect(k);
           },
           child: SizedBox(
             width: 52,
             height: 52,
             child: Center(
-              child: a == Affiliation.waypoint
-                  ? const Icon(
-                      Icons.location_on,
-                      color: Colors.redAccent,
-                      size: 32,
-                    )
-                  : NatoSymbol(affiliation: a, size: 30),
+              child: PointSymbol(
+                affiliation: k.affiliation,
+                role: k.role,
+                size: 32,
+              ),
             ),
           ),
         ),

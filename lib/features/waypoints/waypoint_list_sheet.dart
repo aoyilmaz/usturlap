@@ -80,14 +80,12 @@ class _WaypointListBody extends ConsumerWidget {
                     itemBuilder: (context, i) {
                       final wp = list[i];
                       return ListTile(
-                        leading: wp.affiliation == Affiliation.waypoint
-                            ? const Icon(Icons.location_on,
-                                color: Colors.redAccent)
-                            : SizedBox(
-                                width: 28,
-                                height: 28,
-                                child: NatoSymbol(
-                                    affiliation: wp.affiliation, size: 28)),
+                        leading: PointSymbol(
+                          affiliation: wp.affiliation,
+                          echelon: wp.echelon,
+                          role: wp.role,
+                          size: 28,
+                        ),
                         title: Text(wp.name),
                         subtitle: Text(
                           CoordFormat.format(wp.position, format),

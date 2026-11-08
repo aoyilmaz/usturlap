@@ -22,24 +22,38 @@ class CotType {
   /// Serbest çizim: çizgi ya da (ilk = son nokta) kapalı alan.
   static const freeform = 'u-d-f';
 
-  // Sadakat harfi (2525: f/h/n/u + a/s/j/k/p/…).
+  // Sadakat harfi (2525: f/h/n/u + a/s/j/k/p/…). Görev noktaları ve sade
+  // nokta burada yok → sade işaretçi olarak gider.
   static const _affiliationCode = {
     Affiliation.friend: 'f',
+    Affiliation.assumedFriend: 'a',
     Affiliation.hostile: 'h',
+    Affiliation.suspect: 's',
     Affiliation.neutral: 'n',
     Affiliation.unknown: 'u',
   };
 
-  // Kara birliği işlev kodları (2525B): muharebe birliği altında.
+  // Ana ikonun işlev kodu (boyut G'den sonrası). Birlikler 2525B muharebe
+  // birliği altında; tehlikeler TAK CoT kataloğundan (CoTtypes.xml):
+  // `a-.-G-E-X-M` Land Mines, `a-.-G-E-X-N` NBC Equipment,
+  // `a-.-G-I-c-bar` Fence/Wall/Barrier.
   static const _roleCode = {
     SymbolRole.infantry: 'U-C-I',
     SymbolRole.armor: 'U-C-A',
     SymbolRole.artillery: 'U-C-F',
     SymbolRole.recon: 'U-C-R',
+    SymbolRole.mine: 'E-X-M',
+    SymbolRole.cbrn: 'E-X-N',
+    SymbolRole.barrier: 'I-c-bar',
   };
 
-  /// Pusula sembolünden CoT tipi. Sade waypoint → [spotMarker].
-  /// Rolsüz NATO sembolü → genel kara nesnesi (ör. `a-h-G`).
+  // Okurken aynı ikona düşen başka kodlar: KBRN tesisi (`I-R-N`, alt
+  // tipleri kimyasal `-C` / biyolojik `-B`). Dikkat: `I-R-M` "maden ocağı"
+  // yapısıdır, kara mayını değil.
+  static const _roleAliases = {SymbolRole.cbrn: 'I-R-N'};
+
+  /// Pusula sembolünden CoT tipi. Sade nokta ve görev noktaları →
+  /// [spotMarker]. Rolsüz NATO sembolü → genel kara nesnesi (ör. `a-h-G`).
   static String forSymbol(Affiliation affiliation, SymbolRole role) {
     final a = _affiliationCode[affiliation];
     if (a == null) return spotMarker;
@@ -55,8 +69,12 @@ class CotType {
       return (affiliation: Affiliation.waypoint, role: SymbolRole.none);
     }
     final affiliation = switch (parts[1]) {
-      'f' || 'a' => Affiliation.friend, // a = varsayılan dost
-      'h' || 's' || 'j' || 'k' => Affiliation.hostile, // şüpheli, joker, faker
+      'f' => Affiliation.friend,
+      'a' => Affiliation.assumedFriend,
+      'h' ||
+      'j' ||
+      'k' => Affiliation.hostile, // joker, faker: tatbikat düşmanı
+      's' => Affiliation.suspect,
       'n' => Affiliation.neutral,
       _ => Affiliation.unknown, // u, p (beklemede), o (yok), x (egzersiz)…
     };
@@ -64,9 +82,13 @@ class CotType {
     // Boyuttan sonraki işlev kodu: "U-C-I" ile başlayan her alt tip piyadedir.
     if (parts.length >= 3 && parts[2] == 'G') {
       final fn = parts.skip(3).join('-');
-      for (final e in _roleCode.entries) {
-        if (fn == e.value || fn.startsWith('${e.value}-')) {
-          role = e.key;
+      bool matches(String code) => fn == code || fn.startsWith('$code-');
+      for (final r in SymbolRole.values) {
+        final code = _roleCode[r];
+        final alias = _roleAliases[r];
+        if ((code != null && matches(code)) ||
+            (alias != null && matches(alias))) {
+          role = r;
           break;
         }
       }

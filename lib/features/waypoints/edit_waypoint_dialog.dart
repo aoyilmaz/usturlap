@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models/waypoint.dart';
 import '../../providers/waypoint_providers.dart';
-import '../symbols/nato_symbol.dart';
 import '../symbols/symbol_modifier_fields.dart';
 
 /// Var olan bir waypoint'i düzenler (ad / not / yükseklik / APP-6 sadakat).
@@ -55,29 +54,9 @@ Future<void> showEditWaypointDialog(
                       errorText: elevError,
                     ),
                   ),
-                  const SizedBox(height: 14),
-                  const Text('Sadakat (APP-6)',
-                      style: TextStyle(fontSize: 12, color: Colors.grey)),
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    children: [
-                      for (final a in Affiliation.values)
-                        ChoiceChip(
-                          avatar: a == Affiliation.waypoint
-                              ? const Icon(Icons.location_on,
-                                  color: Colors.redAccent, size: 18)
-                              : SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child:
-                                      NatoSymbol(affiliation: a, size: 20)),
-                          label: Text(a.label),
-                          selected: selected == a,
-                          onSelected: (_) => setLocal(() => selected = a),
-                        ),
-                    ],
+                  PointKindChips(
+                    selected: selected,
+                    onSelected: (a) => setLocal(() => selected = a),
                   ),
                   SymbolModifierFields(
                     affiliation: selected,
@@ -111,7 +90,6 @@ Future<void> showEditWaypointDialog(
                   final name = nameCtrl.text.trim().isEmpty
                       ? wp.name
                       : nameCtrl.text.trim();
-                  final isNato = selected != Affiliation.waypoint;
                   await repo.updateDetails(
                         wp.id!,
                         name: name,
@@ -119,8 +97,9 @@ Future<void> showEditWaypointDialog(
                             ? null
                             : noteCtrl.text.trim(),
                         affiliation: selected,
-                        echelon: isNato ? echelon : Echelon.none,
-                        role: isNato ? role : SymbolRole.none,
+                        echelon: SymbolModifierFields.echelonToSave(
+                          selected, echelon, role),
+                        role: SymbolModifierFields.roleToSave(selected, role),
                       );
                   await repo.setElevation(wp.id!, elev);
                   if (context.mounted) Navigator.of(context).pop();
