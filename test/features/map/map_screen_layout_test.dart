@@ -18,6 +18,7 @@ import 'package:kerteriz/features/shell/atak_toolbar.dart';
 import 'package:kerteriz/features/shell/settings_sheet.dart';
 import 'package:kerteriz/features/shell/toolbar_tools.dart';
 import 'package:kerteriz/providers/location_providers.dart';
+import 'package:kerteriz/providers/overlay_providers.dart';
 import 'package:kerteriz/providers/repeater_providers.dart';
 import 'package:kerteriz/providers/settings_providers.dart';
 import 'package:kerteriz/providers/waypoint_providers.dart';
@@ -318,6 +319,25 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Nokta bırak'));
     await tester.pump();
     expect(find.byType(PointDropperBar), findsNothing);
+    await dispose(tester);
+  });
+
+  testWidgets('etiket süzgeci açıkken şerit görünür, ✕ kaldırır', (
+    tester,
+  ) async {
+    await pumpScreen(tester, const Size(390, 844), self: _self);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(MapScreen)),
+    );
+    container
+        .read(overlayVisibilityProvider.notifier)
+        .update((v) => v.withTag('su'));
+    await tester.pump();
+    expect(find.text('Yalnız #su gösteriliyor'), findsOneWidget);
+    await tester.tap(find.byTooltip('Etiket süzgecini kaldır'));
+    await tester.pump();
+    expect(container.read(overlayVisibilityProvider).tag, isNull);
+    expect(find.text('Yalnız #su gösteriliyor'), findsNothing);
     await dispose(tester);
   });
 }

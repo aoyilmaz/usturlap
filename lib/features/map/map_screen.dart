@@ -28,6 +28,8 @@ import '../../domain/models/route_plan.dart';
 import '../../domain/models/offline_region.dart';
 import '../offline/offline_frame_panel.dart';
 import '../offline/offline_regions_sheet.dart';
+import '../overlays/overlay_manager_sheet.dart';
+import '../../providers/overlay_providers.dart';
 import '../../providers/repeater_providers.dart';
 import '../../providers/settings_providers.dart';
 import '../../providers/tool_providers.dart';
@@ -1124,6 +1126,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       ]),
       ToolGridSection('Harita', [
         catalog(ToolbarTool.maps),
+        catalog(ToolbarTool.overlays),
         catalog(ToolbarTool.offlineRegions),
         ToolGridItem(
             icon: Icons.file_download_outlined,
@@ -1225,6 +1228,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             context,
             onShowRegion: _showRegion,
             onNewRegion: _startFraming,
+          ),
+        );
+      case ToolbarTool.overlays:
+        return ToolbarItem(
+          icon: t.icon,
+          label: t.label,
+          active: !ref.read(overlayVisibilityProvider).isDefault,
+          onTap: () => showOverlayManagerSheet(
+            context,
+            onCenter: _centerOn,
+            onShowRoute: _showRoute,
           ),
         );
       case ToolbarTool.nightMode:
@@ -1334,6 +1348,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         ref.watch(displayedTrackPointsProvider).value ?? const <TrackPoint>[];
     final tool = ref.watch(toolProvider);
     final graphics = ref.watch(mapGraphicsProvider).value ?? const <MapGraphic>[];
+    // Overlay yöneticisi: gizlenen grup/nesne ve etiket süzgeci.
+    final visibility = ref.watch(overlayVisibilityProvider);
     final nightMode = ref.watch(nightModeProvider);
     final showGpsCircle = ref.watch(showGpsCircleProvider);
     final dropAffiliation = ref.watch(dropAffiliationProvider);
@@ -1377,7 +1393,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       // İndirilmiş bölgelerin sınırları (çerçevelerken hepsi, yoksa seçilen).
       ..._regionOutlines(),
       // Kalıcı taktik grafikler (çizgi/alan).
-      ..._graphicOverlays(graphics),
+      ..._graphicOverlays([
+        for (final g in graphics)
+          if (visibility.showsGraphic(g)) g,
+      ]),
       // Aktif ölçüm/çizim aracı.
       ..._toolOverlays(tool),
       // Rota: planlanan / takip edilen / önizlenen.
@@ -1412,7 +1431,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           strokeWidth: 1.5,
         ),
       for (final r in repeaters) _repeaterMarker(r),
-      for (final wp in waypoints) _waypointMarker(wp),
+      for (final wp in waypoints)
+        if (visibility.showsWaypoint(wp)) _waypointMarker(wp),
       // Son 15 dakikanın izi (kendi işaret menüsünden açılır).
       if (showTrail && self != null && recentTrail.isNotEmpty)
         MapLine(
@@ -1698,6 +1718,18 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                           onClose: () => setState(() => _dropMode = false),
                           onDropAtCrosshair:
                               crosshairOn ? _addAtCrosshair : null,
+                        ),
+                      // Etiket süzgeci açık: yeni nesneler etiketsizse
+                      // görünmez; kullanıcı bilsin.
+                      if (visibility.tag != null)
+                        _ModeHint(
+                          night: nightMode,
+                          icon: Icons.filter_alt,
+                          text: 'Yalnız #${visibility.tag} gösteriliyor',
+                          closeTooltip: 'Etiket süzgecini kaldır',
+                          onClose: () => ref
+                              .read(overlayVisibilityProvider.notifier)
+                              .update((v) => v.withTag(null)),
                         ),
                       if (_placingSelf)
                         _ModeHint(

@@ -173,7 +173,8 @@ görüntülerinden alınır, ATAK'ın ikonları kullanılmaz.
 
 **D3. Etkileşim** — adım adım: **D3a** radyal menü, **D3b** kendi işaret menüsü, **D3c** GPS'siz
 konum düzeltme, **D3d** Point Dropper (dördü de cihazda ✓, 2026-11-08), **D3e** nokta detayı
-(yükseklik + fotoğraf; cihazda ✓, 2026-11-08). Sırada Overlay Manager + #etiket.
+(yükseklik + fotoğraf; cihazda ✓, 2026-11-08), **D3f** Overlay Manager + #etiket (cihazda ✓);
+sırada kayıtlı görünümler.
 
 > D3a: noktaya / röleye dokununca etrafında 64 pt düğmelerden halka (`shell/radial_menu.dart`).
 > Nokta: Detay · Git · R&B (noktadan ölçüm) · Halka (noktayı merkez alan menzil halkası) ·
@@ -208,6 +209,14 @@ konum düzeltme, **D3d** Point Dropper (dördü de cihazda ✓, 2026-11-08), **D
 > (uid'e bağlı, yol göreli, uid yol için temizlenir); tam ekran görüntüleyici (yakınlaştır, onaylı
 > sil). Nokta silinince fotoğrafları da silinir; acil silme klasörü siler (testli). HGT okuyucusu
 > artık hazırlığı bekliyor (eskiden ilk sorguda sessizce null). Fotoğraf CoT/paket aktarımı G'de.
+>
+> D3f: Overlay yöneticisi (≡ → Harita; araç çubuğuna da eklenebilir; süzgeç varken vurgulu).
+> Noktalar türe göre açılır gruplar, Çizimler, İzler (dokun → haritada göster; bir seferde bir),
+> Rotalar (dokun → önizle), telsiz röleleri. Grup ve nesne başına göz düğmesi; nesneye dokun →
+> ortala. #etiketler ad ve nottaki `#kelime`'den (Türkçe küçük harf, şema değişikliği yok); çipe
+> dokununca haritada yalnız o etiketli noktalar/çizimler kalır, haritada "Yalnız #x" şeridi (✕).
+> Seçimler ayarlarda JSON (`OverlayVisibility`). İz/rota çoklu görünürlük ve harita katmanları
+> aç/kapa sonra.
 
 | Özellik (ATAK s.) | Ne yapılacak | Efor |
 |---|---|---|

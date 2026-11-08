@@ -15,6 +15,7 @@ enum ToolbarTool {
   tracks,
   graphics,
   offlineRegions,
+  overlays,
   nightMode,
   crosshair,
   settings;
