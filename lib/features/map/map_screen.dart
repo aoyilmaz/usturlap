@@ -56,6 +56,7 @@ import '../tracks/track_list_sheet.dart';
 import '../waypoints/add_waypoint_dialog.dart';
 import '../waypoints/edit_waypoint_dialog.dart';
 import '../waypoints/point_dropper_bar.dart';
+import '../waypoints/waypoint_detail_panel.dart';
 import '../waypoints/waypoint_list_sheet.dart';
 import 'base_layer.dart';
 import 'base_layer_resolver.dart';
@@ -529,75 +530,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   void _showWaypointDetail(Waypoint wp) {
     showAdaptiveSheet<void>(
       context: context,
+      id: 'waypoint-detail',
       showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(wp.name,
-                  style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Text(CoordFormat.format(wp.position, ref.read(coordFormatProvider)),
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
-              Text(CoordFormat.wgs84(wp.position),
-                  style: const TextStyle(color: Colors.grey, fontSize: 12)),
-              if (wp.note != null && wp.note!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(wp.note!),
-              ],
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  FilledButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      _centerOn(wp.position);
-                    },
-                    icon: const Icon(Icons.my_location),
-                    label: const Text('Ortala'),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      ref
-                          .read(navTargetProvider.notifier)
-                          .set(wp.position, wp.name);
-                      Navigator.of(context).pop();
-                    },
-                    icon: const Icon(Icons.navigation),
-                    label: const Text('Git'),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      showEditWaypointDialog(context, ref, wp);
-                    },
-                    icon: const Icon(Icons.edit),
-                    label: const Text('Düzenle'),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: () => _shareWaypoint(wp),
-                    icon: const Icon(Icons.ios_share),
-                    label: const Text('Paylaş'),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      _deleteWaypoint(wp);
-                      Navigator.of(context).pop();
-                    },
-                    icon: const Icon(Icons.delete_outline),
-                    label: const Text('Sil'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+      isScrollControlled: true,
+      builder: (context) => WaypointDetailPanel(
+        initial: wp,
+        onCenter: (w) => _centerOn(w.position),
+        onGo: (w) => ref.read(navTargetProvider.notifier).set(w.position, w.name),
+        onEdit: (w) => showEditWaypointDialog(this.context, ref, w),
+        onShare: _shareWaypoint,
+        onDelete: _deleteWaypoint,
       ),
     );
   }
@@ -614,6 +556,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     if (target != null && target.position == wp.position) {
       ref.read(navTargetProvider.notifier).clear();
     }
+    // Fotoğrafları da gitsin (dosya + kayıt).
+    ref.read(attachmentRepositoryProvider).deleteAllFor(wp.uid);
     ref.read(waypointRepositoryProvider).delete(wp.id!);
   }
 

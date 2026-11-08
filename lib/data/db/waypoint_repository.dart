@@ -95,6 +95,13 @@ class WaypointRepository {
     );
   }
 
+  /// Elle girilen yüksekliği (MSL, m) ayarlar; null = arazi verisine dön.
+  Future<void> setElevation(int id, double? meters) {
+    return (_db.update(_db.waypoints)..where((t) => t.id.equals(id))).write(
+      WaypointsCompanion(elevation: Value(meters)),
+    );
+  }
+
   Future<void> delete(int id) {
     return (_db.delete(_db.waypoints)..where((t) => t.id.equals(id))).go();
   }
@@ -112,5 +119,6 @@ class WaypointRepository {
         role: SymbolRole.fromName(r.role),
         typeCode: r.cotType,
         hae: r.hae,
+        elevation: r.elevation,
       );
 }

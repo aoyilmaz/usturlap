@@ -35,6 +35,10 @@
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Kerteriz konumunuzu, hızınızı ve yönünüzü haritada göstermek için kullanır. Veriler yalnızca cihazda kalır.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Kerteriz, noktalara fotoğraf eklemek için kamerayı kullanır. Fotoğraflar yalnızca cihazda kalır.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Kerteriz, noktalara fotoğraf arşivinden fotoğraf eklemek için kullanır. Fotoğraflar yalnızca cihazda kalır.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

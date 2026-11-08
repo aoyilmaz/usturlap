@@ -3,9 +3,9 @@ import 'package:kerteriz/data/elevation/hgt_parser.dart';
 
 void main() {
   group('HgtParser Tests', () {
-    test('Dizin set edilmeden null döner', () async {
+    test('Dizin bulunamazsa null döner, hata fırlatmaz', () async {
       final parser = HgtParser();
-      // init() çağrılmadığı için dış dizin null kalacak
+      // Testte path_provider eklentisi yok: hazırlık dizini bulamaz.
       final elevation = await parser.getElevation(41.0, 28.0);
       expect(elevation, isNull);
     });

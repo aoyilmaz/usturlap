@@ -37,9 +37,9 @@ void main() {
     await dir.delete(recursive: true);
   });
 
-  test('şema sürümü 8 olur', () async {
+  test('şema güncel sürüme (9) yükselir', () async {
     final v = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(v.read<int>('user_version'), 8);
+    expect(v.read<int>('user_version'), 9);
   });
 
   test('noktalar korunur, sembolleri CoT tipine dönüşür, uid alır', () async {

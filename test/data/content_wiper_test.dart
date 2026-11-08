@@ -88,6 +88,8 @@ void main() {
         'eski.MBTILES',
         'Inbox/rota.gpx',
         'tiles_external/N37E037.hgt',
+        // Nokta fotoğrafları (D3e): her iki kipte de silinmeli.
+        'attachments/uid-1/foto.jpg',
       ]) {
         await File('${docs.path}/$f').create(recursive: true);
       }

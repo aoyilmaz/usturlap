@@ -1,17 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../data/elevation/hgt_parser.dart';
 import '../../../domain/usecases/line_of_sight_calculator.dart';
+import '../../../providers/elevation_providers.dart';
 import '../../../providers/tool_providers.dart';
 import 'los_profile_panel.dart';
-
-final hgtParserProvider = Provider<HgtParser>((ref) {
-  final parser = HgtParser();
-  // Arka planda init edilir
-  parser.init();
-  return parser;
-});
 
 final losCalculatorProvider = Provider<LineOfSightCalculator>((ref) {
   return LineOfSightCalculator(ref.watch(hgtParserProvider));

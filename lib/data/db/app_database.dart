@@ -29,6 +29,9 @@ class Waypoints extends Table {
   TextColumn get cotType => text().nullable()();
   // v8: elipsoit üstü yükseklik (m), CoT hae.
   RealColumn get hae => real().nullable()();
+  // v9: deniz seviyesinden yükseklik (m), kullanıcının girdiği (ATAK
+  // Details). Girilmemişse arayüz arazi verisinden (HGT) okur.
+  RealColumn get elevation => real().nullable()();
 }
 
 /// Kalıcı taktik grafikler (çizgi/alan). Noktalar JSON dizisi olarak saklanır.
@@ -109,6 +112,19 @@ class TrackPoints extends Table {
   RealColumn get speed => real().nullable()();
 }
 
+/// Nesnelere eklenen dosyalar (v9; şimdilik fotoğraf, ATAK Details).
+/// Nesneye uid ile bağlanır (nokta; ileride iz, çizim). Dosya Belgeler
+/// klasöründe; yol göreli saklanır (iOS'ta uygulama klasörünün yolu
+/// güncellemede değişebilir).
+@DataClassName('AttachmentRow')
+class Attachments extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get itemUid => text()();
+  // Belgeler klasörüne göre: attachments/<uid>/<uuid>.jpg
+  TextColumn get path => text()();
+  DateTimeColumn get createdAt => dateTime()();
+}
+
 /// Planlanmış rotalar (kontrol noktaları sıralı). Noktalar JSON dizisi.
 @DataClassName('RoutePlanRow')
 class RoutePlans extends Table {
@@ -134,6 +150,7 @@ class RoutePlans extends Table {
   MapGraphics,
   ImportedLayers,
   RoutePlans,
+  Attachments,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_open());
@@ -142,13 +159,14 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async {
           await m.createAll();
           await _createUidIndexes();
+          await _createAttachmentIndex();
         },
         onUpgrade: (m, from, to) async {
           // Mevcut veriyi koruyarak yeni tablo/sütun ekle.
@@ -187,6 +205,14 @@ class AppDatabase extends _$AppDatabase {
             await backfillUids();
             await _createUidIndexes();
           }
+          // v9: nokta yüksekliği (MSL) + nesne ekleri (fotoğraf).
+          if (from < 9) {
+            await _addColumnIfMissing(m, waypoints, waypoints.elevation);
+            if (!await _tableExists(attachments.actualTableName)) {
+              await m.createTable(attachments);
+            }
+            await _createAttachmentIndex();
+          }
         },
         beforeOpen: (details) async {
           // Cascade delete için foreign key'leri aç.
@@ -206,6 +232,19 @@ class AppDatabase extends _$AppDatabase {
     if (cols.any((c) => c.read<String>('name') == column.name)) return;
     await m.addColumn(table, column);
   }
+
+  Future<bool> _tableExists(String name) async {
+    final rows = await customSelect(
+      "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+      variables: [Variable.withString(name)],
+    ).get();
+    return rows.isNotEmpty;
+  }
+
+  /// Bir nesnenin ekleri hızlı bulunsun.
+  Future<void> _createAttachmentIndex() => customStatement(
+        'CREATE INDEX IF NOT EXISTS attachments_item ON attachments (item_uid)',
+      );
 
   /// uid'i boş satırlara yeni UUID verir (v8 yükseltmesi). Tekrar çağrılması
   /// zararsızdır: yalnızca boş olanları doldurur.

@@ -6,7 +6,7 @@ import '../../providers/waypoint_providers.dart';
 import '../symbols/nato_symbol.dart';
 import '../symbols/symbol_modifier_fields.dart';
 
-/// Var olan bir waypoint'i düzenler (ad / not / APP-6 sadakat).
+/// Var olan bir waypoint'i düzenler (ad / not / yükseklik / APP-6 sadakat).
 Future<void> showEditWaypointDialog(
   BuildContext context,
   WidgetRef ref,
@@ -14,6 +14,10 @@ Future<void> showEditWaypointDialog(
 ) async {
   final nameCtrl = TextEditingController(text: wp.name);
   final noteCtrl = TextEditingController(text: wp.note ?? '');
+  final elevCtrl = TextEditingController(
+    text: wp.elevation == null ? '' : wp.elevation!.round().toString(),
+  );
+  String? elevError;
   var selected = wp.affiliation;
   var echelon = wp.echelon;
   var role = wp.role;
@@ -40,6 +44,16 @@ Future<void> showEditWaypointDialog(
                     controller: noteCtrl,
                     decoration: const InputDecoration(
                         labelText: 'Not (isteğe bağlı)'),
+                  ),
+                  TextField(
+                    controller: elevCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(
+                        signed: true, decimal: true),
+                    decoration: InputDecoration(
+                      labelText: 'Yükseklik (m, MSL)',
+                      helperText: 'Boş bırakılırsa arazi verisinden okunur',
+                      errorText: elevError,
+                    ),
                   ),
                   const SizedBox(height: 14),
                   const Text('Sadakat (APP-6)',
@@ -82,11 +96,23 @@ Future<void> showEditWaypointDialog(
               ),
               FilledButton(
                 onPressed: () async {
+                  // Yükseklik: boş = arazi verisi; geçersizse kaydetme.
+                  final elevText =
+                      elevCtrl.text.trim().replaceAll(',', '.');
+                  final elev =
+                      elevText.isEmpty ? null : double.tryParse(elevText);
+                  if (elevText.isNotEmpty &&
+                      (elev == null || elev < -500 || elev > 9000)) {
+                    setLocal(() =>
+                        elevError = '-500 ile 9000 arasında bir sayı girin');
+                    return;
+                  }
+                  final repo = ref.read(waypointRepositoryProvider);
                   final name = nameCtrl.text.trim().isEmpty
                       ? wp.name
                       : nameCtrl.text.trim();
                   final isNato = selected != Affiliation.waypoint;
-                  await ref.read(waypointRepositoryProvider).updateDetails(
+                  await repo.updateDetails(
                         wp.id!,
                         name: name,
                         note: noteCtrl.text.trim().isEmpty
@@ -96,6 +122,7 @@ Future<void> showEditWaypointDialog(
                         echelon: isNato ? echelon : Echelon.none,
                         role: isNato ? role : SymbolRole.none,
                       );
+                  await repo.setElevation(wp.id!, elev);
                   if (context.mounted) Navigator.of(context).pop();
                 },
                 child: const Text('Kaydet'),

@@ -50,6 +50,7 @@ dependencies:
   file_picker: ^11.0.2
   xml: ^6.6.1
   mapbox_maps_flutter: ^3.34.1
+  image_picker: ^1.2.4
 
 dev_dependencies:
   flutter_test:

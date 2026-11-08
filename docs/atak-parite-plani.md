@@ -172,8 +172,8 @@ görüntülerinden alınır, ATAK'ın ikonları kullanılmaz.
 | Toolbar Manager (55–57) | Üst çubuğa hangi araçların konacağını kullanıcı seçer | M |
 
 **D3. Etkileşim** — adım adım: **D3a** radyal menü, **D3b** kendi işaret menüsü, **D3c** GPS'siz
-konum düzeltme, **D3d** Point Dropper (dördü de cihazda ✓, 2026-11-08); sırada **D3e** nokta detayı
-(yükseklik + fotoğraf).
+konum düzeltme, **D3d** Point Dropper (dördü de cihazda ✓, 2026-11-08), **D3e** nokta detayı
+(yükseklik + fotoğraf; cihazda ✓, 2026-11-08). Sırada Overlay Manager + #etiket.
 
 > D3a: noktaya / röleye dokununca etrafında 64 pt düğmelerden halka (`shell/radial_menu.dart`).
 > Nokta: Detay · Git · R&B (noktadan ölçüm) · Halka (noktayı merkez alan menzil halkası) ·
@@ -200,6 +200,14 @@ konum düzeltme, **D3d** Point Dropper (dördü de cihazda ✓, 2026-11-08); sı
 > gibi diyalogla ekler. **Görev seti (OP, CP, sensör, toplanma) sembol kütüphanesine kaldı:**
 > ATAK CoT kodları doğrulanamadı (`b-m-p-s-p-op` trafikte görülüyor ama tanımı yok); yanlış
 > kodla dışa aktarmak Faz 2'de sessiz uyumsuzluk yaratır.
+>
+> D3e: nokta detayı kendi panelinde (`waypoints/waypoint_detail_panel.dart`, noktayı canlı izler).
+> Yükseklik: elle girilen (MSL, drift v9 `elevation`; Düzenle'de) ya da arazi verisinden "≈ m
+> (arazi verisi)"; CoT `hae` ayrı (jeoit modeli yok, MSL↔HAE çevrilmez). Fotoğraf: kamera /
+> arşiv (`image_picker` 1.2.4), Belgeler/attachments/<uid>/ altına kopya, `attachments` tablosu
+> (uid'e bağlı, yol göreli, uid yol için temizlenir); tam ekran görüntüleyici (yakınlaştır, onaylı
+> sil). Nokta silinince fotoğrafları da silinir; acil silme klasörü siler (testli). HGT okuyucusu
+> artık hazırlığı bekliyor (eskiden ilk sorguda sessizce null). Fotoğraf CoT/paket aktarımı G'de.
 
 | Özellik (ATAK s.) | Ne yapılacak | Efor |
 |---|---|---|

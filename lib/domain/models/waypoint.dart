@@ -100,6 +100,10 @@ class Waypoint implements MapItem {
   /// Elipsoit üstü yükseklik (m) — CoT `hae`. Bilinmiyorsa null.
   final double? hae;
 
+  /// Deniz seviyesinden yükseklik (m), kullanıcının girdiği. null ise
+  /// arayüz arazi verisinden (HGT) okur.
+  final double? elevation;
+
   const Waypoint({
     required this.uid,
     required this.name,
@@ -112,6 +116,7 @@ class Waypoint implements MapItem {
     this.role = SymbolRole.none,
     this.typeCode,
     this.hae,
+    this.elevation,
   });
 
   @override

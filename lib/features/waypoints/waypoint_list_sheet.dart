@@ -101,6 +101,9 @@ class _WaypointListBody extends ConsumerWidget {
                             if (target != null && target.position == wp.position) {
                               ref.read(navTargetProvider.notifier).clear();
                             }
+                            ref
+                                .read(attachmentRepositoryProvider)
+                                .deleteAllFor(wp.uid);
                             ref.read(waypointRepositoryProvider).delete(wp.id!);
                           },
                         ),

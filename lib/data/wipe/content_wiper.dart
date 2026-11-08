@@ -9,7 +9,8 @@ import '../offline/mapbox_offline_store.dart';
 ///
 /// Silinenler:
 /// - Veritabanı: noktalar, izler, rotalar, grafikler, ayarlar (callsign dahil).
-/// - Belgeler klasörü: içe aktarılan dosyalar, yükseklik verisi.
+/// - Belgeler klasörü: içe aktarılan dosyalar, nokta fotoğrafları
+///   (`attachments/`), yükseklik verisi.
 /// - Geçici klasör: paylaşılan dışa aktarımlar (KML/GeoJSON) ve kopyalar.
 /// - Mapbox: indirilen bölgeler, stil paketi, önbellek.
 ///

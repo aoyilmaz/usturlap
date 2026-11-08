@@ -9,35 +9,46 @@ import 'package:path_provider/path_provider.dart';
 class HgtParser {
   /// Yüklenen HGT dosyalarının bellek-içi önbelleği
   final Map<String, ByteData> _cache = {};
-  
+
   /// Dosyaların bulunduğu ana dizin (örneğin `/tiles_external`)
   String? _externalDirectory;
 
   HgtParser();
 
-  /// HGT dosyalarının bulunduğu dizini ilkler.
-  Future<void> init() async {
-    if (Platform.isIOS || Platform.isMacOS) {
-      final dir = await getApplicationDocumentsDirectory();
-      _externalDirectory = '${dir.path}/tiles_external';
-    } else {
-      final dir = await getExternalStorageDirectory();
-      if (dir != null) {
-        _externalDirectory = '${dir.path}/tiles_external';
-      }
-    }
+  Future<void>? _ready;
 
-    if (_externalDirectory != null) {
-      final directory = Directory(_externalDirectory!);
-      if (!await directory.exists()) {
-        await directory.create(recursive: true);
+  /// HGT dosyalarının bulunduğu dizini ilkler (bir kez; [getElevation]
+  /// hazırlık bitmeden çağrılırsa bekler — eskiden sessizce null dönüyordu).
+  Future<void> init() => _ready ??= _init();
+
+  Future<void> _init() async {
+    // Dizin bulunamazsa (izin, platform) okuyucu hata fırlatmaz: veri yok.
+    try {
+      if (Platform.isIOS || Platform.isMacOS) {
+        final dir = await getApplicationDocumentsDirectory();
+        _externalDirectory = '${dir.path}/tiles_external';
+      } else {
+        final dir = await getExternalStorageDirectory();
+        if (dir != null) {
+          _externalDirectory = '${dir.path}/tiles_external';
+        }
       }
+
+      if (_externalDirectory != null) {
+        final directory = Directory(_externalDirectory!);
+        if (!await directory.exists()) {
+          await directory.create(recursive: true);
+        }
+      }
+    } catch (_) {
+      _externalDirectory = null;
     }
   }
 
   /// Verilen enlem (lat) ve boylam (lon) için yüksekliği (metre) döner.
   /// Dosya bulunamazsa veya veri geçersizse null döner.
   Future<int?> getElevation(double lat, double lon) async {
+    await init();
     if (_externalDirectory == null) return null;
 
     final fileName = _getFileName(lat, lon);
@@ -80,7 +91,7 @@ class HgtParser {
 
     // Her piksel 2 byte (16-bit) kaplar
     int bytePos = (row * resolution + col) * 2;
-    
+
     if (bytePos >= 0 && bytePos + 1 < data.lengthInBytes) {
       // Big Endian 16-bit signed integer (SRTM format standardı)
       int elevation = data.getInt16(bytePos, Endian.big);
@@ -96,13 +107,13 @@ class HgtParser {
     int latInt = lat.floor();
     int lonInt = lon.floor();
 
-    String latStr = latInt >= 0 
-      ? 'N${latInt.toString().padLeft(2, '0')}' 
-      : 'S${latInt.abs().toString().padLeft(2, '0')}';
-      
-    String lonStr = lonInt >= 0 
-      ? 'E${lonInt.toString().padLeft(3, '0')}' 
-      : 'W${lonInt.abs().toString().padLeft(3, '0')}';
+    String latStr = latInt >= 0
+        ? 'N${latInt.toString().padLeft(2, '0')}'
+        : 'S${latInt.abs().toString().padLeft(2, '0')}';
+
+    String lonStr = lonInt >= 0
+        ? 'E${lonInt.toString().padLeft(3, '0')}'
+        : 'W${lonInt.abs().toString().padLeft(3, '0')}';
 
     return '$latStr$lonStr.hgt';
   }
