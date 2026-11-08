@@ -257,6 +257,28 @@ void main() {
       expect(e.child('link_attr')!.getAttribute('method'), 'Walking');
     });
 
+    test('nokta adları gidip döner; varsayılan adlar ad sayılmaz', () {
+      final named = RoutePlan(
+        uid: 'r2',
+        name: 'Devriye',
+        points: route.points,
+        pointNames: const [null, 'KÖPRÜ', null],
+        createdAt: DateTime.utc(2026),
+      );
+      final cps = mapper
+          .fromRoute(named)
+          .children('link')
+          .where((l) => l.getAttribute('relation') == 'c')
+          .map((l) => l.getAttribute('callsign'));
+      expect(cps, ['Devriye SP', 'KÖPRÜ', 'CP2']);
+      final back = roundTrip(named) as RoutePlan;
+      expect(back.pointNames, [null, 'KÖPRÜ', null]);
+      expect(back.nameOf(0), 'BAŞLANGIÇ');
+      expect(back.nameOf(1), 'KÖPRÜ');
+      // Adsız rota adsız döner.
+      expect((roundTrip(route) as RoutePlan).pointNames, isEmpty);
+    });
+
     test('gidiş-dönüş: sıra ve ad korunur', () {
       final back = roundTrip(route) as RoutePlan;
       expect(back.uid, 'r1');

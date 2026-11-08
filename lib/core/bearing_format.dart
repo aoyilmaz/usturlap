@@ -113,6 +113,17 @@ class BearingFormatter {
   final NorthRef ref;
   final AngleUnit unit;
 
+  /// Seçili kuzey ve birimle yazılan kerterizi ("45", "45,5", "0800" mil)
+  /// [at] noktasında coğrafi dereceye çevirir. Geçersiz ya da aralık
+  /// dışıysa (derece 0–360, mil 0–6400) null.
+  double? parseToTrue(String text, LatLng at, {DateTime? date}) {
+    final v = double.tryParse(text.trim().replaceAll(',', '.'));
+    final full = unit == AngleUnit.mils ? 6400.0 : 360.0;
+    if (v == null || v < 0 || v >= full) return null;
+    final deg = unit == AngleUnit.mils ? v * 360 / 6400 : v;
+    return NorthMath.toTrue(deg, at, ref, date: date);
+  }
+
   /// Coğrafi kerteriz [trueDeg]'i, [at] noktasında seçili kuzeye çevirip
   /// biçimlendirir. [at]: kerterizin ölçüldüğü nokta (gözlemci).
   String format(double trueDeg, LatLng at, {DateTime? date}) {

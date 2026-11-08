@@ -5,7 +5,12 @@ import 'package:latlong2/latlong.dart';
 class NavTarget {
   final LatLng position;
   final String label;
-  const NavTarget(this.position, this.label);
+
+  /// Buluşma saati (E7): bu saatte hedefte olmak için gereken hız
+  /// gösterilir. null = yok.
+  final DateTime? arriveBy;
+
+  const NavTarget(this.position, this.label, {this.arriveBy});
 }
 
 /// Seçili "Git" hedefi. null = navigasyon kapalı.
@@ -13,10 +18,23 @@ class NavTargetNotifier extends Notifier<NavTarget?> {
   @override
   NavTarget? build() => null;
 
-  void set(LatLng position, String label) =>
-      state = NavTarget(position, label);
+  /// Aynı hedef (aynı ad) yeniden verilirse (ör. nokta taşındı) buluşma
+  /// saati korunur; yeni hedefte sıfırlanır.
+  void set(LatLng position, String label) => state = NavTarget(
+    position,
+    label,
+    arriveBy: state?.label == label ? state?.arriveBy : null,
+  );
+
+  void setArriveBy(DateTime? at) {
+    final t = state;
+    if (t == null) return;
+    state = NavTarget(t.position, t.label, arriveBy: at);
+  }
+
   void clear() => state = null;
 }
 
-final navTargetProvider =
-    NotifierProvider<NavTargetNotifier, NavTarget?>(NavTargetNotifier.new);
+final navTargetProvider = NotifierProvider<NavTargetNotifier, NavTarget?>(
+  NavTargetNotifier.new,
+);

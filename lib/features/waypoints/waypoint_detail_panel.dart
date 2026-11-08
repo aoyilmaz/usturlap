@@ -6,10 +6,15 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../core/coord_format.dart';
 import '../../domain/models/attachment.dart';
+import '../../domain/models/bullseye.dart';
+import '../../domain/models/range_line.dart';
 import '../../domain/models/waypoint.dart';
+import '../../providers/bullseye_providers.dart';
 import '../../providers/elevation_providers.dart';
 import '../../providers/settings_providers.dart';
 import '../../providers/waypoint_providers.dart';
+import '../tools/bullseye_panel.dart';
+import 'fov_editor.dart';
 
 /// Fotoğraf seçici: kamera ya da arşiv → dosya yolu (vazgeçildiyse null).
 /// Testte sahtesi takılır.
@@ -84,6 +89,8 @@ class WaypointDetailPanel extends ConsumerWidget {
           style: const TextStyle(color: Colors.grey, fontSize: 12),
         ),
         ElevationLine(waypoint: wp),
+        BullseyeCallLine(waypoint: wp),
+        FovSection(waypoint: wp),
         if (wp.note != null && wp.note!.isNotEmpty) ...[
           const SizedBox(height: 8),
           Text(wp.note!),
@@ -112,6 +119,33 @@ class WaypointDetailPanel extends ConsumerWidget {
               onPressed: () => onShare(wp),
               icon: const Icon(Icons.ios_share),
               label: const Text('Paylaş'),
+            ),
+            OutlinedButton.icon(
+              // Tek bullseye: varsa yerini alır. Nokta taşınınca o da gider.
+              onPressed: () {
+                final had = ref.read(bullseyeProvider) != null;
+                ref
+                    .read(bullseyeProvider.notifier)
+                    .set(
+                      Bullseye(
+                        center: RbEnd(
+                          wp.position,
+                          RbEnd.waypointRef(wp.uid),
+                        ),
+                        name: wp.name,
+                      ),
+                    );
+                ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      '${wp.name} bullseye yapıldı'
+                      '${had ? ' (öncekinin yerine)' : ''}.',
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.track_changes),
+              label: const Text('Bullseye yap'),
             ),
             OutlinedButton.icon(
               onPressed: () => popThen(onDelete),

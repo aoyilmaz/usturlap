@@ -652,6 +652,22 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
       await map.setStyleSourceProperty(_srcLines, 'data', data.lines);
       await map.setStyleSourceProperty(_srcMarkers, 'data', data.markers);
     }
+
+    // 3) Değişken resimler (ör. R&B etiketi "045° · 1,2 km"): artık hiçbir
+    // işaretçinin kullanmadığı eski sürümler stilden ve önbellekten atılır;
+    // yoksa konum değiştikçe bellek büyür. Veri güncellendikten SONRA:
+    // haritada hâlâ onu gösteren bir işaretçi kalmasın.
+    final used = {for (final m in data.markerById.values) m.imageKey};
+    bool stale(String k) => MapMarker.isVolatileKey(k) && !used.contains(k);
+    for (final k in [..._imagesInStyle.where(stale)]) {
+      _imagesInStyle.remove(k);
+      try {
+        await map.removeStyleImage(k);
+      } catch (e) {
+        debugPrint('Mapbox resim silme hatası ($k): $e');
+      }
+    }
+    _c._png.removeWhere((k, _) => stale(k));
   }
 
   Future<void> _addSourcesAndLayers(

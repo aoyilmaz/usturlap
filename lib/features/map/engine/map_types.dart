@@ -148,7 +148,14 @@ class MapMarker extends MapOverlay {
 
   /// Görünümün önbellek anahtarı: aynı görünen işaretçiler (ör. tüm röleler)
   /// aynı anahtarı paylaşır → tek kez resme çevrilir.
+  ///
+  /// [volatilePrefix] ile başlayan anahtar "değişken"dir (ör. içinde ölçüm
+  /// yazan etiket): hiçbir işaretçi kullanmayınca motor resmi atar.
   final String imageKey;
+
+  static const volatilePrefix = 'v:';
+
+  static bool isVolatileKey(String key) => key.startsWith(volatilePrefix);
 
   final LatLng point;
   final Widget child;

@@ -115,7 +115,9 @@ class CotMapper {
   }
 
   CotEvent fromRoute(RoutePlan r) {
-    String cpName(int i) => i == 0 ? '${r.name} SP' : 'CP$i';
+    // Kullanıcının verdiği nokta adı; yoksa ATAK'ın alışık olduğu SP / CPn.
+    String cpName(int i) =>
+        r.customNameOf(i) ?? (i == 0 ? '${r.name} SP' : 'CP$i');
     final d = _detail([
       for (var i = 0; i < r.points.length; i++)
         _el('link', {
@@ -167,12 +169,31 @@ class CotMapper {
   MapItem? toItem(CotEvent e) {
     final name = _callsign(e);
     if (e.type == CotType.route) {
-      final pts = [
-        for (final l in e.children('link'))
-          if (l.getAttribute('relation') == 'c') ?_parsePoint(l),
-      ];
+      final pts = <LatLng>[];
+      final names = <String?>[];
+      for (final l in e.children('link')) {
+        if (l.getAttribute('relation') != 'c') continue;
+        final p = _parsePoint(l);
+        if (p == null) continue;
+        // Varsayılan adlar (SP / CPn) ad sayılmaz; Pusula kendi adını verir.
+        final cs = l.getAttribute('callsign')?.trim();
+        final i = pts.length;
+        final isDefault =
+            cs == null ||
+            cs.isEmpty ||
+            cs == (i == 0 ? '$name SP' : 'CP$i') ||
+            (i == 0 && cs == 'SP');
+        pts.add(p);
+        names.add(isDefault ? null : cs);
+      }
       if (pts.length < 2) return null;
-      return RoutePlan(uid: e.uid, name: name, points: pts, createdAt: e.time);
+      return RoutePlan(
+        uid: e.uid,
+        name: name,
+        points: pts,
+        pointNames: names.any((n) => n != null) ? names : const [],
+        createdAt: e.time,
+      );
     }
     if (e.type == CotType.freeform) {
       final pts = [for (final l in e.children('link')) ?_parsePoint(l)];

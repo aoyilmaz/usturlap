@@ -118,7 +118,7 @@ Kerteriz tarzı kabuk (alt çubuk, üst HUD, sağ düğme sütunu) kalkar; yerin
 ekranı gelir. Kaynak: kılavuz s.5–6, 8, 55–57. Yerleşim kılavuz metninden ve ekran
 görüntülerinden alınır, ATAK'ın ikonları kullanılmaz.
 
-**D1. Ana ekran düzeni** — **kodda tamam (2026-11-06), cihaz testi bekliyor**
+**D1. Ana ekran düzeni** — **tamam** (commit 3cfe368)
 
 > Yapılan: `AtakToolbar` (≡ · Nokta bırak · R&B · Git · Haritalar · İz; ≡'ye uzun bas → gizle),
 > `MapSideControls` (haritayla dönen pusula oku; dokun: kuzey/yön, uzun bas: döndürme kilidi + 3B;
@@ -137,9 +137,8 @@ görüntülerinden alınır, ATAK'ın ikonları kullanılmaz.
 | Sol alt: bildirim ve navigasyon (5, 17–19) | Uyarılar, rota/bloodhound bilgi kutusu ATAK'taki gibi sol altta | S |
 | Ölçek (5) | C1'de açılan ölçek çubuğu ATAK konumuna taşınır | S |
 
-**D2. Paneller ve araç çubukları** — üç adımda: **D2a** araç alt çubukları (tamam, commit
-89423b0), **D2b** panel açıkken harita kullanılabilir (kodda tamam, cihaz testi bekliyor),
-**D2c** Toolbar Manager (kodda tamam, cihaz testi bekliyor).
+**D2. Paneller ve araç çubukları** — üç adımda: **D2a** araç alt çubukları (commit 89423b0),
+**D2b** panel açıkken harita kullanılabilir, **D2c** Toolbar Manager (ikisi commit 2fc0b40).
 
 > D2a: R&B düğmesi ana çubuğun altında **Range Tools** çubuğunu açar (halka · R&B · alan · sektör ·
 > görüş hattı · ✕; seçili araç sarı, tekrar dokununca kapanır) + altında ölçüm şeridi (kaydet ·
@@ -255,6 +254,81 @@ konum düzeltme, **D3d** Point Dropper (dördü de cihazda ✓, 2026-11-08), **D
 "sağ kenardan kaydır" jestini değiştiriyor. Aşama D başlarken brief güncellenir.
 
 ### Aşama E: Ölçüm ve navigasyon tam set
+
+Adımlar (tablodaki sırayla): **E1** kalıcı / dinamik R&B çizgisi, **E2** kalıcı menzil / tehdit
+halkaları, **E3** Bullseye, **E4** çoklu Bloodhound, **E5** Resection, **E6** taktik pusula, **E7**
+buluşma noktası, **E8** rota eksikleri, **E9** sensör / FOV — **hepsi cihazda ✓ (2026-11-08).**
+Sesli uyarı şimdilik yok (kullanıcı kararı; iOS'ta paket gerekir).
+
+> E1: iki noktalı ölçüm (R&B) şeritteki Kaydet ile kalıcı **R&B çizgisi** olur (R&B-1…; 3+
+> noktalı yol eskisi gibi çizim). Nesneye dokunarak konan uç ona bağlanır (`RbEnd`: `self` /
+> `wp:<uid>`; drift v10 `range_lines`, bağlı uçta kuruluş konumu da saklanır, nesne silinirse
+> uç orada kalır): ben yürüdükçe / nokta taşınınca çizgi güncellenir. Kendi işaret menüsüne
+> "R&B" eklendi (benden hedefe dinamik çizgi); noktanın R&B / Halka eylemleri bağlı başlar.
+> Haritada pembe çizgi + ortada "kerteriz · mesafe" etiketi (ayarlardaki kuzey/birim); etikete
+> dokun → Detay · Ortala · Sil. Detay paneli: uçlar (canlı / bağlı / silinmiş), mesafe, kerteriz,
+> ters kerteriz, iki ucun yüksekliği (bağlı noktada elle girilen, yoksa arazi verisi) ve eğim
+> açısı (↗ / ↘, eğrilik yok sayılır); yeniden adlandır, sil (onaylı). Overlay yöneticisinde
+> "R&B çizgileri" grubu (göz, #etiket). Motor: `v:` önekli işaretçi resimleri kullanılmayınca
+> stilden atılır (değişen etiketler bellek büyütmesin). ATAK paylaşımı (`u-rb-a`) sonra.
+>
+> E2: menzil halkası aracında Kaydet → kalıcı **halka grubu** (HALKA-1…; R, 2R, 3R; drift v11
+> `range_rings`, mesafeler JSON). Merkez nesneye dokunarak konduysa bağlı (nokta / ben). Düşman
+> ya da şüpheli noktası merkezliyse **tehdit halkası** (kırmızı), diğerleri pembe. Haritada
+> içten dışa solan halkalar + her halkanın kuzey ucunda mesafe etiketi; dokun → Detay · Ortala ·
+> Sil. Detay: merkez, halkalar, **konumum** (merkeze mesafe, kerteriz, kaçıncı halkanın içinde);
+> **Mesafeler** düzenlenir (en çok 6, 1 m–200 km; boşlukla ayrılır, ondalık virgül/nokta, `km`
+> eki: "500 1000 1,5km"). Overlay yöneticisinde "Menzil halkaları". ATAK paylaşımı (`u-r-b-c-c`)
+> sonra. Ortak parçalar `tools/measure_common.dart` (onay, ad, uç açıklaması, satır).
+>
+> E3: **Bullseye** (≡ → Ölçüm; araç çubuğuna eklenebilir; nokta Detay → "Bullseye yap"). Tek
+> bullseye (görev başına bir referans): ayarlarda JSON `bullseye`, şema değişmedi; merkez sabit
+> ya da noktaya bağlı. Haritada halkalar (aralık 100 m–10 km, 1–10 halka) + 30°'de bir ışın,
+> ışınlar **seçili kuzeye** hizalı (manyetikte 030°M tam sayı), uçlarda kerteriz, halkalarda
+> mesafe etiketi (6+ halkada seyrek); dokun → Detay · Ortala · Kaldır. Sol altta **"BE 045° /
+> 2.30 km"** şeridi (konumumun çağrısı; dokun → panel); nokta detayında noktanın BE çağrısı.
+> ATAK paylaşımı (`u-r-b-bullseye`) sonra.
+>
+> E4: **Takip (Bloodhound)**: nokta menüsünde "Takip" (benden noktaya); ≡ → Navigasyon → Takip
+> panelinde iki nokta arası ekleme. Aynı anda birden çok takip ("Git" hedefi gibi bellekte; tek
+> "Git" ayrı kalır). Uçlar R&B gibi bağlı. Haritada çizgi + "kerteriz · mesafe · süre (varış
+> saati)" etiketi; renk ETA'ya göre: kırmızı ≤ 5 dk, sarı ≤ 15 dk, yeşil (eşikler panelde, kalıcı
+> `bloodhound_eta`); hız yalnız benden bilinir, duruyorsam yürüyüş hızıyla "~" tahmin; iki nokta
+> arasında süre/renk yok (beyaz). Gerçek hızla kırmızıya girince titreşim + uyarı (ATAK yanıp
+> sönme yerine). Renkler anlam taşıdığı için gece modunda da aynı.
+>
+> E5: **Geriden kestirme** (Resection; ≡ → Navigasyon, ya da kendi işaretin → Düzelt → "Geriden
+> kestirme"). 2–3 noktaya pusula kerterizi (ayarlardaki kuzey/birim; `BearingFormatter.parseToTrue`).
+> Çözüm `domain/usecases/resection.dart`: yerel düzlem, en küçük kareler; ~5°'nin altı paralel,
+> bulunan yerin arkasında kalan nokta "tutarsız" (ters okuma). Hata alanı: en iyi kesişen çiftin
+> ±σ çizgileri (pusula hassasiyeti ±1/2/5°) + üç nişanda hata üçgeni, dışbükey çokgen; "± m" =
+> en uzak köşe. 30°'nin altı kesişme "zayıf" uyarısı. Haritada canlı önizleme (nişan çizgileri,
+> hata alanı, konum). "Konumum yap" → elle konum (D3c), "Nokta olarak kaydet" (KESTİRME-n).
+>
+> E6: **Taktik pusula** (pusula okuna uzun bas → yandaki sırada; ≡ → Navigasyon). Tam ekran:
+> telefonla dönen gül (5°'de çentik, 30°'de kısa etiket, K/D/G/B; seçili kuzey ve birimle), üstte
+> sabit çizgi, ortada büyük yön + ters yön. **Kerterizi kilitle** (o anki yön) / **Kerteriz gir**
+> / **Hedefe kilitle** ("Git" hedefi; yürüdükçe yeniden hesaplanır). Sapma: "DOĞRU" (±3°), "SAĞA
+> 12°" / "SOLA 5°", yeşil / sarı (±15°) / kırmızı; rotaya girince titreşim. Plan "[N]'ye uzun bas"
+> diyordu; uzun basma D1'de ek düğmeleri açıyor, pusula o sıraya eklendi.
+>
+> E7: **Buluşma saati**: "Git" şeridinde ⏱ → saat seç (geçmiş saat = ertesi gün; aynı hedef
+> yeniden verilince korunur). Şeritte "Buluşma 14:30 · gereken 4.2 km/h"; hareket ediyorsam
+> şimdiki hızla "3 dk geç" (turuncu) / "5 dk erken" / "zamanında". Ekiplerin aynı anda varması Faz 2.
+>
+> E8: rota menüsü (Rota paneli → ⋮): **Yükseklik profili** (arazi verisinden; ↗/↘ toplam, en
+> yüksek/alçak, grafik + kontrol noktaları), **Nokta adları** (boş = BAŞLANGIÇ, KN1…; JSON'da
+> isteğe bağlı 3. eleman, şema değişmedi; CoT'ta gidip döner, ATAK'a adsızsa SP/CPn), **Ters
+> çevir** (dönüş; takipteyse takip biter), **Yeniden adlandır**, **GPX / KML paylaş**, Sil (artık
+> onaylı). Takip panelinde sıradaki noktanın adı. Takipte **uyarı**: rotaya girildi / nokta
+> geçildi (sıradaki nokta, kerteriz, mesafe), rota bitti, rotadan sapıldı → titreşim + ekran
+> uyarısı. **Sesli** uyarı iOS'ta paket gerektiriyor (`flutter_tts` vb.) → kullanıcı onayı bekliyor.
+>
+> E9: **Görüş konisi**: nokta Detay → "Görüş konisi ekle": yön (ayarlardaki kuzey/birim; "Yönü
+> pusuladan al" = telefonun baktığı yön), açıklık 30/60/90/120/180°/her yön, menzil (1 m–100 km,
+> "1,5km"). drift v12: `waypoints.fov_azimuth/fov_width/fov_range` (üçü birlikte; yarım kayıt
+> yok sayılır). Haritada noktanın renginde yarı saydam koni; nokta gizlenince konisi de gizlenir.
+> ATAK'a koni paylaşımı (CoT `sensor` ayrıntısı) doğrulanmadığı için sonra.
 
 | Özellik (ATAK s.) | Ne yapılacak | Efor |
 |---|---|---|

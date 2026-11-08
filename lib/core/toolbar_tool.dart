@@ -8,6 +8,9 @@ enum ToolbarTool {
   dropPoint,
   measure,
   goTo,
+  bloodhound,
+  resection,
+  tacticalCompass,
   maps,
   record,
   routes,
@@ -17,6 +20,7 @@ enum ToolbarTool {
   offlineRegions,
   overlays,
   savedViews,
+  bullseye,
   nightMode,
   crosshair,
   settings;

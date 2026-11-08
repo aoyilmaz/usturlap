@@ -12,7 +12,8 @@ import 'atak_toolbar.dart' show kToolbarButtonSize;
 ///
 /// Pusula oku haritayla birlikte döner (kuzeyi gösterir).
 /// - Dokun: kuzey-yukarı ↔ yön-yukarı.
-/// - Uzun bas: yanında ek düğmeler açılır: döndürmeyi kilitle, 3B.
+/// - Uzun bas: yanında ek düğmeler açılır: döndürmeyi kilitle, 3B,
+///   taktik pusula.
 class MapSideControls extends StatefulWidget {
   const MapSideControls({
     super.key,
@@ -27,6 +28,7 @@ class MapSideControls extends StatefulWidget {
     required this.onZoomOut,
     this.onToggleTerrain,
     this.terrainOn = false,
+    this.onTacticalCompass,
     this.night = false,
   });
 
@@ -44,6 +46,9 @@ class MapSideControls extends StatefulWidget {
   /// null → 3B düğmesi gösterilmez (motor desteklemiyor).
   final VoidCallback? onToggleTerrain;
   final bool terrainOn;
+
+  /// null → taktik pusula düğmesi gösterilmez.
+  final VoidCallback? onTacticalCompass;
   final bool night;
 
   @override
@@ -96,6 +101,20 @@ class _MapSideControlsState extends State<MapSideControls> {
                   accent: accent,
                   night: widget.night,
                   onTap: widget.onToggleTerrain!,
+                ),
+              ],
+              if (widget.onTacticalCompass != null) ...[
+                const SizedBox(width: 6),
+                _SquareButton(
+                  icon: Icons.explore,
+                  label: 'Taktik pusula',
+                  active: false,
+                  accent: accent,
+                  night: widget.night,
+                  onTap: () {
+                    setState(() => _extras = false);
+                    widget.onTacticalCompass!();
+                  },
                 ),
               ],
             ],

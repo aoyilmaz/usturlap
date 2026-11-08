@@ -3,13 +3,82 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/bearing_format.dart';
 import '../../core/geo_math.dart';
+import '../../core/sequential_name.dart';
 import '../../domain/models/map_graphic.dart';
+import '../../domain/models/range_line.dart';
+import '../../domain/models/range_ring.dart';
+import '../../domain/models/waypoint.dart';
+import '../../providers/range_line_providers.dart';
 import '../../providers/settings_providers.dart';
 import '../../providers/tool_providers.dart';
+import '../../providers/waypoint_providers.dart';
 import 'save_graphic_dialog.dart';
+
+/// İki noktalı ölçümü kalıcı R&B çizgisi yapar (ATAK R&B Line): ad sıra
+/// numaralı (R&B-1…), nesneye dokunularak konan uç o nesneye bağlı kalır.
+/// Kaydedince ölçüm noktaları temizlenir; araç açık kalır.
+Future<void> saveRangeLine(BuildContext context, WidgetRef ref) async {
+  final tool = ref.read(toolProvider);
+  if (tool.points.length != 2) return;
+  final messenger = ScaffoldMessenger.maybeOf(context);
+  final existing = ref.read(rangeLinesProvider).value ?? const <RangeLine>[];
+  final name = nextSequentialName('R&B', [for (final l in existing) l.name]);
+  final start = RbEnd(tool.points[0], tool.refAt(0));
+  final end = RbEnd(tool.points[1], tool.refAt(1));
+  await ref
+      .read(rangeLineRepositoryProvider)
+      .add(name: name, start: start, end: end);
+  ref.read(toolProvider.notifier).clearPoints();
+  final linked = [start, end].where((e) => e.ref != null).length;
+  messenger?.showSnackBar(
+    SnackBar(
+      content: Text(
+        linked == 0
+            ? '$name kaydedildi.'
+            : '$name kaydedildi; $linked ucu nesneye bağlı, onunla hareket eder.',
+      ),
+    ),
+  );
+}
 
 /// Aktif aracın ölçüm şeridi: değer + kaydet · göster/gizle · geri al · temizle.
 /// Range Tools çubuğunun (RangeToolsBar) altında durur.
+/// Menzil halkası aracını kalıcı halka grubu yapar (ATAK R&B Circle):
+/// R, 2R, 3R; ad HALKA-1…; merkez bir nesneye dokunularak konduysa ona bağlı.
+/// Düşman / şüpheli noktası merkezliyse tehdit halkası (kırmızı).
+Future<void> saveRangeRing(BuildContext context, WidgetRef ref) async {
+  final tool = ref.read(toolProvider);
+  if (tool.points.length != 2) return;
+  final messenger = ScaffoldMessenger.maybeOf(context);
+  final existing = ref.read(rangeRingsProvider).value ?? const <RangeRing>[];
+  final name = nextSequentialName('HALKA', [for (final r in existing) r.name]);
+  final center = RbEnd(tool.points[0], tool.refAt(0));
+  final r = GeoMath.distance(tool.points[0], tool.points[1]);
+  final threat = ref
+          .read(waypointsProvider)
+          .value
+          ?.where((w) => w.uid == center.waypointUid)
+          .any((w) =>
+              w.affiliation == Affiliation.hostile ||
+              w.affiliation == Affiliation.suspect) ??
+      false;
+  await ref.read(rangeRingRepositoryProvider).add(
+        name: name,
+        center: center,
+        radii: RangeRing.evenRadii(r),
+        colorValue: threat ? RangeRing.threatColor : RangeLine.defaultColor,
+      );
+  ref.read(toolProvider.notifier).clearPoints();
+  messenger?.showSnackBar(
+    SnackBar(
+      content: Text(
+        '$name kaydedildi${center.ref == null ? '' : '; merkez nesneye bağlı'}. '
+        'Mesafeleri etikete dokunup Detay\'dan değiştirebilirsin.',
+      ),
+    ),
+  );
+}
+
 class ToolBanner extends ConsumerWidget {
   const ToolBanner({super.key});
 
@@ -24,9 +93,13 @@ class ToolBanner extends ConsumerWidget {
     final accent = night ? Colors.redAccent : Colors.amberAccent;
     final fmt = ref.watch(bearingFormatterProvider);
 
-    // Kalıcı grafik olarak kaydedilebilir mi? (v1: çizgi + alan)
+    // İki noktalı mesafe → kalıcı R&B çizgisi; daha uzun yol / alan →
+    // kalıcı grafik.
+    final rangeLine =
+        tool.mode == ToolMode.distance && tool.points.length == 2;
+    final ring = tool.mode == ToolMode.rangeRings && tool.points.length == 2;
     final GraphicType? savable;
-    if (tool.mode == ToolMode.distance && tool.points.length >= 2) {
+    if (tool.mode == ToolMode.distance && tool.points.length >= 3) {
       savable = GraphicType.line;
     } else if (tool.mode == ToolMode.polygon && tool.points.length >= 3) {
       savable = GraphicType.area;
@@ -59,12 +132,23 @@ class ToolBanner extends ConsumerWidget {
           IconButton(
             visualDensity: VisualDensity.compact,
             icon: Icon(Icons.bookmark_add_outlined,
-                color: savable == null ? Colors.white24 : accent, size: 20),
-            tooltip: 'Çizimi kaydet',
-            onPressed: savable == null
-                ? null
-                : () => showSaveGraphicDialog(context, ref,
-                    type: savable!, points: tool.points),
+                color: savable == null && !rangeLine && !ring
+                    ? Colors.white24
+                    : accent,
+                size: 20),
+            tooltip: rangeLine
+                ? 'R&B çizgisi olarak kaydet'
+                : ring
+                    ? 'Halkayı kaydet'
+                    : 'Çizimi kaydet',
+            onPressed: rangeLine
+                ? () => saveRangeLine(context, ref)
+                : ring
+                    ? () => saveRangeRing(context, ref)
+                    : savable == null
+                    ? null
+                    : () => showSaveGraphicDialog(context, ref,
+                        type: savable!, points: tool.points),
           ),
           IconButton(
             visualDensity: VisualDensity.compact,

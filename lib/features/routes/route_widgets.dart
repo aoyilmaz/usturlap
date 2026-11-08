@@ -306,7 +306,8 @@ class RouteFollowPanel extends ConsumerWidget {
             if (p != null && !p.finished)
               Row(
                 children: [
-                  metric('SONRAKİ', GeoMath.fmtDistance(p.distToNext)),
+                  metric('SONRAKİ', GeoMath.fmtDistance(p.distToNext),
+                      sub: active.route.nameOf(p.targetIndex)),
                   metric(
                       'KERTERİZ',
                       self == null

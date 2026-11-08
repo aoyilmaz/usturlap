@@ -144,6 +144,39 @@ class $WaypointsTable extends Waypoints
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _fovAzimuthMeta = const VerificationMeta(
+    'fovAzimuth',
+  );
+  @override
+  late final GeneratedColumn<double> fovAzimuth = GeneratedColumn<double>(
+    'fov_azimuth',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _fovWidthMeta = const VerificationMeta(
+    'fovWidth',
+  );
+  @override
+  late final GeneratedColumn<double> fovWidth = GeneratedColumn<double>(
+    'fov_width',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _fovRangeMeta = const VerificationMeta(
+    'fovRange',
+  );
+  @override
+  late final GeneratedColumn<double> fovRange = GeneratedColumn<double>(
+    'fov_range',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -159,6 +192,9 @@ class $WaypointsTable extends Waypoints
     cotType,
     hae,
     elevation,
+    fovAzimuth,
+    fovWidth,
+    fovRange,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -258,6 +294,24 @@ class $WaypointsTable extends Waypoints
         elevation.isAcceptableOrUnknown(data['elevation']!, _elevationMeta),
       );
     }
+    if (data.containsKey('fov_azimuth')) {
+      context.handle(
+        _fovAzimuthMeta,
+        fovAzimuth.isAcceptableOrUnknown(data['fov_azimuth']!, _fovAzimuthMeta),
+      );
+    }
+    if (data.containsKey('fov_width')) {
+      context.handle(
+        _fovWidthMeta,
+        fovWidth.isAcceptableOrUnknown(data['fov_width']!, _fovWidthMeta),
+      );
+    }
+    if (data.containsKey('fov_range')) {
+      context.handle(
+        _fovRangeMeta,
+        fovRange.isAcceptableOrUnknown(data['fov_range']!, _fovRangeMeta),
+      );
+    }
     return context;
   }
 
@@ -319,6 +373,18 @@ class $WaypointsTable extends Waypoints
         DriftSqlType.double,
         data['${effectivePrefix}elevation'],
       ),
+      fovAzimuth: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}fov_azimuth'],
+      ),
+      fovWidth: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}fov_width'],
+      ),
+      fovRange: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}fov_range'],
+      ),
     );
   }
 
@@ -342,6 +408,9 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
   final String? cotType;
   final double? hae;
   final double? elevation;
+  final double? fovAzimuth;
+  final double? fovWidth;
+  final double? fovRange;
   const WaypointRow({
     required this.id,
     required this.name,
@@ -356,6 +425,9 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
     this.cotType,
     this.hae,
     this.elevation,
+    this.fovAzimuth,
+    this.fovWidth,
+    this.fovRange,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -389,6 +461,15 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
     if (!nullToAbsent || elevation != null) {
       map['elevation'] = Variable<double>(elevation);
     }
+    if (!nullToAbsent || fovAzimuth != null) {
+      map['fov_azimuth'] = Variable<double>(fovAzimuth);
+    }
+    if (!nullToAbsent || fovWidth != null) {
+      map['fov_width'] = Variable<double>(fovWidth);
+    }
+    if (!nullToAbsent || fovRange != null) {
+      map['fov_range'] = Variable<double>(fovRange);
+    }
     return map;
   }
 
@@ -415,6 +496,15 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
       elevation: elevation == null && nullToAbsent
           ? const Value.absent()
           : Value(elevation),
+      fovAzimuth: fovAzimuth == null && nullToAbsent
+          ? const Value.absent()
+          : Value(fovAzimuth),
+      fovWidth: fovWidth == null && nullToAbsent
+          ? const Value.absent()
+          : Value(fovWidth),
+      fovRange: fovRange == null && nullToAbsent
+          ? const Value.absent()
+          : Value(fovRange),
     );
   }
 
@@ -437,6 +527,9 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
       cotType: serializer.fromJson<String?>(json['cotType']),
       hae: serializer.fromJson<double?>(json['hae']),
       elevation: serializer.fromJson<double?>(json['elevation']),
+      fovAzimuth: serializer.fromJson<double?>(json['fovAzimuth']),
+      fovWidth: serializer.fromJson<double?>(json['fovWidth']),
+      fovRange: serializer.fromJson<double?>(json['fovRange']),
     );
   }
   @override
@@ -456,6 +549,9 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
       'cotType': serializer.toJson<String?>(cotType),
       'hae': serializer.toJson<double?>(hae),
       'elevation': serializer.toJson<double?>(elevation),
+      'fovAzimuth': serializer.toJson<double?>(fovAzimuth),
+      'fovWidth': serializer.toJson<double?>(fovWidth),
+      'fovRange': serializer.toJson<double?>(fovRange),
     };
   }
 
@@ -473,6 +569,9 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
     Value<String?> cotType = const Value.absent(),
     Value<double?> hae = const Value.absent(),
     Value<double?> elevation = const Value.absent(),
+    Value<double?> fovAzimuth = const Value.absent(),
+    Value<double?> fovWidth = const Value.absent(),
+    Value<double?> fovRange = const Value.absent(),
   }) => WaypointRow(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -487,6 +586,9 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
     cotType: cotType.present ? cotType.value : this.cotType,
     hae: hae.present ? hae.value : this.hae,
     elevation: elevation.present ? elevation.value : this.elevation,
+    fovAzimuth: fovAzimuth.present ? fovAzimuth.value : this.fovAzimuth,
+    fovWidth: fovWidth.present ? fovWidth.value : this.fovWidth,
+    fovRange: fovRange.present ? fovRange.value : this.fovRange,
   );
   WaypointRow copyWithCompanion(WaypointsCompanion data) {
     return WaypointRow(
@@ -505,6 +607,11 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
       cotType: data.cotType.present ? data.cotType.value : this.cotType,
       hae: data.hae.present ? data.hae.value : this.hae,
       elevation: data.elevation.present ? data.elevation.value : this.elevation,
+      fovAzimuth: data.fovAzimuth.present
+          ? data.fovAzimuth.value
+          : this.fovAzimuth,
+      fovWidth: data.fovWidth.present ? data.fovWidth.value : this.fovWidth,
+      fovRange: data.fovRange.present ? data.fovRange.value : this.fovRange,
     );
   }
 
@@ -523,7 +630,10 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
           ..write('uid: $uid, ')
           ..write('cotType: $cotType, ')
           ..write('hae: $hae, ')
-          ..write('elevation: $elevation')
+          ..write('elevation: $elevation, ')
+          ..write('fovAzimuth: $fovAzimuth, ')
+          ..write('fovWidth: $fovWidth, ')
+          ..write('fovRange: $fovRange')
           ..write(')'))
         .toString();
   }
@@ -543,6 +653,9 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
     cotType,
     hae,
     elevation,
+    fovAzimuth,
+    fovWidth,
+    fovRange,
   );
   @override
   bool operator ==(Object other) =>
@@ -560,7 +673,10 @@ class WaypointRow extends DataClass implements Insertable<WaypointRow> {
           other.uid == this.uid &&
           other.cotType == this.cotType &&
           other.hae == this.hae &&
-          other.elevation == this.elevation);
+          other.elevation == this.elevation &&
+          other.fovAzimuth == this.fovAzimuth &&
+          other.fovWidth == this.fovWidth &&
+          other.fovRange == this.fovRange);
 }
 
 class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
@@ -577,6 +693,9 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
   final Value<String?> cotType;
   final Value<double?> hae;
   final Value<double?> elevation;
+  final Value<double?> fovAzimuth;
+  final Value<double?> fovWidth;
+  final Value<double?> fovRange;
   const WaypointsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -591,6 +710,9 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
     this.cotType = const Value.absent(),
     this.hae = const Value.absent(),
     this.elevation = const Value.absent(),
+    this.fovAzimuth = const Value.absent(),
+    this.fovWidth = const Value.absent(),
+    this.fovRange = const Value.absent(),
   });
   WaypointsCompanion.insert({
     this.id = const Value.absent(),
@@ -606,6 +728,9 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
     this.cotType = const Value.absent(),
     this.hae = const Value.absent(),
     this.elevation = const Value.absent(),
+    this.fovAzimuth = const Value.absent(),
+    this.fovWidth = const Value.absent(),
+    this.fovRange = const Value.absent(),
   }) : name = Value(name),
        lat = Value(lat),
        lon = Value(lon),
@@ -624,6 +749,9 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
     Expression<String>? cotType,
     Expression<double>? hae,
     Expression<double>? elevation,
+    Expression<double>? fovAzimuth,
+    Expression<double>? fovWidth,
+    Expression<double>? fovRange,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -639,6 +767,9 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
       if (cotType != null) 'cot_type': cotType,
       if (hae != null) 'hae': hae,
       if (elevation != null) 'elevation': elevation,
+      if (fovAzimuth != null) 'fov_azimuth': fovAzimuth,
+      if (fovWidth != null) 'fov_width': fovWidth,
+      if (fovRange != null) 'fov_range': fovRange,
     });
   }
 
@@ -656,6 +787,9 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
     Value<String?>? cotType,
     Value<double?>? hae,
     Value<double?>? elevation,
+    Value<double?>? fovAzimuth,
+    Value<double?>? fovWidth,
+    Value<double?>? fovRange,
   }) {
     return WaypointsCompanion(
       id: id ?? this.id,
@@ -671,6 +805,9 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
       cotType: cotType ?? this.cotType,
       hae: hae ?? this.hae,
       elevation: elevation ?? this.elevation,
+      fovAzimuth: fovAzimuth ?? this.fovAzimuth,
+      fovWidth: fovWidth ?? this.fovWidth,
+      fovRange: fovRange ?? this.fovRange,
     );
   }
 
@@ -716,6 +853,15 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
     if (elevation.present) {
       map['elevation'] = Variable<double>(elevation.value);
     }
+    if (fovAzimuth.present) {
+      map['fov_azimuth'] = Variable<double>(fovAzimuth.value);
+    }
+    if (fovWidth.present) {
+      map['fov_width'] = Variable<double>(fovWidth.value);
+    }
+    if (fovRange.present) {
+      map['fov_range'] = Variable<double>(fovRange.value);
+    }
     return map;
   }
 
@@ -734,7 +880,10 @@ class WaypointsCompanion extends UpdateCompanion<WaypointRow> {
           ..write('uid: $uid, ')
           ..write('cotType: $cotType, ')
           ..write('hae: $hae, ')
-          ..write('elevation: $elevation')
+          ..write('elevation: $elevation, ')
+          ..write('fovAzimuth: $fovAzimuth, ')
+          ..write('fovWidth: $fovWidth, ')
+          ..write('fovRange: $fovRange')
           ..write(')'))
         .toString();
   }
@@ -3440,6 +3589,1197 @@ class AttachmentsCompanion extends UpdateCompanion<AttachmentRow> {
   }
 }
 
+class $RangeLinesTable extends RangeLines
+    with TableInfo<$RangeLinesTable, RangeLineRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RangeLinesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _uidMeta = const VerificationMeta('uid');
+  @override
+  late final GeneratedColumn<String> uid = GeneratedColumn<String>(
+    'uid',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 80,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _startLatMeta = const VerificationMeta(
+    'startLat',
+  );
+  @override
+  late final GeneratedColumn<double> startLat = GeneratedColumn<double>(
+    'start_lat',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _startLonMeta = const VerificationMeta(
+    'startLon',
+  );
+  @override
+  late final GeneratedColumn<double> startLon = GeneratedColumn<double>(
+    'start_lon',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _startRefMeta = const VerificationMeta(
+    'startRef',
+  );
+  @override
+  late final GeneratedColumn<String> startRef = GeneratedColumn<String>(
+    'start_ref',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _endLatMeta = const VerificationMeta('endLat');
+  @override
+  late final GeneratedColumn<double> endLat = GeneratedColumn<double>(
+    'end_lat',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _endLonMeta = const VerificationMeta('endLon');
+  @override
+  late final GeneratedColumn<double> endLon = GeneratedColumn<double>(
+    'end_lon',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _endRefMeta = const VerificationMeta('endRef');
+  @override
+  late final GeneratedColumn<String> endRef = GeneratedColumn<String>(
+    'end_ref',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<int> color = GeneratedColumn<int>(
+    'color',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    uid,
+    name,
+    startLat,
+    startLon,
+    startRef,
+    endLat,
+    endLon,
+    endRef,
+    color,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'range_lines';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RangeLineRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('uid')) {
+      context.handle(
+        _uidMeta,
+        uid.isAcceptableOrUnknown(data['uid']!, _uidMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_uidMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('start_lat')) {
+      context.handle(
+        _startLatMeta,
+        startLat.isAcceptableOrUnknown(data['start_lat']!, _startLatMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_startLatMeta);
+    }
+    if (data.containsKey('start_lon')) {
+      context.handle(
+        _startLonMeta,
+        startLon.isAcceptableOrUnknown(data['start_lon']!, _startLonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_startLonMeta);
+    }
+    if (data.containsKey('start_ref')) {
+      context.handle(
+        _startRefMeta,
+        startRef.isAcceptableOrUnknown(data['start_ref']!, _startRefMeta),
+      );
+    }
+    if (data.containsKey('end_lat')) {
+      context.handle(
+        _endLatMeta,
+        endLat.isAcceptableOrUnknown(data['end_lat']!, _endLatMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_endLatMeta);
+    }
+    if (data.containsKey('end_lon')) {
+      context.handle(
+        _endLonMeta,
+        endLon.isAcceptableOrUnknown(data['end_lon']!, _endLonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_endLonMeta);
+    }
+    if (data.containsKey('end_ref')) {
+      context.handle(
+        _endRefMeta,
+        endRef.isAcceptableOrUnknown(data['end_ref']!, _endRefMeta),
+      );
+    }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_colorMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RangeLineRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RangeLineRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      uid: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}uid'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      startLat: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}start_lat'],
+      )!,
+      startLon: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}start_lon'],
+      )!,
+      startRef: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}start_ref'],
+      ),
+      endLat: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}end_lat'],
+      )!,
+      endLon: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}end_lon'],
+      )!,
+      endRef: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}end_ref'],
+      ),
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}color'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $RangeLinesTable createAlias(String alias) {
+    return $RangeLinesTable(attachedDatabase, alias);
+  }
+}
+
+class RangeLineRow extends DataClass implements Insertable<RangeLineRow> {
+  final int id;
+  final String uid;
+  final String name;
+  final double startLat;
+  final double startLon;
+  final String? startRef;
+  final double endLat;
+  final double endLon;
+  final String? endRef;
+  final int color;
+  final DateTime createdAt;
+  const RangeLineRow({
+    required this.id,
+    required this.uid,
+    required this.name,
+    required this.startLat,
+    required this.startLon,
+    this.startRef,
+    required this.endLat,
+    required this.endLon,
+    this.endRef,
+    required this.color,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['uid'] = Variable<String>(uid);
+    map['name'] = Variable<String>(name);
+    map['start_lat'] = Variable<double>(startLat);
+    map['start_lon'] = Variable<double>(startLon);
+    if (!nullToAbsent || startRef != null) {
+      map['start_ref'] = Variable<String>(startRef);
+    }
+    map['end_lat'] = Variable<double>(endLat);
+    map['end_lon'] = Variable<double>(endLon);
+    if (!nullToAbsent || endRef != null) {
+      map['end_ref'] = Variable<String>(endRef);
+    }
+    map['color'] = Variable<int>(color);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  RangeLinesCompanion toCompanion(bool nullToAbsent) {
+    return RangeLinesCompanion(
+      id: Value(id),
+      uid: Value(uid),
+      name: Value(name),
+      startLat: Value(startLat),
+      startLon: Value(startLon),
+      startRef: startRef == null && nullToAbsent
+          ? const Value.absent()
+          : Value(startRef),
+      endLat: Value(endLat),
+      endLon: Value(endLon),
+      endRef: endRef == null && nullToAbsent
+          ? const Value.absent()
+          : Value(endRef),
+      color: Value(color),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory RangeLineRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RangeLineRow(
+      id: serializer.fromJson<int>(json['id']),
+      uid: serializer.fromJson<String>(json['uid']),
+      name: serializer.fromJson<String>(json['name']),
+      startLat: serializer.fromJson<double>(json['startLat']),
+      startLon: serializer.fromJson<double>(json['startLon']),
+      startRef: serializer.fromJson<String?>(json['startRef']),
+      endLat: serializer.fromJson<double>(json['endLat']),
+      endLon: serializer.fromJson<double>(json['endLon']),
+      endRef: serializer.fromJson<String?>(json['endRef']),
+      color: serializer.fromJson<int>(json['color']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'uid': serializer.toJson<String>(uid),
+      'name': serializer.toJson<String>(name),
+      'startLat': serializer.toJson<double>(startLat),
+      'startLon': serializer.toJson<double>(startLon),
+      'startRef': serializer.toJson<String?>(startRef),
+      'endLat': serializer.toJson<double>(endLat),
+      'endLon': serializer.toJson<double>(endLon),
+      'endRef': serializer.toJson<String?>(endRef),
+      'color': serializer.toJson<int>(color),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  RangeLineRow copyWith({
+    int? id,
+    String? uid,
+    String? name,
+    double? startLat,
+    double? startLon,
+    Value<String?> startRef = const Value.absent(),
+    double? endLat,
+    double? endLon,
+    Value<String?> endRef = const Value.absent(),
+    int? color,
+    DateTime? createdAt,
+  }) => RangeLineRow(
+    id: id ?? this.id,
+    uid: uid ?? this.uid,
+    name: name ?? this.name,
+    startLat: startLat ?? this.startLat,
+    startLon: startLon ?? this.startLon,
+    startRef: startRef.present ? startRef.value : this.startRef,
+    endLat: endLat ?? this.endLat,
+    endLon: endLon ?? this.endLon,
+    endRef: endRef.present ? endRef.value : this.endRef,
+    color: color ?? this.color,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  RangeLineRow copyWithCompanion(RangeLinesCompanion data) {
+    return RangeLineRow(
+      id: data.id.present ? data.id.value : this.id,
+      uid: data.uid.present ? data.uid.value : this.uid,
+      name: data.name.present ? data.name.value : this.name,
+      startLat: data.startLat.present ? data.startLat.value : this.startLat,
+      startLon: data.startLon.present ? data.startLon.value : this.startLon,
+      startRef: data.startRef.present ? data.startRef.value : this.startRef,
+      endLat: data.endLat.present ? data.endLat.value : this.endLat,
+      endLon: data.endLon.present ? data.endLon.value : this.endLon,
+      endRef: data.endRef.present ? data.endRef.value : this.endRef,
+      color: data.color.present ? data.color.value : this.color,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RangeLineRow(')
+          ..write('id: $id, ')
+          ..write('uid: $uid, ')
+          ..write('name: $name, ')
+          ..write('startLat: $startLat, ')
+          ..write('startLon: $startLon, ')
+          ..write('startRef: $startRef, ')
+          ..write('endLat: $endLat, ')
+          ..write('endLon: $endLon, ')
+          ..write('endRef: $endRef, ')
+          ..write('color: $color, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    uid,
+    name,
+    startLat,
+    startLon,
+    startRef,
+    endLat,
+    endLon,
+    endRef,
+    color,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RangeLineRow &&
+          other.id == this.id &&
+          other.uid == this.uid &&
+          other.name == this.name &&
+          other.startLat == this.startLat &&
+          other.startLon == this.startLon &&
+          other.startRef == this.startRef &&
+          other.endLat == this.endLat &&
+          other.endLon == this.endLon &&
+          other.endRef == this.endRef &&
+          other.color == this.color &&
+          other.createdAt == this.createdAt);
+}
+
+class RangeLinesCompanion extends UpdateCompanion<RangeLineRow> {
+  final Value<int> id;
+  final Value<String> uid;
+  final Value<String> name;
+  final Value<double> startLat;
+  final Value<double> startLon;
+  final Value<String?> startRef;
+  final Value<double> endLat;
+  final Value<double> endLon;
+  final Value<String?> endRef;
+  final Value<int> color;
+  final Value<DateTime> createdAt;
+  const RangeLinesCompanion({
+    this.id = const Value.absent(),
+    this.uid = const Value.absent(),
+    this.name = const Value.absent(),
+    this.startLat = const Value.absent(),
+    this.startLon = const Value.absent(),
+    this.startRef = const Value.absent(),
+    this.endLat = const Value.absent(),
+    this.endLon = const Value.absent(),
+    this.endRef = const Value.absent(),
+    this.color = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  RangeLinesCompanion.insert({
+    this.id = const Value.absent(),
+    required String uid,
+    required String name,
+    required double startLat,
+    required double startLon,
+    this.startRef = const Value.absent(),
+    required double endLat,
+    required double endLon,
+    this.endRef = const Value.absent(),
+    required int color,
+    required DateTime createdAt,
+  }) : uid = Value(uid),
+       name = Value(name),
+       startLat = Value(startLat),
+       startLon = Value(startLon),
+       endLat = Value(endLat),
+       endLon = Value(endLon),
+       color = Value(color),
+       createdAt = Value(createdAt);
+  static Insertable<RangeLineRow> custom({
+    Expression<int>? id,
+    Expression<String>? uid,
+    Expression<String>? name,
+    Expression<double>? startLat,
+    Expression<double>? startLon,
+    Expression<String>? startRef,
+    Expression<double>? endLat,
+    Expression<double>? endLon,
+    Expression<String>? endRef,
+    Expression<int>? color,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (uid != null) 'uid': uid,
+      if (name != null) 'name': name,
+      if (startLat != null) 'start_lat': startLat,
+      if (startLon != null) 'start_lon': startLon,
+      if (startRef != null) 'start_ref': startRef,
+      if (endLat != null) 'end_lat': endLat,
+      if (endLon != null) 'end_lon': endLon,
+      if (endRef != null) 'end_ref': endRef,
+      if (color != null) 'color': color,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  RangeLinesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? uid,
+    Value<String>? name,
+    Value<double>? startLat,
+    Value<double>? startLon,
+    Value<String?>? startRef,
+    Value<double>? endLat,
+    Value<double>? endLon,
+    Value<String?>? endRef,
+    Value<int>? color,
+    Value<DateTime>? createdAt,
+  }) {
+    return RangeLinesCompanion(
+      id: id ?? this.id,
+      uid: uid ?? this.uid,
+      name: name ?? this.name,
+      startLat: startLat ?? this.startLat,
+      startLon: startLon ?? this.startLon,
+      startRef: startRef ?? this.startRef,
+      endLat: endLat ?? this.endLat,
+      endLon: endLon ?? this.endLon,
+      endRef: endRef ?? this.endRef,
+      color: color ?? this.color,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (uid.present) {
+      map['uid'] = Variable<String>(uid.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (startLat.present) {
+      map['start_lat'] = Variable<double>(startLat.value);
+    }
+    if (startLon.present) {
+      map['start_lon'] = Variable<double>(startLon.value);
+    }
+    if (startRef.present) {
+      map['start_ref'] = Variable<String>(startRef.value);
+    }
+    if (endLat.present) {
+      map['end_lat'] = Variable<double>(endLat.value);
+    }
+    if (endLon.present) {
+      map['end_lon'] = Variable<double>(endLon.value);
+    }
+    if (endRef.present) {
+      map['end_ref'] = Variable<String>(endRef.value);
+    }
+    if (color.present) {
+      map['color'] = Variable<int>(color.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RangeLinesCompanion(')
+          ..write('id: $id, ')
+          ..write('uid: $uid, ')
+          ..write('name: $name, ')
+          ..write('startLat: $startLat, ')
+          ..write('startLon: $startLon, ')
+          ..write('startRef: $startRef, ')
+          ..write('endLat: $endLat, ')
+          ..write('endLon: $endLon, ')
+          ..write('endRef: $endRef, ')
+          ..write('color: $color, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RangeRingsTable extends RangeRings
+    with TableInfo<$RangeRingsTable, RangeRingRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RangeRingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _uidMeta = const VerificationMeta('uid');
+  @override
+  late final GeneratedColumn<String> uid = GeneratedColumn<String>(
+    'uid',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 80,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _centerLatMeta = const VerificationMeta(
+    'centerLat',
+  );
+  @override
+  late final GeneratedColumn<double> centerLat = GeneratedColumn<double>(
+    'center_lat',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _centerLonMeta = const VerificationMeta(
+    'centerLon',
+  );
+  @override
+  late final GeneratedColumn<double> centerLon = GeneratedColumn<double>(
+    'center_lon',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _centerRefMeta = const VerificationMeta(
+    'centerRef',
+  );
+  @override
+  late final GeneratedColumn<String> centerRef = GeneratedColumn<String>(
+    'center_ref',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _radiiJsonMeta = const VerificationMeta(
+    'radiiJson',
+  );
+  @override
+  late final GeneratedColumn<String> radiiJson = GeneratedColumn<String>(
+    'radii_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<int> color = GeneratedColumn<int>(
+    'color',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    uid,
+    name,
+    centerLat,
+    centerLon,
+    centerRef,
+    radiiJson,
+    color,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'range_rings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RangeRingRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('uid')) {
+      context.handle(
+        _uidMeta,
+        uid.isAcceptableOrUnknown(data['uid']!, _uidMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_uidMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('center_lat')) {
+      context.handle(
+        _centerLatMeta,
+        centerLat.isAcceptableOrUnknown(data['center_lat']!, _centerLatMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_centerLatMeta);
+    }
+    if (data.containsKey('center_lon')) {
+      context.handle(
+        _centerLonMeta,
+        centerLon.isAcceptableOrUnknown(data['center_lon']!, _centerLonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_centerLonMeta);
+    }
+    if (data.containsKey('center_ref')) {
+      context.handle(
+        _centerRefMeta,
+        centerRef.isAcceptableOrUnknown(data['center_ref']!, _centerRefMeta),
+      );
+    }
+    if (data.containsKey('radii_json')) {
+      context.handle(
+        _radiiJsonMeta,
+        radiiJson.isAcceptableOrUnknown(data['radii_json']!, _radiiJsonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_radiiJsonMeta);
+    }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_colorMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RangeRingRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RangeRingRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      uid: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}uid'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      centerLat: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}center_lat'],
+      )!,
+      centerLon: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}center_lon'],
+      )!,
+      centerRef: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}center_ref'],
+      ),
+      radiiJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}radii_json'],
+      )!,
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}color'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $RangeRingsTable createAlias(String alias) {
+    return $RangeRingsTable(attachedDatabase, alias);
+  }
+}
+
+class RangeRingRow extends DataClass implements Insertable<RangeRingRow> {
+  final int id;
+  final String uid;
+  final String name;
+  final double centerLat;
+  final double centerLon;
+  final String? centerRef;
+  final String radiiJson;
+  final int color;
+  final DateTime createdAt;
+  const RangeRingRow({
+    required this.id,
+    required this.uid,
+    required this.name,
+    required this.centerLat,
+    required this.centerLon,
+    this.centerRef,
+    required this.radiiJson,
+    required this.color,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['uid'] = Variable<String>(uid);
+    map['name'] = Variable<String>(name);
+    map['center_lat'] = Variable<double>(centerLat);
+    map['center_lon'] = Variable<double>(centerLon);
+    if (!nullToAbsent || centerRef != null) {
+      map['center_ref'] = Variable<String>(centerRef);
+    }
+    map['radii_json'] = Variable<String>(radiiJson);
+    map['color'] = Variable<int>(color);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  RangeRingsCompanion toCompanion(bool nullToAbsent) {
+    return RangeRingsCompanion(
+      id: Value(id),
+      uid: Value(uid),
+      name: Value(name),
+      centerLat: Value(centerLat),
+      centerLon: Value(centerLon),
+      centerRef: centerRef == null && nullToAbsent
+          ? const Value.absent()
+          : Value(centerRef),
+      radiiJson: Value(radiiJson),
+      color: Value(color),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory RangeRingRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RangeRingRow(
+      id: serializer.fromJson<int>(json['id']),
+      uid: serializer.fromJson<String>(json['uid']),
+      name: serializer.fromJson<String>(json['name']),
+      centerLat: serializer.fromJson<double>(json['centerLat']),
+      centerLon: serializer.fromJson<double>(json['centerLon']),
+      centerRef: serializer.fromJson<String?>(json['centerRef']),
+      radiiJson: serializer.fromJson<String>(json['radiiJson']),
+      color: serializer.fromJson<int>(json['color']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'uid': serializer.toJson<String>(uid),
+      'name': serializer.toJson<String>(name),
+      'centerLat': serializer.toJson<double>(centerLat),
+      'centerLon': serializer.toJson<double>(centerLon),
+      'centerRef': serializer.toJson<String?>(centerRef),
+      'radiiJson': serializer.toJson<String>(radiiJson),
+      'color': serializer.toJson<int>(color),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  RangeRingRow copyWith({
+    int? id,
+    String? uid,
+    String? name,
+    double? centerLat,
+    double? centerLon,
+    Value<String?> centerRef = const Value.absent(),
+    String? radiiJson,
+    int? color,
+    DateTime? createdAt,
+  }) => RangeRingRow(
+    id: id ?? this.id,
+    uid: uid ?? this.uid,
+    name: name ?? this.name,
+    centerLat: centerLat ?? this.centerLat,
+    centerLon: centerLon ?? this.centerLon,
+    centerRef: centerRef.present ? centerRef.value : this.centerRef,
+    radiiJson: radiiJson ?? this.radiiJson,
+    color: color ?? this.color,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  RangeRingRow copyWithCompanion(RangeRingsCompanion data) {
+    return RangeRingRow(
+      id: data.id.present ? data.id.value : this.id,
+      uid: data.uid.present ? data.uid.value : this.uid,
+      name: data.name.present ? data.name.value : this.name,
+      centerLat: data.centerLat.present ? data.centerLat.value : this.centerLat,
+      centerLon: data.centerLon.present ? data.centerLon.value : this.centerLon,
+      centerRef: data.centerRef.present ? data.centerRef.value : this.centerRef,
+      radiiJson: data.radiiJson.present ? data.radiiJson.value : this.radiiJson,
+      color: data.color.present ? data.color.value : this.color,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RangeRingRow(')
+          ..write('id: $id, ')
+          ..write('uid: $uid, ')
+          ..write('name: $name, ')
+          ..write('centerLat: $centerLat, ')
+          ..write('centerLon: $centerLon, ')
+          ..write('centerRef: $centerRef, ')
+          ..write('radiiJson: $radiiJson, ')
+          ..write('color: $color, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    uid,
+    name,
+    centerLat,
+    centerLon,
+    centerRef,
+    radiiJson,
+    color,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RangeRingRow &&
+          other.id == this.id &&
+          other.uid == this.uid &&
+          other.name == this.name &&
+          other.centerLat == this.centerLat &&
+          other.centerLon == this.centerLon &&
+          other.centerRef == this.centerRef &&
+          other.radiiJson == this.radiiJson &&
+          other.color == this.color &&
+          other.createdAt == this.createdAt);
+}
+
+class RangeRingsCompanion extends UpdateCompanion<RangeRingRow> {
+  final Value<int> id;
+  final Value<String> uid;
+  final Value<String> name;
+  final Value<double> centerLat;
+  final Value<double> centerLon;
+  final Value<String?> centerRef;
+  final Value<String> radiiJson;
+  final Value<int> color;
+  final Value<DateTime> createdAt;
+  const RangeRingsCompanion({
+    this.id = const Value.absent(),
+    this.uid = const Value.absent(),
+    this.name = const Value.absent(),
+    this.centerLat = const Value.absent(),
+    this.centerLon = const Value.absent(),
+    this.centerRef = const Value.absent(),
+    this.radiiJson = const Value.absent(),
+    this.color = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  RangeRingsCompanion.insert({
+    this.id = const Value.absent(),
+    required String uid,
+    required String name,
+    required double centerLat,
+    required double centerLon,
+    this.centerRef = const Value.absent(),
+    required String radiiJson,
+    required int color,
+    required DateTime createdAt,
+  }) : uid = Value(uid),
+       name = Value(name),
+       centerLat = Value(centerLat),
+       centerLon = Value(centerLon),
+       radiiJson = Value(radiiJson),
+       color = Value(color),
+       createdAt = Value(createdAt);
+  static Insertable<RangeRingRow> custom({
+    Expression<int>? id,
+    Expression<String>? uid,
+    Expression<String>? name,
+    Expression<double>? centerLat,
+    Expression<double>? centerLon,
+    Expression<String>? centerRef,
+    Expression<String>? radiiJson,
+    Expression<int>? color,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (uid != null) 'uid': uid,
+      if (name != null) 'name': name,
+      if (centerLat != null) 'center_lat': centerLat,
+      if (centerLon != null) 'center_lon': centerLon,
+      if (centerRef != null) 'center_ref': centerRef,
+      if (radiiJson != null) 'radii_json': radiiJson,
+      if (color != null) 'color': color,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  RangeRingsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? uid,
+    Value<String>? name,
+    Value<double>? centerLat,
+    Value<double>? centerLon,
+    Value<String?>? centerRef,
+    Value<String>? radiiJson,
+    Value<int>? color,
+    Value<DateTime>? createdAt,
+  }) {
+    return RangeRingsCompanion(
+      id: id ?? this.id,
+      uid: uid ?? this.uid,
+      name: name ?? this.name,
+      centerLat: centerLat ?? this.centerLat,
+      centerLon: centerLon ?? this.centerLon,
+      centerRef: centerRef ?? this.centerRef,
+      radiiJson: radiiJson ?? this.radiiJson,
+      color: color ?? this.color,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (uid.present) {
+      map['uid'] = Variable<String>(uid.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (centerLat.present) {
+      map['center_lat'] = Variable<double>(centerLat.value);
+    }
+    if (centerLon.present) {
+      map['center_lon'] = Variable<double>(centerLon.value);
+    }
+    if (centerRef.present) {
+      map['center_ref'] = Variable<String>(centerRef.value);
+    }
+    if (radiiJson.present) {
+      map['radii_json'] = Variable<String>(radiiJson.value);
+    }
+    if (color.present) {
+      map['color'] = Variable<int>(color.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RangeRingsCompanion(')
+          ..write('id: $id, ')
+          ..write('uid: $uid, ')
+          ..write('name: $name, ')
+          ..write('centerLat: $centerLat, ')
+          ..write('centerLon: $centerLon, ')
+          ..write('centerRef: $centerRef, ')
+          ..write('radiiJson: $radiiJson, ')
+          ..write('color: $color, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3451,6 +4791,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ImportedLayersTable importedLayers = $ImportedLayersTable(this);
   late final $RoutePlansTable routePlans = $RoutePlansTable(this);
   late final $AttachmentsTable attachments = $AttachmentsTable(this);
+  late final $RangeLinesTable rangeLines = $RangeLinesTable(this);
+  late final $RangeRingsTable rangeRings = $RangeRingsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3464,6 +4806,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     importedLayers,
     routePlans,
     attachments,
+    rangeLines,
+    rangeRings,
   ];
 }
 
@@ -3482,6 +4826,9 @@ typedef $$WaypointsTableCreateCompanionBuilder =
       Value<String?> cotType,
       Value<double?> hae,
       Value<double?> elevation,
+      Value<double?> fovAzimuth,
+      Value<double?> fovWidth,
+      Value<double?> fovRange,
     });
 typedef $$WaypointsTableUpdateCompanionBuilder =
     WaypointsCompanion Function({
@@ -3498,6 +4845,9 @@ typedef $$WaypointsTableUpdateCompanionBuilder =
       Value<String?> cotType,
       Value<double?> hae,
       Value<double?> elevation,
+      Value<double?> fovAzimuth,
+      Value<double?> fovWidth,
+      Value<double?> fovRange,
     });
 
 class $$WaypointsTableFilterComposer
@@ -3571,6 +4921,21 @@ class $$WaypointsTableFilterComposer
 
   ColumnFilters<double> get elevation => $composableBuilder(
     column: $table.elevation,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get fovAzimuth => $composableBuilder(
+    column: $table.fovAzimuth,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get fovWidth => $composableBuilder(
+    column: $table.fovWidth,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get fovRange => $composableBuilder(
+    column: $table.fovRange,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3648,6 +5013,21 @@ class $$WaypointsTableOrderingComposer
     column: $table.elevation,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<double> get fovAzimuth => $composableBuilder(
+    column: $table.fovAzimuth,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get fovWidth => $composableBuilder(
+    column: $table.fovWidth,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get fovRange => $composableBuilder(
+    column: $table.fovRange,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$WaypointsTableAnnotationComposer
@@ -3699,6 +5079,17 @@ class $$WaypointsTableAnnotationComposer
 
   GeneratedColumn<double> get elevation =>
       $composableBuilder(column: $table.elevation, builder: (column) => column);
+
+  GeneratedColumn<double> get fovAzimuth => $composableBuilder(
+    column: $table.fovAzimuth,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get fovWidth =>
+      $composableBuilder(column: $table.fovWidth, builder: (column) => column);
+
+  GeneratedColumn<double> get fovRange =>
+      $composableBuilder(column: $table.fovRange, builder: (column) => column);
 }
 
 class $$WaypointsTableTableManager
@@ -3745,6 +5136,9 @@ class $$WaypointsTableTableManager
                 Value<String?> cotType = const Value.absent(),
                 Value<double?> hae = const Value.absent(),
                 Value<double?> elevation = const Value.absent(),
+                Value<double?> fovAzimuth = const Value.absent(),
+                Value<double?> fovWidth = const Value.absent(),
+                Value<double?> fovRange = const Value.absent(),
               }) => WaypointsCompanion(
                 id: id,
                 name: name,
@@ -3759,6 +5153,9 @@ class $$WaypointsTableTableManager
                 cotType: cotType,
                 hae: hae,
                 elevation: elevation,
+                fovAzimuth: fovAzimuth,
+                fovWidth: fovWidth,
+                fovRange: fovRange,
               ),
           createCompanionCallback:
               ({
@@ -3775,6 +5172,9 @@ class $$WaypointsTableTableManager
                 Value<String?> cotType = const Value.absent(),
                 Value<double?> hae = const Value.absent(),
                 Value<double?> elevation = const Value.absent(),
+                Value<double?> fovAzimuth = const Value.absent(),
+                Value<double?> fovWidth = const Value.absent(),
+                Value<double?> fovRange = const Value.absent(),
               }) => WaypointsCompanion.insert(
                 id: id,
                 name: name,
@@ -3789,6 +5189,9 @@ class $$WaypointsTableTableManager
                 cotType: cotType,
                 hae: hae,
                 elevation: elevation,
+                fovAzimuth: fovAzimuth,
+                fovWidth: fovWidth,
+                fovRange: fovRange,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -5276,6 +6679,584 @@ typedef $$AttachmentsTableProcessedTableManager =
       AttachmentRow,
       PrefetchHooks Function()
     >;
+typedef $$RangeLinesTableCreateCompanionBuilder =
+    RangeLinesCompanion Function({
+      Value<int> id,
+      required String uid,
+      required String name,
+      required double startLat,
+      required double startLon,
+      Value<String?> startRef,
+      required double endLat,
+      required double endLon,
+      Value<String?> endRef,
+      required int color,
+      required DateTime createdAt,
+    });
+typedef $$RangeLinesTableUpdateCompanionBuilder =
+    RangeLinesCompanion Function({
+      Value<int> id,
+      Value<String> uid,
+      Value<String> name,
+      Value<double> startLat,
+      Value<double> startLon,
+      Value<String?> startRef,
+      Value<double> endLat,
+      Value<double> endLon,
+      Value<String?> endRef,
+      Value<int> color,
+      Value<DateTime> createdAt,
+    });
+
+class $$RangeLinesTableFilterComposer
+    extends Composer<_$AppDatabase, $RangeLinesTable> {
+  $$RangeLinesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get uid => $composableBuilder(
+    column: $table.uid,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get startLat => $composableBuilder(
+    column: $table.startLat,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get startLon => $composableBuilder(
+    column: $table.startLon,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get startRef => $composableBuilder(
+    column: $table.startRef,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get endLat => $composableBuilder(
+    column: $table.endLat,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get endLon => $composableBuilder(
+    column: $table.endLon,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get endRef => $composableBuilder(
+    column: $table.endRef,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RangeLinesTableOrderingComposer
+    extends Composer<_$AppDatabase, $RangeLinesTable> {
+  $$RangeLinesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get uid => $composableBuilder(
+    column: $table.uid,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get startLat => $composableBuilder(
+    column: $table.startLat,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get startLon => $composableBuilder(
+    column: $table.startLon,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get startRef => $composableBuilder(
+    column: $table.startRef,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get endLat => $composableBuilder(
+    column: $table.endLat,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get endLon => $composableBuilder(
+    column: $table.endLon,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get endRef => $composableBuilder(
+    column: $table.endRef,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RangeLinesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RangeLinesTable> {
+  $$RangeLinesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get uid =>
+      $composableBuilder(column: $table.uid, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<double> get startLat =>
+      $composableBuilder(column: $table.startLat, builder: (column) => column);
+
+  GeneratedColumn<double> get startLon =>
+      $composableBuilder(column: $table.startLon, builder: (column) => column);
+
+  GeneratedColumn<String> get startRef =>
+      $composableBuilder(column: $table.startRef, builder: (column) => column);
+
+  GeneratedColumn<double> get endLat =>
+      $composableBuilder(column: $table.endLat, builder: (column) => column);
+
+  GeneratedColumn<double> get endLon =>
+      $composableBuilder(column: $table.endLon, builder: (column) => column);
+
+  GeneratedColumn<String> get endRef =>
+      $composableBuilder(column: $table.endRef, builder: (column) => column);
+
+  GeneratedColumn<int> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$RangeLinesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RangeLinesTable,
+          RangeLineRow,
+          $$RangeLinesTableFilterComposer,
+          $$RangeLinesTableOrderingComposer,
+          $$RangeLinesTableAnnotationComposer,
+          $$RangeLinesTableCreateCompanionBuilder,
+          $$RangeLinesTableUpdateCompanionBuilder,
+          (
+            RangeLineRow,
+            BaseReferences<_$AppDatabase, $RangeLinesTable, RangeLineRow>,
+          ),
+          RangeLineRow,
+          PrefetchHooks Function()
+        > {
+  $$RangeLinesTableTableManager(_$AppDatabase db, $RangeLinesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RangeLinesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RangeLinesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RangeLinesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> uid = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<double> startLat = const Value.absent(),
+                Value<double> startLon = const Value.absent(),
+                Value<String?> startRef = const Value.absent(),
+                Value<double> endLat = const Value.absent(),
+                Value<double> endLon = const Value.absent(),
+                Value<String?> endRef = const Value.absent(),
+                Value<int> color = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => RangeLinesCompanion(
+                id: id,
+                uid: uid,
+                name: name,
+                startLat: startLat,
+                startLon: startLon,
+                startRef: startRef,
+                endLat: endLat,
+                endLon: endLon,
+                endRef: endRef,
+                color: color,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String uid,
+                required String name,
+                required double startLat,
+                required double startLon,
+                Value<String?> startRef = const Value.absent(),
+                required double endLat,
+                required double endLon,
+                Value<String?> endRef = const Value.absent(),
+                required int color,
+                required DateTime createdAt,
+              }) => RangeLinesCompanion.insert(
+                id: id,
+                uid: uid,
+                name: name,
+                startLat: startLat,
+                startLon: startLon,
+                startRef: startRef,
+                endLat: endLat,
+                endLon: endLon,
+                endRef: endRef,
+                color: color,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RangeLinesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RangeLinesTable,
+      RangeLineRow,
+      $$RangeLinesTableFilterComposer,
+      $$RangeLinesTableOrderingComposer,
+      $$RangeLinesTableAnnotationComposer,
+      $$RangeLinesTableCreateCompanionBuilder,
+      $$RangeLinesTableUpdateCompanionBuilder,
+      (
+        RangeLineRow,
+        BaseReferences<_$AppDatabase, $RangeLinesTable, RangeLineRow>,
+      ),
+      RangeLineRow,
+      PrefetchHooks Function()
+    >;
+typedef $$RangeRingsTableCreateCompanionBuilder =
+    RangeRingsCompanion Function({
+      Value<int> id,
+      required String uid,
+      required String name,
+      required double centerLat,
+      required double centerLon,
+      Value<String?> centerRef,
+      required String radiiJson,
+      required int color,
+      required DateTime createdAt,
+    });
+typedef $$RangeRingsTableUpdateCompanionBuilder =
+    RangeRingsCompanion Function({
+      Value<int> id,
+      Value<String> uid,
+      Value<String> name,
+      Value<double> centerLat,
+      Value<double> centerLon,
+      Value<String?> centerRef,
+      Value<String> radiiJson,
+      Value<int> color,
+      Value<DateTime> createdAt,
+    });
+
+class $$RangeRingsTableFilterComposer
+    extends Composer<_$AppDatabase, $RangeRingsTable> {
+  $$RangeRingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get uid => $composableBuilder(
+    column: $table.uid,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get centerLat => $composableBuilder(
+    column: $table.centerLat,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get centerLon => $composableBuilder(
+    column: $table.centerLon,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get centerRef => $composableBuilder(
+    column: $table.centerRef,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get radiiJson => $composableBuilder(
+    column: $table.radiiJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RangeRingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $RangeRingsTable> {
+  $$RangeRingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get uid => $composableBuilder(
+    column: $table.uid,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get centerLat => $composableBuilder(
+    column: $table.centerLat,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get centerLon => $composableBuilder(
+    column: $table.centerLon,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get centerRef => $composableBuilder(
+    column: $table.centerRef,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get radiiJson => $composableBuilder(
+    column: $table.radiiJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RangeRingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RangeRingsTable> {
+  $$RangeRingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get uid =>
+      $composableBuilder(column: $table.uid, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<double> get centerLat =>
+      $composableBuilder(column: $table.centerLat, builder: (column) => column);
+
+  GeneratedColumn<double> get centerLon =>
+      $composableBuilder(column: $table.centerLon, builder: (column) => column);
+
+  GeneratedColumn<String> get centerRef =>
+      $composableBuilder(column: $table.centerRef, builder: (column) => column);
+
+  GeneratedColumn<String> get radiiJson =>
+      $composableBuilder(column: $table.radiiJson, builder: (column) => column);
+
+  GeneratedColumn<int> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$RangeRingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RangeRingsTable,
+          RangeRingRow,
+          $$RangeRingsTableFilterComposer,
+          $$RangeRingsTableOrderingComposer,
+          $$RangeRingsTableAnnotationComposer,
+          $$RangeRingsTableCreateCompanionBuilder,
+          $$RangeRingsTableUpdateCompanionBuilder,
+          (
+            RangeRingRow,
+            BaseReferences<_$AppDatabase, $RangeRingsTable, RangeRingRow>,
+          ),
+          RangeRingRow,
+          PrefetchHooks Function()
+        > {
+  $$RangeRingsTableTableManager(_$AppDatabase db, $RangeRingsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RangeRingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RangeRingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RangeRingsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> uid = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<double> centerLat = const Value.absent(),
+                Value<double> centerLon = const Value.absent(),
+                Value<String?> centerRef = const Value.absent(),
+                Value<String> radiiJson = const Value.absent(),
+                Value<int> color = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => RangeRingsCompanion(
+                id: id,
+                uid: uid,
+                name: name,
+                centerLat: centerLat,
+                centerLon: centerLon,
+                centerRef: centerRef,
+                radiiJson: radiiJson,
+                color: color,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String uid,
+                required String name,
+                required double centerLat,
+                required double centerLon,
+                Value<String?> centerRef = const Value.absent(),
+                required String radiiJson,
+                required int color,
+                required DateTime createdAt,
+              }) => RangeRingsCompanion.insert(
+                id: id,
+                uid: uid,
+                name: name,
+                centerLat: centerLat,
+                centerLon: centerLon,
+                centerRef: centerRef,
+                radiiJson: radiiJson,
+                color: color,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RangeRingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RangeRingsTable,
+      RangeRingRow,
+      $$RangeRingsTableFilterComposer,
+      $$RangeRingsTableOrderingComposer,
+      $$RangeRingsTableAnnotationComposer,
+      $$RangeRingsTableCreateCompanionBuilder,
+      $$RangeRingsTableUpdateCompanionBuilder,
+      (
+        RangeRingRow,
+        BaseReferences<_$AppDatabase, $RangeRingsTable, RangeRingRow>,
+      ),
+      RangeRingRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -5296,4 +7277,8 @@ class $AppDatabaseManager {
       $$RoutePlansTableTableManager(_db, _db.routePlans);
   $$AttachmentsTableTableManager get attachments =>
       $$AttachmentsTableTableManager(_db, _db.attachments);
+  $$RangeLinesTableTableManager get rangeLines =>
+      $$RangeLinesTableTableManager(_db, _db.rangeLines);
+  $$RangeRingsTableTableManager get rangeRings =>
+      $$RangeRingsTableTableManager(_db, _db.rangeRings);
 }

@@ -32,6 +32,11 @@ class Waypoints extends Table {
   // v9: deniz seviyesinden yükseklik (m), kullanıcının girdiği (ATAK
   // Details). Girilmemişse arayüz arazi verisinden (HGT) okur.
   RealColumn get elevation => real().nullable()();
+  // v12: görüş konisi (yön coğrafi °, açıklık °, menzil m); üçü birlikte
+  // dolu ya da boş.
+  RealColumn get fovAzimuth => real().nullable()();
+  RealColumn get fovWidth => real().nullable()();
+  RealColumn get fovRange => real().nullable()();
 }
 
 /// Kalıcı taktik grafikler (çizgi/alan). Noktalar JSON dizisi olarak saklanır.
@@ -140,6 +145,44 @@ class RoutePlans extends Table {
   TextColumn get uid => text().nullable()();
 }
 
+/// v10: kalıcı R&B çizgileri (ATAK R&B Line). Uçlar sabit konum ya da
+/// nesneye bağlı (`ref`: `self` ya da `wp:<uid>`; bkz. `RbEnd`); bağlı uçta
+/// lat/lon kuruluş anındaki konumdur (nesne silinirse uç orada kalır).
+@DataClassName('RangeLineRow')
+class RangeLines extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  // Yeni tablo: uid baştan zorunlu ve benzersiz.
+  TextColumn get uid => text().unique()();
+  TextColumn get name => text().withLength(min: 1, max: 80)();
+  RealColumn get startLat => real()();
+  RealColumn get startLon => real()();
+  TextColumn get startRef => text().nullable()();
+  RealColumn get endLat => real()();
+  RealColumn get endLon => real()();
+  TextColumn get endRef => text().nullable()();
+  // ARGB renk değeri.
+  IntColumn get color => integer()();
+  DateTimeColumn get createdAt => dateTime()();
+}
+
+/// v11: kalıcı menzil / tehdit halkaları (ATAK R&B Circle, Threat Rings).
+/// Merkez R&B ucu gibi sabit ya da bağlı (`centerRef`); halka mesafeleri
+/// metre cinsinden JSON dizisi, küçükten büyüğe.
+@DataClassName('RangeRingRow')
+class RangeRings extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get uid => text().unique()();
+  TextColumn get name => text().withLength(min: 1, max: 80)();
+  RealColumn get centerLat => real()();
+  RealColumn get centerLon => real()();
+  TextColumn get centerRef => text().nullable()();
+  // [500.0, 1000.0, ...] JSON.
+  TextColumn get radiiJson => text()();
+  // ARGB renk değeri.
+  IntColumn get color => integer()();
+  DateTimeColumn get createdAt => dateTime()();
+}
+
 /// Uygulamanın drift veritabanı. Faz ilerledikçe geofence tabloları
 /// buraya eklenecek (şema sürümü artırılarak).
 @DriftDatabase(tables: [
@@ -151,6 +194,8 @@ class RoutePlans extends Table {
   ImportedLayers,
   RoutePlans,
   Attachments,
+  RangeLines,
+  RangeRings,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_open());
@@ -159,7 +204,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -212,6 +257,24 @@ class AppDatabase extends _$AppDatabase {
               await m.createTable(attachments);
             }
             await _createAttachmentIndex();
+          }
+          // v10: kalıcı R&B çizgileri.
+          if (from < 10) {
+            if (!await _tableExists(rangeLines.actualTableName)) {
+              await m.createTable(rangeLines);
+            }
+          }
+          // v11: kalıcı menzil / tehdit halkaları.
+          if (from < 11) {
+            if (!await _tableExists(rangeRings.actualTableName)) {
+              await m.createTable(rangeRings);
+            }
+          }
+          // v12: noktalarda görüş konisi.
+          if (from < 12) {
+            await _addColumnIfMissing(m, waypoints, waypoints.fovAzimuth);
+            await _addColumnIfMissing(m, waypoints, waypoints.fovWidth);
+            await _addColumnIfMissing(m, waypoints, waypoints.fovRange);
           }
         },
         beforeOpen: (details) async {

@@ -20,13 +20,17 @@ Future<void> showManualPositionSheet(
   BuildContext context, {
   required VoidCallback onPickOnMap,
   required ValueChanged<LatLng> onApplied,
+  VoidCallback? onResection,
 }) {
   return showAdaptiveSheet<void>(
     context: context,
     id: 'manual-position',
     isScrollControlled: true,
-    builder: (_) =>
-        ManualPositionPanel(onPickOnMap: onPickOnMap, onApplied: onApplied),
+    builder: (_) => ManualPositionPanel(
+      onPickOnMap: onPickOnMap,
+      onApplied: onApplied,
+      onResection: onResection,
+    ),
   );
 }
 
@@ -35,10 +39,14 @@ class ManualPositionPanel extends ConsumerStatefulWidget {
     super.key,
     required this.onPickOnMap,
     required this.onApplied,
+    this.onResection,
   });
 
   final VoidCallback onPickOnMap;
   final ValueChanged<LatLng> onApplied;
+
+  /// "Geriden kestirme" paneline geç (2–3 kerterizle konum).
+  final VoidCallback? onResection;
 
   @override
   ConsumerState<ManualPositionPanel> createState() =>
@@ -157,6 +165,17 @@ class _ManualPositionPanelState extends ConsumerState<ManualPositionPanel> {
             widget.onPickOnMap();
           },
         ),
+        if (widget.onResection != null) ...[
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.change_history),
+            label: const Text('Geriden kestirme (2–3 kerteriz)'),
+            onPressed: () {
+              Navigator.of(context).pop();
+              widget.onResection!();
+            },
+          ),
+        ],
         section('Koordinat'),
         TextField(
           controller: _coord,

@@ -10,15 +10,24 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../core/constants.dart';
 import '../../core/coord_format.dart';
+import '../../core/bearing_format.dart';
 import '../../core/geo_math.dart';
+import '../../core/nav_math.dart';
 import '../../core/sequential_name.dart';
 import '../../domain/models/contact.dart';
 import '../../domain/models/imported_layer.dart';
+import '../../domain/models/bloodhound.dart';
+import '../../domain/models/bullseye.dart';
 import '../../domain/models/map_graphic.dart';
+import '../../domain/models/range_line.dart';
 import '../../domain/models/repeater.dart';
 import '../../domain/models/track.dart';
 import '../../domain/models/waypoint.dart';
+import '../../providers/bloodhound_providers.dart';
+import '../../providers/bullseye_providers.dart';
 import '../../providers/graphic_providers.dart';
+import '../../providers/range_line_providers.dart';
+import '../../providers/resection_providers.dart';
 import '../../providers/layer_providers.dart';
 import '../../providers/location_providers.dart';
 import '../../providers/nav_providers.dart';
@@ -54,6 +63,14 @@ import '../tools/graphic_list_sheet.dart';
 import '../layers/import_layer_action.dart';
 import '../nav/nav_banner.dart';
 import '../symbols/nato_symbol.dart';
+import '../hud/resection_panel.dart';
+import '../nav/bloodhound_panel.dart';
+import '../routes/route_alerts.dart';
+import '../nav/tactical_compass_page.dart';
+import '../tools/bullseye_panel.dart';
+import '../tools/measure_common.dart';
+import '../tools/range_line_panel.dart';
+import '../tools/range_ring_panel.dart';
 import '../tools/range_tools_bar.dart';
 import '../tracks/track_list_sheet.dart';
 import '../waypoints/add_waypoint_dialog.dart';
@@ -253,6 +270,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           self.position,
           title: '${self.callsign} (elle)',
           actions: () => _selfActions(self),
+          anchor: RbEnd.selfRef,
         ),
         child: const Icon(Icons.person_pin_circle,
             color: Colors.orangeAccent, size: 38),
@@ -269,6 +287,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         self.position,
         title: self.callsign,
         actions: () => _selfActions(self),
+        anchor: RbEnd.selfRef,
       ),
       child: heading == null
           ? const Icon(Icons.my_location, color: Colors.lightBlueAccent, size: 28)
@@ -294,6 +313,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         wp.position,
         title: wp.name,
         actions: () => _waypointActions(wp),
+        anchor: RbEnd.waypointRef(wp.uid),
       ),
       child: PointSymbol(
         affiliation: wp.affiliation,
@@ -303,6 +323,308 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       ),
     );
   }
+
+  /// R&B etiketi yazı stili (ölçüm ve çizim aynı stili kullanır; resim
+  /// uygulama temasından bağımsız çizildiği için miras almaz).
+  static const _rbLabelStyle = TextStyle(
+    inherit: false,
+    color: Colors.white,
+    fontSize: 13,
+    fontWeight: FontWeight.w700,
+    decoration: TextDecoration.none,
+  );
+
+  /// R&B çizgisinin ortasındaki etiket: "kerteriz · mesafe". Dokununca
+  /// çizginin menüsü. Yazı değiştikçe resim yenilenir (değişken anahtar).
+  MapMarker _rangeLabelMarker(
+    ResolvedRangeLine r,
+    BearingFormatter fmt,
+    bool night,
+  ) {
+    final m = r.measure;
+    return _labelMarker(
+      id: 'rb:${r.line.id}',
+      text:
+          '${fmt.format(m.bearing, r.from)} · ${GeoMath.fmtDistance(m.meters)}',
+      color: night ? Colors.redAccent : Color(r.line.colorValue),
+      point: r.middle,
+      onTap: () => _onObjectTap(
+        r.middle,
+        title: r.line.name,
+        actions: () => _rangeLineActions(r),
+      ),
+    );
+  }
+
+  List<MapOverlay> _rangeRingCircles(ResolvedRangeRing r, bool night) {
+    final color = night ? Colors.redAccent : Color(r.ring.colorValue);
+    final n = r.ring.radii.length;
+    return [
+      for (var i = 0; i < n; i++)
+        MapCircle(
+          center: r.center,
+          radiusMeters: r.ring.radii[i],
+          fillColor: color.withValues(alpha: i == 0 ? 0.10 : 0.0),
+          // İçteki halka en belirgin; dıştakiler en çok %50'ye solar.
+          strokeColor:
+              color.withValues(alpha: n == 1 ? 1.0 : 1.0 - 0.5 * i / (n - 1)),
+          strokeWidth: 2,
+        ),
+    ];
+  }
+
+  /// Her halkanın kuzey ucunda mesafe etiketi; dokununca halkanın menüsü.
+  List<MapMarker> _rangeRingLabels(ResolvedRangeRing r, bool night) {
+    final color = night ? Colors.redAccent : Color(r.ring.colorValue);
+    return [
+      for (var i = 0; i < r.ring.radii.length; i++)
+        _labelMarker(
+          id: 'rr:${r.ring.id}:$i',
+          text: GeoMath.fmtDistance(r.ring.radii[i]),
+          color: color,
+          point: r.labelPoint(i),
+          onTap: () => _onObjectTap(
+            r.labelPoint(i),
+            title: r.ring.name,
+            actions: () => _rangeRingActions(r),
+          ),
+        ),
+    ];
+  }
+
+  /// Haritaya yazı etiketi (R&B, halka): koyu zemin, renkli çerçeve.
+  /// Yazı değiştikçe resim yenilenir (değişken anahtar).
+  MapMarker _labelMarker({
+    required String id,
+    required String text,
+    required Color color,
+    required LatLng point,
+    required VoidCallback onTap,
+  }) {
+    final tp = TextPainter(
+      text: TextSpan(text: text, style: _rbLabelStyle),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final width = (tp.width + 18).ceilToDouble();
+    tp.dispose();
+    return MapMarker(
+      id: id,
+      imageKey: '${MapMarker.volatilePrefix}lbl:${color.toARGB32()}:$text',
+      point: point,
+      width: width,
+      height: 26,
+      onTap: onTap,
+      child: Container(
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.72),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: color, width: 1.5),
+        ),
+        child: Text(text, style: _rbLabelStyle, maxLines: 1),
+      ),
+    );
+  }
+
+  static const _bullseyeColor = Color(0xFFF5F5F5);
+
+  List<MapOverlay> _bullseyeOverlays(
+    ResolvedBullseye b,
+    NorthRef north,
+    bool night,
+  ) {
+    final color = night ? Colors.redAccent : _bullseyeColor;
+    final outer = b.bullseye.outerRadius;
+    return [
+      for (final r in b.bullseye.radii)
+        MapCircle(
+          center: b.center,
+          radiusMeters: r,
+          fillColor: Colors.transparent,
+          strokeColor: color.withValues(alpha: 0.8),
+          strokeWidth: 1.5,
+        ),
+      for (final brg in Bullseye.radialBearings(b.center, north))
+        MapLine(
+          points: [b.center, GeoMath.destination(b.center, outer, brg)],
+          width: 1.5,
+          color: color.withValues(alpha: 0.6),
+        ),
+    ];
+  }
+
+  /// Merkez işareti, ışın uçlarında kerteriz ve halkalarda mesafe
+  /// etiketleri; hepsine dokununca bullseye'ın menüsü.
+  List<MapMarker> _bullseyeMarkers(
+    ResolvedBullseye b,
+    BearingFormatter fmt,
+    bool night,
+  ) {
+    final color = night ? Colors.redAccent : _bullseyeColor;
+    final be = b.bullseye;
+    void tap(LatLng p) => _onObjectTap(
+          p,
+          title: be.name,
+          actions: () => _bullseyeActions(b),
+        );
+    final bearings = Bullseye.radialBearings(b.center, fmt.ref);
+    // Halka etiketleri ışınların arasında (ilk iki ışının ortası).
+    final ringBearing = bearings[0] + Bullseye.radialStep / 2;
+    final many = be.ringCount > 5;
+    return [
+      MapMarker(
+        id: 'be:center',
+        imageKey: 'be:center:${color.toARGB32()}',
+        point: b.center,
+        width: 34,
+        height: 34,
+        onTap: () => tap(b.center),
+        child: Icon(Icons.track_changes, color: color, size: 30),
+      ),
+      for (var i = 0; i < bearings.length; i++)
+        _labelMarker(
+          id: 'be:r$i',
+          text: fmt.format(bearings[i], b.center),
+          color: color,
+          point: GeoMath.destination(b.center, be.outerRadius, bearings[i]),
+          onTap: () => tap(b.center),
+        ),
+      for (var k = 1; k <= be.ringCount; k++)
+        // Çok halkada her ikinciye (ve en dıştakine) etiket: kalabalık olmasın.
+        if (!many || k.isEven || k == be.ringCount)
+          _labelMarker(
+            id: 'be:k$k',
+            text: GeoMath.fmtDistance(be.ringSpacing * k),
+            color: color,
+            point:
+                GeoMath.destination(b.center, be.ringSpacing * k, ringBearing),
+            onTap: () => tap(b.center),
+          ),
+    ];
+  }
+
+  /// Geriden kestirme: her noktadan bana doğru nişan çizgisi, hata alanı
+  /// ve bulunan konum.
+  List<MapOverlay> _resectionOverlays(ResectionPreview p) {
+    const color = Colors.amber;
+    final at = p.result.position;
+    return [
+      if (p.result.errorPolygon.length >= 3)
+        MapArea(
+          points: p.result.errorPolygon,
+          fillColor: color.withValues(alpha: 0.25),
+          strokeColor: color,
+          strokeWidth: 2,
+        ),
+      for (final s in p.sightings)
+        MapLine(
+          points: [
+            s.landmark,
+            // Konum bulunduysa biraz ötesine, yoksa 5 km.
+            GeoMath.destination(
+              s.landmark,
+              at == null ? 5000 : GeoMath.distance(s.landmark, at) * 1.3,
+              s.trueBearing + 180,
+            ),
+          ],
+          width: 2,
+          color: color,
+        ),
+      if (at != null)
+        MapMarker(
+          id: 'resection',
+          imageKey: 'resection',
+          point: at,
+          width: 40,
+          height: 40,
+          child: const Icon(Icons.person_pin_circle,
+              color: Colors.orangeAccent, size: 36),
+        ),
+    ];
+  }
+
+  List<RadialAction> _bloodhoundActions(ResolvedBloodhound r) => [
+        RadialAction(
+            icon: Icons.info_outline,
+            label: 'Detay',
+            onTap: _openBloodhounds),
+        RadialAction(
+            icon: Icons.center_focus_strong,
+            label: 'Hedef',
+            onTap: () => _centerOn(r.to)),
+        RadialAction(
+            icon: Icons.close,
+            label: 'Kaldır',
+            color: Colors.redAccent,
+            onTap: () => ref
+                .read(bloodhoundsProvider.notifier)
+                .remove(r.bloodhound.id)),
+      ];
+
+  List<RadialAction> _bullseyeActions(ResolvedBullseye b) => [
+        RadialAction(
+            icon: Icons.info_outline, label: 'Detay', onTap: _openBullseye),
+        RadialAction(
+            icon: Icons.center_focus_strong,
+            label: 'Ortala',
+            onTap: () => _centerOn(b.center)),
+        RadialAction(
+            icon: Icons.delete_outline,
+            label: 'Kaldır',
+            color: Colors.redAccent,
+            onTap: () async {
+              final n = ref.read(bullseyeProvider.notifier);
+              if (await confirmDeleteNamed(context, b.bullseye.name)) {
+                n.set(null);
+              }
+            }),
+      ];
+
+  /// Halka grubunun menüsü.
+  List<RadialAction> _rangeRingActions(ResolvedRangeRing r) => [
+        RadialAction(
+            icon: Icons.info_outline,
+            label: 'Detay',
+            onTap: () => showRangeRingPanel(context,
+                ringId: r.ring.id!, onCenter: _centerOn)),
+        RadialAction(
+            icon: Icons.center_focus_strong,
+            label: 'Ortala',
+            onTap: () => _centerOn(r.center)),
+        RadialAction(
+            icon: Icons.delete_outline,
+            label: 'Sil',
+            color: Colors.redAccent,
+            onTap: () async {
+              final repo = ref.read(rangeRingRepositoryProvider);
+              if (await confirmDeleteNamed(context, r.ring.name)) {
+                await repo.delete(r.ring.id!);
+              }
+            }),
+      ];
+
+  /// R&B çizgisinin menüsü.
+  List<RadialAction> _rangeLineActions(ResolvedRangeLine r) => [
+        RadialAction(
+            icon: Icons.info_outline,
+            label: 'Detay',
+            onTap: () => showRangeLinePanel(context,
+                lineId: r.line.id!, onCenter: _centerOn)),
+        RadialAction(
+            icon: Icons.center_focus_strong,
+            label: 'Ortala',
+            onTap: () => _centerOn(r.middle)),
+        RadialAction(
+            icon: Icons.delete_outline,
+            label: 'Sil',
+            color: Colors.redAccent,
+            onTap: () async {
+              final repo = ref.read(rangeLineRepositoryProvider);
+              if (await confirmDeleteNamed(context, r.line.name)) {
+                await repo.delete(r.line.id!);
+              }
+            }),
+      ];
 
   /// Telsiz röle işaretçisi (anten ikonu; dokun → özellikler).
   MapMarker _repeaterMarker(Repeater r) {
@@ -570,11 +892,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// Haritadaki bir nesneye dokunuldu. Ölçüm, rota planlama ya da taşıma
   /// sürüyorsa nokta nesnenin tam üstüne konur (ATAK: nesneye yapışma);
   /// değilse nesnenin radyal menüsü açılır.
+  /// [anchor]: ölçüm aracı açıkken bu nesneye dokunulursa noktanın bağı
+  /// (kaydedilen R&B çizgisinin ucu nesneyle hareket eder).
   void _onObjectTap(
     LatLng p, {
     required String title,
     required List<RadialAction> Function() actions,
     VoidCallback? onOpen,
+    String? anchor,
   }) {
     if (_moving != null) {
       _finishMove(p);
@@ -592,7 +917,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
     if (ref.read(toolProvider).active) {
       HapticFeedback.selectionClick();
-      ref.read(toolProvider.notifier).addPoint(p);
+      ref.read(toolProvider.notifier).addPoint(p, ref: anchor);
       return;
     }
     onOpen?.call();
@@ -641,13 +966,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 .read(navTargetProvider.notifier)
                 .set(wp.position, wp.name)),
         RadialAction(
+            icon: Icons.pets,
+            label: 'Takip',
+            onTap: () => _followWaypoint(wp)),
+        RadialAction(
             icon: Icons.straighten,
             label: 'R&B',
-            onTap: () => _startToolAt(ToolMode.distance, wp.position)),
+            onTap: () => _startToolAt(ToolMode.distance, wp.position,
+                anchor: RbEnd.waypointRef(wp.uid))),
         RadialAction(
             icon: Icons.radar,
             label: 'Halka',
-            onTap: () => _startToolAt(ToolMode.rangeRings, wp.position)),
+            onTap: () => _startToolAt(ToolMode.rangeRings, wp.position,
+                anchor: RbEnd.waypointRef(wp.uid))),
         RadialAction(
             icon: Icons.open_with, label: 'Taşı', onTap: () => _startMove(wp)),
         RadialAction(
@@ -702,6 +1033,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           label: '15 dk',
           color: trail ? on : null,
           onTap: () => ref.read(showRecentTrailProvider.notifier).toggle()),
+      // Benden hedefe R&B: ikinci ucu haritaya / bir nesneye dokunarak koy;
+      // kaydedilen çizgi ben hareket ettikçe güncellenir (ATAK dinamik R&B).
+      RadialAction(
+          icon: Icons.straighten,
+          label: 'R&B',
+          onTap: () => _startToolAt(ToolMode.distance, self.position,
+              anchor: RbEnd.selfRef)),
       RadialAction(
           icon: Icons.ios_share,
           label: 'Paylaş',
@@ -721,6 +1059,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         setState(() => _follow = true);
         _map.moveTo(p);
       },
+      onResection: _openResection,
     );
   }
 
@@ -762,10 +1101,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   /// Ölçüm aracını nesneden başlat (R&B: ikinci nokta için haritaya dokun;
   /// halka: dokunulan yer yarıçapı belirler).
-  void _startToolAt(ToolMode mode, LatLng p) {
+  void _startToolAt(ToolMode mode, LatLng p, {String? anchor}) {
     final n = ref.read(toolProvider.notifier);
     n.setMode(mode);
-    n.addPoint(p);
+    n.addPoint(p, ref: anchor);
     setState(() {
       _rangeBarOpen = true;
       _dropMode = false;
@@ -860,6 +1199,33 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   // ----------------------------------------- kayıtlı görünümler (ATAK s.22)
+
+  void _openResection() => showResectionPanel(context, onCenter: _centerOn);
+
+  void _openBloodhounds() =>
+      showBloodhoundPanel(context, onCenter: _centerOn);
+
+  /// Noktayı takip et (benden noktaya). Aynı takip açıksa söyler.
+  void _followWaypoint(Waypoint wp) {
+    final me = ref.read(selfContactProvider)?.position;
+    final added = ref.read(bloodhoundsProvider.notifier).add(
+          RbEnd(me ?? wp.position, RbEnd.selfRef),
+          RbEnd(wp.position, RbEnd.waypointRef(wp.uid)),
+        );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(added
+          ? '${wp.name} takip ediliyor. Hepsi: ≡ → Takip.'
+          : '${wp.name} zaten takip ediliyor.'),
+    ));
+  }
+
+  void _openBullseye() {
+    showBullseyePanel(
+      context,
+      mapCenter: () => _map.camera.center,
+      onCenter: _centerOn,
+    );
+  }
 
   void _openSavedViews() {
     showSavedViewsSheet(
@@ -1163,6 +1529,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     showToolsGridSheet(context, sections: [
       ToolGridSection('Navigasyon', [
         catalog(ToolbarTool.goTo),
+        catalog(ToolbarTool.bloodhound),
+        catalog(ToolbarTool.resection),
+        catalog(ToolbarTool.tacticalCompass),
         catalog(ToolbarTool.routes),
       ]),
       ToolGridSection('Ölçüm', [
@@ -1171,6 +1540,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         toolItem(ToolMode.sector, Icons.pie_chart_outline, 'Sektör'),
         toolItem(ToolMode.rangeRings, Icons.radar, 'Menzil halkası'),
         toolItem(ToolMode.lineOfSight, Icons.landscape_outlined, 'Görüş hattı'),
+        catalog(ToolbarTool.bullseye),
       ]),
       ToolGridSection('Veri', [
         catalog(ToolbarTool.dropPoint),
@@ -1304,6 +1674,28 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       case ToolbarTool.savedViews:
         return ToolbarItem(
             icon: t.icon, label: t.label, onTap: _openSavedViews);
+      case ToolbarTool.bloodhound:
+        return ToolbarItem(
+          icon: t.icon,
+          label: t.label,
+          active: ref.read(bloodhoundsProvider).isNotEmpty,
+          onTap: _openBloodhounds,
+        );
+      case ToolbarTool.tacticalCompass:
+        return ToolbarItem(
+            icon: t.icon,
+            label: t.label,
+            onTap: () => showTacticalCompass(context));
+      case ToolbarTool.resection:
+        return ToolbarItem(
+            icon: t.icon, label: t.label, onTap: _openResection);
+      case ToolbarTool.bullseye:
+        return ToolbarItem(
+          icon: t.icon,
+          label: t.label,
+          active: ref.read(bullseyeProvider) != null,
+          onTap: _openBullseye,
+        );
       case ToolbarTool.nightMode:
         final on = ref.read(nightModeProvider);
         return ToolbarItem(
@@ -1413,6 +1805,56 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final graphics = ref.watch(mapGraphicsProvider).value ?? const <MapGraphic>[];
     // Overlay yöneticisi: gizlenen grup/nesne ve etiket süzgeci.
     final visibility = ref.watch(overlayVisibilityProvider);
+    // Kalıcı R&B çizgileri, uçları bağlı nesnelere göre çözülmüş.
+    final rangeLines = [
+      for (final r in ref.watch(resolvedRangeLinesProvider))
+        if (visibility.showsRangeLine(r.line)) r,
+    ];
+    // Kalıcı menzil / tehdit halkaları (merkez bağlıysa onunla gider).
+    final rangeRings = [
+      for (final r in ref.watch(resolvedRangeRingsProvider))
+        if (visibility.showsRangeRing(r.ring)) r,
+    ];
+    final bearingFmt = ref.watch(bearingFormatterProvider);
+    final bullseye = ref.watch(resolvedBullseyeProvider);
+    final bloodhounds = ref.watch(resolvedBloodhoundsProvider);
+    final resection = ref.watch(resectionPreviewProvider);
+    // Rota takibi: nokta geçildi / rota bitti / saptın → titreşim + uyarı.
+    ref.listen<ActiveRouteState?>(activeRouteProvider, (prev, next) {
+      final p = next?.progress;
+      if (prev == null || next == null || p == null) return;
+      if (prev.route.uid != next.route.uid) return;
+      final self = ref.read(selfContactProvider)?.position;
+      final a = routeAlert(prev.progress, p, next.route,
+          bearing: (b) => self == null
+              ? GeoMath.fmtBearing(b)
+              : bearingFmt.format(b, self));
+      if (a == null) return;
+      a.strong ? HapticFeedback.heavyImpact() : HapticFeedback.mediumImpact();
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(a.text)));
+    });
+    // Bir takip gerçek hızla kırmızı eşiğe girince bir kez titret + söyle
+    // (ATAK'ta çizgi yanıp söner). Duruyorken (tahmini ETA) uyarmaz.
+    ref.listen<List<ResolvedBloodhound>>(resolvedBloodhoundsProvider,
+        (prev, next) {
+      final before = {
+        for (final r in prev ?? const <ResolvedBloodhound>[])
+          r.bloodhound.id: r.reading.level,
+      };
+      for (final r in next) {
+        if (r.reading.level == EtaLevel.close &&
+            !r.reading.estimated &&
+            before[r.bloodhound.id] != EtaLevel.close) {
+          HapticFeedback.heavyImpact();
+          final eta = r.reading.eta!;
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Takip: varışa ${NavMath.fmtDuration(eta)}'),
+          ));
+        }
+      }
+    });
     final nightMode = ref.watch(nightModeProvider);
     final showGpsCircle = ref.watch(showGpsCircleProvider);
     final dropKind = ref.watch(dropKindProvider);
@@ -1460,6 +1902,37 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         for (final g in graphics)
           if (visibility.showsGraphic(g)) g,
       ]),
+      // Bullseye: halkalar + 30°'de bir ışın (seçili kuzeye hizalı).
+      if (bullseye != null)
+        ..._bullseyeOverlays(bullseye, bearingFmt.ref, nightMode),
+      // Görüş konileri (nokta gizlenince konisi de gizlenir).
+      for (final wp in waypoints)
+        if (wp.fov != null && visibility.showsWaypoint(wp))
+          MapArea(
+            points: wp.fov!.polygon(wp.position),
+            fillColor: affiliationColor(wp.affiliation).withValues(alpha: 0.16),
+            strokeColor:
+                affiliationColor(wp.affiliation).withValues(alpha: 0.8),
+            strokeWidth: 1.5,
+          ),
+      // Kalıcı menzil halkaları: içten dışa solan çizgi, içte hafif dolgu.
+      for (final r in rangeRings) ..._rangeRingCircles(r, nightMode),
+      // Kalıcı R&B çizgileri (etiketleri işaretçilerle birlikte, üstte).
+      for (final r in rangeLines)
+        MapLine(
+          points: [r.from, r.to],
+          width: 3,
+          color: nightMode ? Colors.redAccent : Color(r.line.colorValue),
+        ),
+      // Takipler (Bloodhound): ETA rengine göre.
+      for (final r in bloodhounds)
+        MapLine(
+          points: [r.from, r.to],
+          width: 4,
+          color: etaColor(r.reading.level),
+        ),
+      // Geriden kestirme önizlemesi (panel açıkken).
+      if (resection != null) ..._resectionOverlays(resection),
       // Aktif ölçüm/çizim aracı.
       ..._toolOverlays(tool),
       // Rota: planlanan / takip edilen / önizlenen.
@@ -1496,6 +1969,22 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       for (final r in repeaters) _repeaterMarker(r),
       for (final wp in waypoints)
         if (visibility.showsWaypoint(wp)) _waypointMarker(wp),
+      for (final r in rangeLines) _rangeLabelMarker(r, bearingFmt, nightMode),
+      for (final r in bloodhounds)
+        _labelMarker(
+          id: 'bh:${r.bloodhound.id}',
+          text: bloodhoundText(r.reading, r.from, bearingFmt),
+          color: etaColor(r.reading.level),
+          point: r.middle,
+          onTap: () => _onObjectTap(
+            r.middle,
+            title: 'Takip',
+            actions: () => _bloodhoundActions(r),
+          ),
+        ),
+      for (final r in rangeRings) ..._rangeRingLabels(r, nightMode),
+      if (bullseye != null)
+        ..._bullseyeMarkers(bullseye, bearingFmt, nightMode),
       // Son 15 dakikanın izi (kendi işaret menüsünden açılır).
       if (showTrail && self != null && recentTrail.isNotEmpty)
         MapLine(
@@ -1851,6 +2340,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     ? () => setState(() => _terrain3d = !_terrain3d)
                     : null,
                 terrainOn: _terrain3d,
+                onTacticalCompass: () => showTacticalCompass(context),
                 following: _follow,
                 onRecenter: _recenter,
                 onZoomIn: () => _map.zoomBy(1),
@@ -2030,6 +2520,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final cards = <Widget>[
       const _OfflineStatusCards(),
       const NavBanner(),
+      BullseyeBanner(onTap: _openBullseye),
       if (showRoutePanel)
         Padding(
           padding: const EdgeInsets.only(top: 6),

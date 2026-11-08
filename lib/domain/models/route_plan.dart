@@ -12,6 +12,7 @@ class RoutePlan implements MapItem {
     required this.name,
     required this.points,
     required this.createdAt,
+    this.pointNames = const [],
   });
 
   final int? id;
@@ -21,6 +22,10 @@ class RoutePlan implements MapItem {
 
   final String name;
   final List<LatLng> points;
+
+  /// Noktaların kullanıcı verdiği adları ([points] ile aynı sırada; eksik
+  /// ya da boşsa varsayılan ad, bkz. [nameOf]).
+  final List<String?> pointNames;
 
   @override
   final DateTime createdAt;
@@ -33,6 +38,30 @@ class RoutePlan implements MapItem {
 
   /// Toplam uzunluk (m).
   double get length => routeLength(points);
+
+  /// Kullanıcının verdiği ad (yoksa null).
+  String? customNameOf(int i) {
+    final n = i < pointNames.length ? pointNames[i]?.trim() : null;
+    return n == null || n.isEmpty ? null : n;
+  }
+
+  /// [i]. noktanın adı: verilmişse o, yoksa "BAŞLANGIÇ", "KN1", "KN2"…
+  /// (kontrol noktası).
+  String nameOf(int i) => customNameOf(i) ?? defaultPointName(i);
+
+  static String defaultPointName(int i) => i == 0 ? 'BAŞLANGIÇ' : 'KN$i';
+
+  /// Ters çevrilmiş rota (dönüş yolu): noktalar ve adları ters sırada.
+  RoutePlan reversed() => RoutePlan(
+    id: id,
+    uid: uid,
+    name: name,
+    points: points.reversed.toList(),
+    pointNames: [
+      for (var i = points.length - 1; i >= 0; i--) customNameOf(i),
+    ],
+    createdAt: createdAt,
+  );
 }
 
 /// Sıralı noktaların toplam uzunluğu (m).

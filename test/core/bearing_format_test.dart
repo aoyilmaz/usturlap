@@ -88,4 +88,23 @@ void main() {
     expect(AngleUnit.fromName('mils'), AngleUnit.mils);
     expect(AngleUnit.fromName('bozuk'), AngleUnit.degrees);
   });
+
+  group('parseToTrue (E5)', () {
+    const at = LatLng(37.06, 37.38);
+    test('derece: virgül/nokta, aralık dışı null', () {
+      const f = BearingFormatter();
+      expect(f.parseToTrue('45', at), 45);
+      expect(f.parseToTrue(' 45,5 ', at), 45.5);
+      expect(f.parseToTrue('360', at), isNull);
+      expect(f.parseToTrue('-1', at), isNull);
+      expect(f.parseToTrue('abc', at), isNull);
+    });
+
+    test('mil ve manyetik: format ile gidiş-dönüş', () {
+      const f = BearingFormatter(ref: NorthRef.magnetic, unit: AngleUnit.mils);
+      final t = f.parseToTrue('0800', at)!;
+      expect(f.format(t, at), '0800 mil M');
+      expect(f.parseToTrue('6400', at), isNull);
+    });
+  });
 }

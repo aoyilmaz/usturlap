@@ -7,6 +7,33 @@ import '../../providers/location_providers.dart';
 import '../../providers/nav_providers.dart';
 import '../../providers/settings_providers.dart';
 
+/// Buluşma satırı (E7): "Buluşma 14:30 · gereken 4.2 km/h · 3 dk geç".
+/// Hareket ediyorsam (≥ 0,5 m/s) şimdiki hızla erken / geç de söylenir.
+({String text, bool late}) rendezvousLine({
+  required double meters,
+  required DateTime arriveBy,
+  required DateTime now,
+  double? speedMps,
+}) {
+  String two(int v) => v.toString().padLeft(2, '0');
+  final hhmm = '${two(arriveBy.hour)}:${two(arriveBy.minute)}';
+  final remaining = arriveBy.difference(now);
+  if (remaining.inSeconds <= 0) {
+    return (text: 'Buluşma $hhmm · saat geçti', late: true);
+  }
+  final kmh = meters / remaining.inSeconds * 3.6;
+  final parts = ['Buluşma $hhmm', 'gereken ${kmh.toStringAsFixed(1)} km/h'];
+  var late = false;
+  if (speedMps != null && speedMps >= 0.5) {
+    final eta = Duration(seconds: (meters / speedMps).round());
+    final diff = now.add(eta).difference(arriveBy); // + = geç
+    final m = diff.inMinutes.abs();
+    late = diff.inSeconds > 0;
+    parts.add(late ? '$m dk geç' : (m == 0 ? 'zamanında' : '$m dk erken'));
+  }
+  return (text: parts.join(' · '), late: late);
+}
+
 /// Aktif "Git" hedefine kerteriz + mesafe gösteren şerit (HUD'un altında).
 ///
 /// Bloodhound (ATAK) gibi: gidiş yönüne göre dönüş ("sağa 35°") ve tahmini
@@ -26,6 +53,7 @@ class NavBanner extends ConsumerWidget {
 
     String info;
     String? detail;
+    ({String text, bool late})? meet;
     if (self == null) {
       info = 'Konum bekleniyor…';
     } else {
@@ -47,6 +75,15 @@ class NavBanner extends ConsumerWidget {
       }
       if (dist <= 20) parts.add('hedefe vardınız');
       if (parts.isNotEmpty) detail = parts.join('  ·  ');
+      final arriveBy = target.arriveBy;
+      if (arriveBy != null && dist > 20) {
+        meet = rendezvousLine(
+          meters: dist,
+          arriveBy: arriveBy,
+          now: DateTime.now(),
+          speedMps: self.speedMps,
+        );
+      }
     }
 
     return Container(
@@ -85,8 +122,22 @@ class NavBanner extends ConsumerWidget {
                           color: accent,
                           fontSize: 12,
                           fontWeight: FontWeight.w600)),
+                if (meet != null)
+                  Text(meet.text,
+                      style: TextStyle(
+                          color: meet.late ? Colors.orangeAccent : accent,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600)),
               ],
             ),
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            icon: Icon(Icons.schedule,
+                color: target.arriveBy == null ? Colors.white70 : accent,
+                size: 20),
+            tooltip: 'Buluşma saati',
+            onPressed: () => _pickArrival(context, ref, target.arriveBy),
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
@@ -97,5 +148,46 @@ class NavBanner extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  /// Buluşma saati seç / değiştir / kaldır. Geçmiş bir saat seçilirse
+  /// ertesi gün sayılır (ör. 23:00'te 01:00).
+  Future<void> _pickArrival(
+    BuildContext context,
+    WidgetRef ref,
+    DateTime? current,
+  ) async {
+    final notifier = ref.read(navTargetProvider.notifier);
+    if (current != null) {
+      final action = await showDialog<String>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Buluşma saati'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop('clear'),
+              child: const Text('Kaldır'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop('change'),
+              child: const Text('Değiştir'),
+            ),
+          ],
+        ),
+      );
+      if (action == 'clear') notifier.setArriveBy(null);
+      if (action != 'change' || !context.mounted) return;
+    }
+    final now = DateTime.now();
+    final initial = current ?? now.add(const Duration(minutes: 30));
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(initial),
+      helpText: 'Hedefte hangi saatte olmalısın?',
+    );
+    if (picked == null) return;
+    var at = DateTime(now.year, now.month, now.day, picked.hour, picked.minute);
+    if (!at.isAfter(now)) at = at.add(const Duration(days: 1));
+    notifier.setArriveBy(at);
   }
 }

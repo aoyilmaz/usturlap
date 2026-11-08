@@ -36,6 +36,37 @@ void main() {
     expect(await repo.watchAll().first, isEmpty);
   });
 
+  test('nokta adları: kaydet, ters çevir, eski (adsız) kayıt okunur', () async {
+    final repo = RouteRepository(db);
+    const pts = [LatLng(39.0, 32.0), LatLng(39.01, 32.0), LatLng(39.02, 32.01)];
+    final saved = await repo.add(
+      name: 'DEVRİYE',
+      points: pts,
+      pointNames: const ['KARAKOL', null, '  '],
+    );
+    var r = (await repo.watchAll().first).single;
+    expect(r.pointNames, ['KARAKOL', null, null]);
+    expect(r.nameOf(0), 'KARAKOL');
+    expect(r.nameOf(1), 'KN1');
+    expect(r.nameOf(2), 'KN2');
+
+    final rev = r.reversed();
+    await repo.setPoints(saved.id!, rev.points, rev.pointNames);
+    r = (await repo.watchAll().first).single;
+    expect(r.points, pts.reversed.toList());
+    expect(r.nameOf(0), 'BAŞLANGIÇ');
+    expect(r.nameOf(2), 'KARAKOL');
+
+    // Eski biçim: yalnız [lat, lon].
+    await db.customUpdate(
+      "UPDATE route_plans SET points_json = '[[1.0,2.0],[3.0,4.0]]'",
+      updates: {db.routePlans},
+    );
+    r = (await repo.watchAll().first).single;
+    expect(r.points, const [LatLng(1, 2), LatLng(3, 4)]);
+    expect(r.pointNames, [null, null]);
+  });
+
   test('planlama: ekle/geri al/temizle; 2 noktadan azsa kaydetmez', () async {
     final c = ProviderContainer(
         overrides: [appDatabaseProvider.overrideWithValue(db)]);

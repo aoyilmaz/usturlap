@@ -1,11 +1,14 @@
 import '../../core/hashtags.dart';
 import 'map_graphic.dart';
+import 'range_line.dart';
+import 'range_ring.dart';
 import 'waypoint.dart';
 
 /// Haritada hangi nesnelerin görüneceği (ATAK Overlay Manager + Hashtags,
 /// kılavuz s.23–24). Saf Dart; ayarlarda JSON olarak saklanır.
 ///
-/// - [hiddenGroups]: gizli gruplar (nokta türleri `wp:<tür>`, `graphics`).
+/// - [hiddenGroups]: gizli gruplar (nokta türleri `wp:<tür>`, `graphics`,
+///   `rb` R&B çizgileri, `rings` menzil halkaları).
 /// - [hiddenUids]: tek tek gizlenen nesneler.
 /// - [tag]: doluysa yalnız bu #etiketi taşıyan noktalar/çizimler görünür.
 class OverlayVisibility {
@@ -21,6 +24,8 @@ class OverlayVisibility {
 
   static String waypointGroup(Affiliation a) => 'wp:${a.name}';
   static const graphicsGroup = 'graphics';
+  static const rangeLinesGroup = 'rb';
+  static const rangeRingsGroup = 'rings';
 
   /// Noktanın etiketleri: adında ve notunda geçen #kelimeler.
   static Set<String> tagsOfWaypoint(Waypoint w) => {
@@ -42,6 +47,16 @@ class OverlayVisibility {
       !hiddenGroups.contains(graphicsGroup) &&
       !hiddenUids.contains(g.uid) &&
       (tag == null || tagsOfName(g.name).contains(tag));
+
+  bool showsRangeLine(RangeLine l) =>
+      !hiddenGroups.contains(rangeLinesGroup) &&
+      !hiddenUids.contains(l.uid) &&
+      (tag == null || tagsOfName(l.name).contains(tag));
+
+  bool showsRangeRing(RangeRing r) =>
+      !hiddenGroups.contains(rangeRingsGroup) &&
+      !hiddenUids.contains(r.uid) &&
+      (tag == null || tagsOfName(r.name).contains(tag));
 
   OverlayVisibility toggleGroup(String group) => _with(
     hiddenGroups: hiddenGroups.contains(group)

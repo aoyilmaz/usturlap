@@ -2,6 +2,7 @@ import 'package:latlong2/latlong.dart';
 
 import 'cot_type.dart';
 import 'map_item.dart';
+import 'sensor_fov.dart';
 
 /// Noktanın türü: sade nokta, Pusula'ya özgü görev noktaları ve APP-6 /
 /// MIL-STD-2525 sadakatleri (çerçeve şekli + rengi).
@@ -142,6 +143,9 @@ class Waypoint implements MapItem {
   /// arayüz arazi verisinden (HGT) okur.
   final double? elevation;
 
+  /// Görüş konisi (sensör / gözetleme); yoksa null.
+  final SensorFov? fov;
+
   const Waypoint({
     required this.uid,
     required this.name,
@@ -155,6 +159,7 @@ class Waypoint implements MapItem {
     this.typeCode,
     this.hae,
     this.elevation,
+    this.fov,
   });
 
   @override

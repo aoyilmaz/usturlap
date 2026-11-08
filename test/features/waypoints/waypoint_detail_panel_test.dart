@@ -8,6 +8,7 @@ import 'package:kerteriz/data/db/app_database.dart';
 import 'package:kerteriz/data/db/attachment_repository.dart';
 import 'package:kerteriz/domain/models/waypoint.dart';
 import 'package:kerteriz/features/waypoints/edit_waypoint_dialog.dart';
+import 'package:kerteriz/providers/bullseye_providers.dart';
 import 'package:kerteriz/features/waypoints/waypoint_detail_panel.dart';
 import 'package:kerteriz/providers/elevation_providers.dart';
 import 'package:kerteriz/providers/waypoint_providers.dart';
@@ -124,6 +125,23 @@ void main() {
     await pump(tester);
     expect(find.text('Yükseklik: ≈ 884 m MSL (arazi verisi)'), findsOneWidget);
     expect(find.text('Henüz fotoğraf yok.'), findsOneWidget);
+    await dispose(tester);
+  });
+
+  testWidgets('Bullseye yap: nokta bullseye olur, kendi çağrısı gizlenir', (
+    tester,
+  ) async {
+    final c = await pump(tester);
+    expect(find.textContaining('BE '), findsNothing);
+    await tester.ensureVisible(find.text('Bullseye yap'));
+    await tester.tap(find.text('Bullseye yap'));
+    await tester.pump();
+    final b = c.read(bullseyeProvider)!;
+    expect(b.name, 'OP-1');
+    expect(b.center.waypointUid, 'uid-op1');
+    expect(find.text('OP-1 bullseye yapıldı.'), findsOneWidget);
+    // Bullseye'ın kendisi için "BE 000° / 0 m" yazılmaz.
+    expect(find.textContaining('BE '), findsNothing);
     await dispose(tester);
   });
 

@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/uuid.dart';
+import '../../domain/models/sensor_fov.dart';
 import '../../domain/models/waypoint.dart';
 import 'app_database.dart';
 
@@ -102,6 +103,17 @@ class WaypointRepository {
     );
   }
 
+  /// Görüş konisini kurar / değiştirir; null kaldırır.
+  Future<void> setFov(int id, SensorFov? fov) {
+    return (_db.update(_db.waypoints)..where((t) => t.id.equals(id))).write(
+      WaypointsCompanion(
+        fovAzimuth: Value(fov?.azimuth),
+        fovWidth: Value(fov?.width),
+        fovRange: Value(fov?.range),
+      ),
+    );
+  }
+
   Future<void> delete(int id) {
     return (_db.delete(_db.waypoints)..where((t) => t.id.equals(id))).go();
   }
@@ -120,5 +132,12 @@ class WaypointRepository {
         typeCode: r.cotType,
         hae: r.hae,
         elevation: r.elevation,
+        fov: SensorFov.isValid(r.fovAzimuth, r.fovWidth, r.fovRange)
+            ? SensorFov(
+                azimuth: r.fovAzimuth!,
+                width: r.fovWidth!,
+                range: r.fovRange!,
+              )
+            : null,
       );
 }

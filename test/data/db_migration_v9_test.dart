@@ -37,7 +37,7 @@ void main() {
 
   Future<void> expectV9(AppDatabase db) async {
     final v = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(v.read<int>('user_version'), 9);
+    expect(v.read<int>('user_version'), 12);
     final cols = await db.customSelect('PRAGMA table_info(waypoints)').get();
     expect(cols.map((c) => c.read<String>('name')), contains('elevation'));
     // Ekler tablosu çalışır durumda.

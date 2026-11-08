@@ -8,6 +8,7 @@ import '../../domain/models/route_plan.dart';
 import '../../domain/models/waypoint.dart';
 import '../../providers/graphic_providers.dart';
 import '../../providers/overlay_providers.dart';
+import '../../providers/range_line_providers.dart';
 import '../../providers/route_providers.dart';
 import '../../providers/settings_providers.dart';
 import '../../providers/track_providers.dart';
@@ -51,6 +52,8 @@ class OverlayManager extends ConsumerWidget {
         ref.watch(mapGraphicsProvider).value ?? const <MapGraphic>[];
     final tracks = ref.watch(tracksProvider).value ?? const [];
     final routes = ref.watch(routesProvider).value ?? const <RoutePlan>[];
+    final rangeLines = ref.watch(resolvedRangeLinesProvider);
+    final rangeRings = ref.watch(resolvedRangeRingsProvider);
     final repeatersOn = ref.watch(showRepeatersProvider);
     final shownTrack = ref.watch(displayedTrackIdProvider);
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
@@ -63,6 +66,8 @@ class OverlayManager extends ConsumerWidget {
       for (final g in graphics) ...OverlayVisibility.tagsOfName(g.name),
       for (final t in tracks) ...OverlayVisibility.tagsOfName(t.name),
       for (final r in routes) ...OverlayVisibility.tagsOfName(r.name),
+      for (final r in rangeLines) ...OverlayVisibility.tagsOfName(r.line.name),
+      for (final r in rangeRings) ...OverlayVisibility.tagsOfName(r.ring.name),
     }.toList()..sort();
     final wps = [
       for (final w in waypoints)
@@ -79,6 +84,14 @@ class OverlayManager extends ConsumerWidget {
     final rts = [
       for (final r in routes)
         if (tagged(OverlayVisibility.tagsOfName(r.name))) r,
+    ];
+    final rbs = [
+      for (final r in rangeLines)
+        if (tagged(OverlayVisibility.tagsOfName(r.line.name))) r,
+    ];
+    final rings = [
+      for (final r in rangeRings)
+        if (tagged(OverlayVisibility.tagsOfName(r.ring.name))) r,
     ];
 
     final wpGroups = [
@@ -251,6 +264,62 @@ class OverlayManager extends ConsumerWidget {
               visible: !vis.hiddenUids.contains(g.uid),
               name: g.name,
               onPressed: () => notifier.update((v) => v.toggleUid(g.uid)),
+            ),
+          ),
+
+        // --- R&B çizgileri
+        header(
+          'R&B çizgileri',
+          rbs.length,
+          trailing: eye(
+            visible: !vis.hiddenGroups.contains(
+              OverlayVisibility.rangeLinesGroup,
+            ),
+            name: 'R&B çizgileri',
+            onPressed: () => notifier.update(
+              (v) => v.toggleGroup(OverlayVisibility.rangeLinesGroup),
+            ),
+          ),
+        ),
+        for (final r in rbs)
+          item(
+            leading: Icon(Icons.straighten, color: Color(r.line.colorValue)),
+            name: r.line.name,
+            itemTags: OverlayVisibility.tagsOfName(r.line.name),
+            onMap: vis.showsRangeLine(r.line),
+            onTap: () => onCenter(r.middle),
+            trailing: eye(
+              visible: !vis.hiddenUids.contains(r.line.uid),
+              name: r.line.name,
+              onPressed: () => notifier.update((v) => v.toggleUid(r.line.uid)),
+            ),
+          ),
+
+        // --- Menzil / tehdit halkaları
+        header(
+          'Menzil halkaları',
+          rings.length,
+          trailing: eye(
+            visible: !vis.hiddenGroups.contains(
+              OverlayVisibility.rangeRingsGroup,
+            ),
+            name: 'Menzil halkaları',
+            onPressed: () => notifier.update(
+              (v) => v.toggleGroup(OverlayVisibility.rangeRingsGroup),
+            ),
+          ),
+        ),
+        for (final r in rings)
+          item(
+            leading: Icon(Icons.radar, color: Color(r.ring.colorValue)),
+            name: r.ring.name,
+            itemTags: OverlayVisibility.tagsOfName(r.ring.name),
+            onMap: vis.showsRangeRing(r.ring),
+            onTap: () => onCenter(r.center),
+            trailing: eye(
+              visible: !vis.hiddenUids.contains(r.ring.uid),
+              name: r.ring.name,
+              onPressed: () => notifier.update((v) => v.toggleUid(r.ring.uid)),
             ),
           ),
 
