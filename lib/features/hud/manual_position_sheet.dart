@@ -170,10 +170,8 @@ class _ManualPositionPanelState extends ConsumerState<ManualPositionPanel> {
           OutlinedButton.icon(
             icon: const Icon(Icons.change_history),
             label: const Text('Geriden kestirme (2–3 kerteriz)'),
-            onPressed: () {
-              Navigator.of(context).pop();
-              widget.onResection!();
-            },
+            // Üste açılır: "← Geri" ile bu panele dönülür.
+            onPressed: () => openStacked(context, widget.onResection!),
           ),
         ],
         section('Koordinat'),

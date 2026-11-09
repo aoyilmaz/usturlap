@@ -73,9 +73,17 @@ class _Panel {
     required this.builder,
     required this.showHandle,
     required this.controller,
+    this.menu = false,
   }) : curve = CurvedAnimation(parent: controller, curve: Curves.easeOutCubic);
 
   final String? id;
+
+  /// Menü paneli (≡ ızgarası): üstündeki panel "← Geri" dışında bir yolla
+  /// kapanırsa (✕, haritaya götüren bir eylem, tutamak) menü de kapanır.
+  final bool menu;
+
+  /// "← Geri" ile kapatıldı: alttaki menüye dönülür.
+  bool viaBack = false;
   final WidgetBuilder builder;
   final bool showHandle;
   final AnimationController controller;
@@ -120,6 +128,39 @@ class PanelHostState extends State<PanelHost> with TickerProviderStateMixin {
   /// Açık (kapanmakta olmayan) panel var mı.
   bool get hasOpenPanel => _top != null;
 
+  /// [runStacked] içindeyken açılan paneller açık olanların üstüne biner.
+  int _stackDepth = 0;
+  int _openCount = 0;
+
+  /// [f] içinde açılan panel, açık panellerin üstüne biner (≡ ızgarasından
+  /// açılan araçlar; "← Geri" ile ızgaraya dönülür). [f] bir panel açtıysa
+  /// true.
+  bool runStacked(VoidCallback f) {
+    final before = _openCount;
+    _stackDepth++;
+    try {
+      f();
+    } finally {
+      _stackDepth--;
+    }
+    return _openCount != before;
+  }
+
+  /// [id]'li paneli kapatır (açık değilse bir şey yapmaz).
+  void closeId(String id) {
+    for (final p in _panels.reversed) {
+      if (!p.closing && p.id == id) _close(p);
+    }
+  }
+
+  /// [p]'nin altındaki (kapanmakta olmayan) panel.
+  _Panel? _below(_Panel p) {
+    for (var i = _panels.indexOf(p) - 1; i >= 0; i--) {
+      if (!_panels[i].closing) return _panels[i];
+    }
+    return null;
+  }
+
   _Panel? get _top {
     for (final p in _panels.reversed) {
       if (!p.closing) return p;
@@ -143,19 +184,24 @@ class PanelHostState extends State<PanelHost> with TickerProviderStateMixin {
     String? id,
     bool toggle = false,
     bool showDragHandle = true,
+    bool menu = false,
   }) {
     final top = _top;
     if (toggle && id != null && top != null && top.id == id) {
       closeAll();
       return top.done.future;
     }
-    final nested = opener.getInheritedWidgetOfExactType<_PanelScope>() != null;
+    final nested =
+        _stackDepth > 0 ||
+        opener.getInheritedWidgetOfExactType<_PanelScope>() != null;
     if (!nested) closeAll();
+    _openCount++;
 
     final p = _Panel(
       id: id,
       builder: builder,
       showHandle: showDragHandle,
+      menu: menu,
       controller: AnimationController(vsync: this, duration: _duration),
     );
     // Giriş bitince alttaki panel gizlenir (bkz. _visible).
@@ -197,7 +243,17 @@ class PanelHostState extends State<PanelHost> with TickerProviderStateMixin {
   void _dismiss(_Panel p) {
     p.history = null;
     if (p.closing || !mounted) return;
+    // Menünün üstündeki panel "← Geri" dışında kapandıysa menü de gider
+    // (ör. "Haritada göster" sonrası harita üstünde menü kalmasın).
+    final below = _below(p);
     setState(() => p.closing = true);
+    if (!p.viaBack && below != null && below.menu) {
+      // Geri yığını şu an bu paneli çıkarıyor olabilir (Navigator.pop);
+      // iç içe çıkarma olmasın diye bir sonraki turda.
+      scheduleMicrotask(() {
+        if (mounted && !below.closing) _close(below);
+      });
+    }
     p.controller.reverse().then((_) {
       if (!mounted) return;
       setState(() => _panels.remove(p));
@@ -387,17 +443,39 @@ class PanelHostState extends State<PanelHost> with TickerProviderStateMixin {
     );
   }
 
-  /// Panel başlığı: dikeyde sürükleme tutamağı, iki yönde de ✕.
+  /// "← Geri": bu paneli kapatıp alttakine (menüye) dön.
+  void _back(_Panel p) {
+    p.viaBack = true;
+    _close(p);
+  }
+
+  /// Panel başlığı: dikeyde sürükleme tutamağı; altta panel varsa solda
+  /// "← Geri"; sağda ✕ (bütün panelleri kapatır).
   Widget _header(BuildContext context, _Panel p, bool landscape) {
     final close = Align(
       alignment: Alignment.centerRight,
       child: IconButton(
         tooltip: 'Kapat',
         icon: const Icon(Icons.close),
-        onPressed: () => _close(p),
+        onPressed: closeAll,
       ),
     );
-    if (landscape) return SizedBox(height: 48, child: close);
+    final back = _below(p) == null
+        ? null
+        : Align(
+            alignment: Alignment.centerLeft,
+            child: IconButton(
+              tooltip: 'Geri',
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => _back(p),
+            ),
+          );
+    if (landscape) {
+      return SizedBox(
+        height: 48,
+        child: Stack(children: [?back, close]),
+      );
+    }
     final handleColor = Theme.of(
       context,
     ).colorScheme.onSurfaceVariant.withValues(alpha: 0.4);
@@ -424,6 +502,7 @@ class PanelHostState extends State<PanelHost> with TickerProviderStateMixin {
                   ),
                 ),
               ),
+            ?back,
             close,
           ],
         ),

@@ -190,6 +190,88 @@ void main() {
     expect(PanelHost.maybeOf(ctx)!.hasOpenPanel, isFalse);
   });
 
+  /// A paneli; içindeki düğme B'yi üstüne açar.
+  void openAB(BuildContext ctx) => showAdaptiveSheet<void>(
+    context: ctx,
+    builder: (c) => TextButton(
+      onPressed: () =>
+          showAdaptiveSheet<void>(context: c, builder: (_) => const Text('B')),
+      child: const Text('A'),
+    ),
+  );
+
+  testWidgets('D4a: ← Geri yalnız altta panel varken; alttakine döner', (
+    tester,
+  ) async {
+    final ctx = await pumpHost(tester, const Size(390, 844));
+    openAB(ctx);
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Geri'), findsNothing);
+    await tester.tap(find.text('A'));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Geri'), findsOneWidget);
+    await tester.tap(find.byTooltip('Geri'));
+    await tester.pumpAndSettle();
+    expect(find.text('B'), findsNothing);
+    expect(find.text('A'), findsOneWidget);
+  });
+
+  testWidgets('D4a: ✕ bütün panelleri kapatır', (tester) async {
+    final ctx = await pumpHost(tester, const Size(844, 390));
+    openAB(ctx);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('A'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Kapat'));
+    await tester.pumpAndSettle();
+    expect(find.text('A'), findsNothing);
+    expect(find.text('B'), findsNothing);
+    expect(PanelHost.maybeOf(ctx)!.hasOpenPanel, isFalse);
+  });
+
+  testWidgets('D4a: menünün üstünden Geri menüye döner; başka kapanış menüyü '
+      'de kapatır', (tester) async {
+    final ctx = await pumpHost(tester, const Size(390, 844));
+    final host = PanelHost.maybeOf(ctx)!;
+    void openMenu() => showAdaptiveSheet<void>(
+      context: ctx,
+      id: 'tools',
+      menu: true,
+      builder: (_) => const Text('MENÜ'),
+    );
+    void openTool() => showAdaptiveSheet<void>(
+      context: ctx,
+      builder: (_) => const Text('ARAÇ'),
+    );
+
+    openMenu();
+    await tester.pumpAndSettle();
+    // Haritadan açılan araç normalde menüyü kapatır; menüden açılınca biner.
+    expect(host.runStacked(openTool), isTrue);
+    await tester.pumpAndSettle();
+    expect(find.text('ARAÇ'), findsOneWidget);
+    await tester.tap(find.byTooltip('Geri'));
+    await tester.pumpAndSettle();
+    expect(find.text('MENÜ'), findsOneWidget);
+
+    // Araç kendi eylemiyle kapanırsa (ör. "Haritada göster") menü de gider.
+    host.runStacked(openTool);
+    await tester.pumpAndSettle();
+    Navigator.of(ctx).pop();
+    await tester.pumpAndSettle();
+    expect(find.text('ARAÇ'), findsNothing);
+    expect(find.text('MENÜ'), findsNothing);
+    expect(host.hasOpenPanel, isFalse);
+
+    // Panel açmayan iş false döner.
+    openMenu();
+    await tester.pumpAndSettle();
+    expect(host.runStacked(() {}), isFalse);
+    host.closeId('tools');
+    await tester.pumpAndSettle();
+    expect(host.hasOpenPanel, isFalse);
+  });
+
   testWidgets('dikey tutamak: yukarı büyütür, aşağı küçültür, sonra kapatır', (
     tester,
   ) async {

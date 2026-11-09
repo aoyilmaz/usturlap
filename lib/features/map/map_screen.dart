@@ -68,6 +68,7 @@ import '../nav/bloodhound_panel.dart';
 import '../routes/route_alerts.dart';
 import '../nav/tactical_compass_page.dart';
 import '../tools/bullseye_panel.dart';
+import 'clear_map_sheet.dart';
 import '../tools/measure_common.dart';
 import '../tools/range_line_panel.dart';
 import '../tools/range_ring_panel.dart';
@@ -1557,6 +1558,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         catalog(ToolbarTool.maps),
         catalog(ToolbarTool.overlays),
         catalog(ToolbarTool.savedViews),
+        catalog(ToolbarTool.clearMap),
         catalog(ToolbarTool.offlineRegions),
         ToolGridItem(
             icon: Icons.file_download_outlined,
@@ -1674,6 +1676,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       case ToolbarTool.savedViews:
         return ToolbarItem(
             icon: t.icon, label: t.label, onTap: _openSavedViews);
+      case ToolbarTool.clearMap:
+        return ToolbarItem(
+            icon: t.icon,
+            label: t.label,
+            onTap: () => showClearMapSheet(context));
       case ToolbarTool.bloodhound:
         return ToolbarItem(
           icon: t.icon,

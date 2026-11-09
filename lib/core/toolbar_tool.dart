@@ -20,6 +20,7 @@ enum ToolbarTool {
   offlineRegions,
   overlays,
   savedViews,
+  clearMap,
   bullseye,
   nightMode,
   crosshair,

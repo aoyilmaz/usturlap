@@ -92,6 +92,9 @@ class ToolNotifier extends Notifier<ToolState> {
   /// Aracı tamamen kapat.
   void reset() => state = const ToolState();
 
+  /// Önceki durumu geri yükler ("Haritayı temizle" → Geri al).
+  void restore(ToolState s) => state = s;
+
   void toggleVisible() => state = state.copyWith(visible: !state.visible);
 }
 

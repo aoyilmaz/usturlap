@@ -33,8 +33,9 @@ class ToolGridSection {
 }
 
 /// ≡ Bütün araçlar (ATAK "Additional Tools & Plugins", kılavuz s.5).
-/// Dikeyde alttan, yatayda sağdan açılır. Bir araca dokununca ızgara kapanır,
-/// sonra araç çalışır.
+/// Dikeyde alttan, yatayda sağdan açılır. Panel açan bir araç ızgaranın
+/// üstüne biner ("← Geri" ızgaraya döner); haritada çalışan araçlarda
+/// (ölçüm, nokta bırak, aç/kapa düğmeleri) ızgara kapanır.
 Future<void> showToolsGridSheet(
   BuildContext context, {
   required List<ToolGridSection> sections,
@@ -44,13 +45,19 @@ Future<void> showToolsGridSheet(
     // ≡ ikinci kez basılınca ızgara kapanır.
     id: 'tools',
     toggle: true,
+    menu: true,
     showDragHandle: true,
     isScrollControlled: true,
     builder: (sheetContext) => _ToolsGrid(
       sections: sections,
       onPick: (item) {
-        Navigator.of(sheetContext).pop();
-        item.onTap();
+        final host = PanelHost.maybeOf(sheetContext);
+        if (host == null) {
+          Navigator.of(sheetContext).pop();
+          item.onTap();
+          return;
+        }
+        if (!host.runStacked(item.onTap)) host.closeId('tools');
       },
     ),
   );

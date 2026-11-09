@@ -5,6 +5,18 @@ import 'panel_host.dart';
 export 'panel_host.dart'
     show PanelHost, PanelHostState, isLandscape, sidePanelWidth;
 
+/// Bir panelin içinden başka bir panele geçerken: [open] içinde açılan
+/// panel bu panelin üstüne biner ("← Geri" ile dönülür). Panel sistemi
+/// yoksa (eski modal yol) [open] olduğu gibi çalışır.
+void openStacked(BuildContext context, VoidCallback open) {
+  final host = PanelHost.maybeOf(context);
+  if (host == null) {
+    open();
+  } else {
+    host.runStacked(open);
+  }
+}
+
 /// Menü/liste açar: **dikeyde alttan**, **yatayda sağdan** panel (ATAK gibi).
 ///
 /// Harita ekranında ([PanelHost] altında) panel **modal değildir**: harita
@@ -22,6 +34,7 @@ Future<T?> showAdaptiveSheet<T>({
   bool isScrollControlled = false,
   String? id,
   bool toggle = false,
+  bool menu = false,
 }) {
   final host = PanelHost.maybeOf(context);
   if (host != null) {
@@ -32,6 +45,7 @@ Future<T?> showAdaptiveSheet<T>({
           id: id,
           toggle: toggle,
           showDragHandle: showDragHandle,
+          menu: menu,
         )
         .then((_) => null);
   }

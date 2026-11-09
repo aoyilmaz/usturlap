@@ -13,6 +13,7 @@ import '../../providers/route_providers.dart';
 import '../../providers/settings_providers.dart';
 import '../../providers/track_providers.dart';
 import '../../providers/waypoint_providers.dart';
+import '../map/clear_map_sheet.dart';
 import '../shell/adaptive_sheet.dart';
 import '../symbols/nato_symbol.dart';
 
@@ -360,15 +361,24 @@ class OverlayManager extends ConsumerWidget {
           value: repeatersOn,
           onChanged: (_) => ref.read(showRepeatersProvider.notifier).toggle(),
         ),
-        if (!vis.isDefault)
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              icon: const Icon(Icons.visibility),
-              label: const Text('Hepsini göster'),
-              onPressed: notifier.reset,
+        Wrap(
+          spacing: 8,
+          children: [
+            if (!vis.isDefault)
+              TextButton.icon(
+                icon: const Icon(Icons.visibility),
+                label: const Text('Hepsini göster'),
+                onPressed: notifier.reset,
+              ),
+            // Üste açılır: "← Geri" ile buraya dönülür.
+            TextButton.icon(
+              icon: const Icon(Icons.cleaning_services_outlined),
+              label: const Text('Haritayı temizle…'),
+              onPressed: () =>
+                  openStacked(context, () => showClearMapSheet(context)),
             ),
-          ),
+          ],
+        ),
       ],
     );
   }

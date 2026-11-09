@@ -235,6 +235,37 @@ konum düzeltme, **D3d** Point Dropper (dördü de cihazda ✓, 2026-11-08), **D
 > Ekle/Düzenle'de tür seçimi iki grup (Nokta/görev · Sadakat); tehlike ikonunda büyüklük gizli.
 > Uzun basarak eklenen noktanın varsayılan adı WP-n yerine NOKTA-n.
 
+**D4. Gezinme ve temizlik** (kullanıcı isteği, 2026-11-08; F'den önce) — **cihazda ✓ (2026-11-09)**:
+
+> **D4a — Menüye geri dön.** Bugün ≡ ızgarasından bir panel açılınca ızgara kendini kapatıyor;
+> menüye dönmek için ✕ ile kapatıp ≡'yi yeniden açmak gerekiyor. Yeni davranış:
+> - Izgaradan açılan **panel** ızgaranın üstüne biner (ızgara altta kalır). Haritayla çalışan
+>   araçlar (R&B, nokta bırak, rota planlama, taktik pusula) eskisi gibi ızgarayı kapatır.
+> - Panel başlığında altta başka panel varsa solda **← Geri** (bir önceki panel); **✕** bütün
+>   panelleri kapatır. Android geri tuşu = ← Geri.
+> - Aynı kural iç içe akışlarda da: Rota → Profil / Nokta adları, Düzelt → Geriden kestirme,
+>   Overlay yöneticisi → nokta detayı.
+>
+> **D4b — Haritayı temizle.** Ekrana eklenenleri tek tek kapatmak yerine tek seferde:
+> - ≡ → Harita → **Haritayı temizle** (araç çubuğuna da eklenebilir; Overlay yöneticisinde de
+>   düğme). Haritada ne varsa sayısıyla listelenir, işaretlenenler temizlenir.
+> - Varsayılan işaretli (geçici / ölçüm): ölçüm aracı çizimi, R&B çizgileri, menzil halkaları,
+>   bullseye, takipler, "Git" hedefi, rota takibi ve önizlemesi, gösterilen iz.
+> - Varsayılan işaretsiz (kalıcı veri): noktalar, çizimler, rotalar — işaretlenirse ayrıca uyarı.
+> - Silmek yerine **yalnız gizle** seçeneği (Overlay yöneticisi görünürlüğü; veri kalır).
+> - Temizledikten sonra birkaç saniye **Geri al** (silinenler aynı kimlikleriyle geri gelir;
+>   eldivenle yanlış dokunmaya karşı).
+>
+> Yapılış: `PanelHost.runStacked` (içinde açılan panel üste biner), menü paneli (`menu: true`;
+> üstündeki panel Geri dışında kapanırsa menü de kapanır — geri yığını çıkarırken iç içe çıkarma
+> olmasın diye bir sonraki turda), başlıkta ← Geri / ✕ hepsini kapat, `openStacked` yardımcısı
+> (Düzelt → Geriden kestirme, Overlay → Haritayı temizle). Android geri tuşu üstteki paneli
+> kapatır; menünün üstündeyse menü de kapanır (iOS önceliği; "← Geri" düğmesi menüye döner).
+> Temizle: `providers/map_cleaner.dart` (`mapClearTargetsProvider` yalnız görünenleri sayar,
+> `MapCleaner.clear/undo/finalize`), `map/clear_map_sheet.dart` (düğme listenin üstünde, 6 sn
+> Geri al); silinen noktaların fotoğrafları Geri al süresi dolunca silinir. Kayıtlı rotalar
+> haritada durmadığı için listede yok.
+
 | Özellik (ATAK s.) | Ne yapılacak | Efor |
 |---|---|---|
 | Radial Menu (11) | Nesneye dokununca, tipine göre değişen halka menü açılır: Sil, İnce ayar, R&B, Git, Tehdit halkası, Kilitlen, Detay, Paylaş. Dilimler eldivenle seçilebilecek büyüklükte | L |
