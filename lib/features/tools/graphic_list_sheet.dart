@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/geo_math.dart';
 import '../../domain/models/map_graphic.dart';
 import '../../providers/graphic_providers.dart';
+import '../elevation/elevation_profile_panel.dart';
 import '../shell/adaptive_sheet.dart';
+import 'graphic_labels.dart';
 
 /// Kayıtlı taktik grafikler paneli: renk/tip/ölçü göster, sil.
 Future<void> showGraphicListSheet(BuildContext context, WidgetRef ref) {
@@ -59,28 +60,40 @@ class _GraphicListBody extends ConsumerWidget {
                     itemBuilder: (context, i) {
                       final g = list[i];
                       return ListTile(
-                        leading: Container(
-                          width: 22,
-                          height: 22,
-                          decoration: BoxDecoration(
-                            color: Color(g.colorValue),
-                            shape: g.type == GraphicType.area
-                                ? BoxShape.rectangle
-                                : BoxShape.circle,
-                            border: Border.all(color: Colors.black26),
-                          ),
+                        leading: Icon(
+                          graphicIcon(g.type),
+                          color: Color(g.colorValue),
                         ),
                         title: Text(g.name),
                         subtitle: Text(
-                          '${g.type.label} · ${_measure(g)}',
+                          '${g.type.label} · ${graphicMeasure(g)}'
+                          '${g.dashed ? ' · kesikli' : ''}'
+                          '${g.height == null ? '' : ' · 3B ${g.height!.round()} m'}',
                           style: const TextStyle(fontSize: 12),
                         ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete_outline),
-                          tooltip: 'Sil',
-                          onPressed: () => ref
-                              .read(mapGraphicRepositoryProvider)
-                              .delete(g.id!),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Çizgi boyunca yükseklik profili (F2).
+                            if (g.type == GraphicType.line &&
+                                g.points.length >= 2)
+                              IconButton(
+                                icon: const Icon(Icons.area_chart_outlined),
+                                tooltip: 'Yükseklik profili: ${g.name}',
+                                onPressed: () => showElevationProfilePanel(
+                                  context,
+                                  title: '${g.name}: yükseklik profili',
+                                  points: g.points,
+                                ),
+                              ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline),
+                              tooltip: 'Sil',
+                              onPressed: () => ref
+                                  .read(mapGraphicRepositoryProvider)
+                                  .delete(g.id!),
+                            ),
+                          ],
                         ),
                       );
                     },
@@ -94,13 +107,4 @@ class _GraphicListBody extends ConsumerWidget {
     );
   }
 
-  /// Tipe göre kısa ölçü metni (çizgi → uzunluk, alan → alan + çevre).
-  String _measure(MapGraphic g) {
-    if (g.type == GraphicType.area && g.points.length >= 3) {
-      return '${GeoMath.fmtArea(GeoMath.polygonArea(g.points))}'
-          ' · ${g.points.length} köşe';
-    }
-    return '${GeoMath.fmtDistance(GeoMath.pathLength(g.points))}'
-        ' · ${g.points.length} nokta';
-  }
 }

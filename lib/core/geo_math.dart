@@ -69,6 +69,25 @@ class GeoMath {
     return pts;
   }
 
+  /// Daire çevresi ([segments] nokta; kapanış noktası yok).
+  static List<LatLng> circlePoints(
+    LatLng center,
+    double radiusMeters, {
+    int segments = 72,
+  }) => [
+    for (var i = 0; i < segments; i++)
+      _d.offset(center, radiusMeters, 360 * i / segments),
+  ];
+
+  /// İki çapraz köşeden enlem/boylam eksenli dikdörtgenin 4 köşesi
+  /// (a'dan başlayıp sırayla).
+  static List<LatLng> rectangleCorners(LatLng a, LatLng b) => [
+    a,
+    LatLng(a.latitude, b.longitude),
+    b,
+    LatLng(b.latitude, a.longitude),
+  ];
+
   static double bearing(LatLng from, LatLng to) => _d.bearing(from, to);
   static double distance(LatLng a, LatLng b) => _d(a, b);
 

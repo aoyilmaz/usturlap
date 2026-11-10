@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/widgets.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -87,11 +89,47 @@ sealed class MapOverlay {
 
 /// Çizgi (iz, ölçüm, navigasyon çizgisi).
 class MapLine extends MapOverlay {
-  const MapLine({required this.points, required this.color, this.width = 3});
+  const MapLine({
+    required this.points,
+    required this.color,
+    this.width = 3,
+    this.dashed = false,
+  });
 
   final List<LatLng> points;
   final Color color;
   final double width;
+
+  /// Kesikli çizgi.
+  final bool dashed;
+}
+
+/// Coğrafi sınırlara gerilmiş resim (ör. görüş alanı, eğim haritası):
+/// ön-çarpılmış RGBA pikseller, satırlar kuzeyden güneye. Bütün çizimlerin
+/// altında, taban haritanın üstünde çizilir.
+class MapImage extends MapOverlay {
+  MapImage({
+    required this.id,
+    required this.north,
+    required this.south,
+    required this.east,
+    required this.west,
+    required this.width,
+    required this.height,
+    required this.pixels,
+    this.opacity = 1,
+  }) : assert(pixels.length == 4 * width * height);
+
+  /// Kaynak kimliği (aynı id = aynı katman; pikseller değişince güncellenir).
+  final String id;
+  final double north;
+  final double south;
+  final double east;
+  final double west;
+  final int width;
+  final int height;
+  final Uint8List pixels;
+  final double opacity;
 }
 
 /// Kapalı alan (poligon, sektör).
@@ -101,12 +139,20 @@ class MapArea extends MapOverlay {
     required this.fillColor,
     required this.strokeColor,
     this.strokeWidth = 3,
+    this.dashed = false,
+    this.height,
   });
 
   final List<LatLng> points;
   final Color fillColor;
   final Color strokeColor;
   final double strokeWidth;
+
+  /// Kesikli kenar.
+  final bool dashed;
+
+  /// 3B yükseklik (m): harita eğikken kutu olarak yükselir; null = düz.
+  final double? height;
 }
 
 /// Metre cinsinden yarıçaplı daire (ör. röle kapsama alanı).

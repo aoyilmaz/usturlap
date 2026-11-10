@@ -49,4 +49,30 @@ void main() {
     n.setMode(ToolMode.polygon);
     expect(c.read(toolProvider).refs, isEmpty);
   });
+
+  test('daire / dikdörtgen: ilk nokta sabit, ikinci değişir', () {
+    for (final mode in [ToolMode.circle, ToolMode.rectangle]) {
+      n.setMode(mode);
+      n.addPoint(p1);
+      n.addPoint(p2);
+      n.addPoint(p3);
+      expect(c.read(toolProvider).points, [p1, p3], reason: mode.name);
+      expect(mode.isDrawing, isTrue);
+    }
+    expect(ToolMode.polygon.isDrawing, isFalse);
+  });
+
+  test('serbest çizim: dokunuş eklenmez, iz bütünüyle verilir', () {
+    n.setMode(ToolMode.freehand);
+    n.addPoint(p1);
+    expect(c.read(toolProvider).points, isEmpty);
+    n.setPath([p1, p2, p3]);
+    expect(c.read(toolProvider).points, [p1, p2, p3]);
+    n.setPath([p3, p1]);
+    expect(c.read(toolProvider).points, [p3, p1]);
+    // Başka araçta iz verilemez.
+    n.setMode(ToolMode.polyline);
+    n.setPath([p1, p2]);
+    expect(c.read(toolProvider).points, isEmpty);
+  });
 }

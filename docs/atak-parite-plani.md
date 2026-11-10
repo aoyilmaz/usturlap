@@ -375,6 +375,44 @@ Sesli uyarı şimdilik yok (kullanıcı kararı; iOS'ta paket gerekir).
 
 ### Aşama F: Arazi analizi
 
+Adımlar: **F1** yükseklik verisi, **F2** çizgi / çizim profili ve eğim, **F3** viewshed, **F4** eş
+yükselti eğrileri, **F5** eğim / yükseklik renkli katmanı — **hepsi cihazda ✓ (2026-11-10).** F3 ve F5 için harita motoruna
+resim katmanı eklenecek.
+
+> F1: **Yükseklik verisi** (≡ → Harita; araç çubuğuna eklenebilir): cihazdaki kareler (biçim,
+> çözünürlük, boyut; uygulamayla gelen N37E037 örneği), **Dosya içe aktar** (çoklu seçim; SRTM
+> `.hgt` konumu dosya adından, DTED `.dt0/.dt1/.dt2` başlıktan; aynı karenin eski dosyası
+> değiştirilir; zip'ler önce Dosyalar'da açılır — `archive` paketi gerekmedi), sil, **haritada
+> kapsama** (1°×1° çerçeveler), "bulunduğun kare var / yok (hangi dosya)". Okuyucu (`HgtParser`,
+> adı tarihsel): HGT + DTED (`data/elevation/dem_tile.dart`; DTED UHL/DSI/ACC + sütun kayıtları,
+> işaret-büyüklük; GDAL'ın örnek n43.dt0 dosyasıyla 121/121 sağlama toplamı doğrulandı — dosya
+> projeye eklenmedi), **çift doğrusal ara değer** (`elevationAt`), bulunamayan kare önbelleği,
+> en çok 4 kare bellekte; içe aktarma / silmeden sonra önbellek yenilenir.
+>
+> F2: **Yükseklik profili** her çizgide: ölçüm şeridi (mesafe aracı, 2+ nokta), kayıtlı çizimler
+> (çizgiler), R&B detayı, rota menüsü (E8). Panel genelleşti (`elevation/elevation_profile_panel.dart`):
+> ara değerli okuma, eğri **eğime göre renkli** (yeşil < %10, sarı < %20, kırmızı), ↗/↘ toplam, en
+> yüksek/alçak, **en dik çıkış / iniş** (%; veri boşluğunun üstünden eğim hesaplanmaz).
+>
+> F3: **Görüş alanı** (≡ → Ölçüm; nokta Detay → "Görüş alanı"): gözlemci (nokta / konumum /
+> harita ortası), gözlemci yüksekliği 2/5/10/30 m, hedef zemin/insan/araç, yarıçap 0,5–10 km.
+> Hesap `domain/usecases/viewshed.dart`: gözlemci çevresinde ≤ 401×401 ızgara (hücre ≥ 30 m),
+> kenar hücrelerine ışın, ufuk açısı takibi, dünya eğriliği + kırılma (k = 0,13); ayrı
+> **isolate**'te (gereken kareler baytlarıyla aktarılır). Haritada yeşil görünür / kırmızı
+> görünmez yarı saydam **resim katmanı** (motor: `MapImage` → Mapbox ImageSource + raster katman,
+> çizimlerin altında; ham RGBA, PNG yok), gözlemci işareti, yarıçap çemberi; özet "Görünen %42 ·
+> 3.14 km²". Bitki örtüsü / bina hesaba katılmaz (SRTM/DTED yüzey). Haritayı temizle'de "Görüş
+> alanı". Testler: düz arazi, sırt arkası, kule, ufuk (eğrilik), veri yok.
+>
+> F4 + F5: **Arazi analizi** paneli (≡ → Ölçüm): alan = harita ortası / konumum çevresi 1–10 km.
+> **Eş yükselti eğrileri** ("yürüyen kareler", eyer durumları; parçalar uç uca birleşir; aralık
+> otomatik (≤ ~20 eğri: 5/10/20/25/50/100/200 m) ya da 10/20/50/100 m); haritada açık kahve, her
+> beşinci (ana) eğri kalın ve yüksekliği yazılı (en çok 40 etiket). **Renkli katman**: eğim (Horn;
+> < 10° yeşil, 10–20 sarı, 20–30 turuncu, > 30 kırmızı; açıklamalı) ya da yükseklik (alandaki en
+> alçak yeşil → en yüksek beyaz). Hesap `domain/usecases/terrain_grid.dart` (≤ 300×300 ızgara,
+> hücre ≥ 30 m), isolate'te; eğriler ve katman birlikte durur, ayrı kaldırılır. Haritayı temizle'de
+> "Arazi katmanları".
+
 | Özellik (ATAK s.) | Ne yapılacak | Efor |
 |---|---|---|
 | Elevation Data (25) | HGT/DTED içe aktarma; Türkiye yükseklik paketi (SRTM kamu malı ya da Copernicus GLO-30); kapsama haritası | M |
@@ -386,6 +424,28 @@ Sesli uyarı şimdilik yok (kullanıcı kararı; iOS'ta paket gerekir).
 **Kabul:** Hepsi uçak modunda, cihazdaki yükseklik verisiyle çalışıyor.
 
 ### Aşama G: Çizim ve veri yönetimi
+
+Adımlar: **G1** çizim araçları, **G2** 3B şekiller, **G6** iz arama (üçü cihazda ✓, 2026-11-10),
+G3 geofence, G4 lasso / çoklu seçim, G5 konumlu fotoğraf / galeri, G7 içe/dışa aktarma (KMZ),
+G8 veri paketi. G7 ve G8 zip ister → `archive` paketi için onay sorulacak.
+
+> G1: **Çizim araçları** çubuğu (araç çubuğuna eklenebilir; ≡ → Veri): Çizgi (çoklu nokta; 2
+> noktada da çizim, R&B değil) · Alan · **Daire** (merkez + kenar) · **Dikdörtgen** (iki çapraz
+> köşe, enlem/boylam eksenli) · **Serbest çizim** (parmakla; çizim modunda harita kaymaz; iz
+> Douglas–Peucker ile ~2,5 pt toleransla sadeleşip tek seferde konuma çevrilir — motor
+> `latLngsAt`). Kaydet penceresi: ad (DAİRE-1…), renk, **kalınlık** 2/3/5/8, **kesikli çizgi**.
+> drift v13 `map_graphics.stroke_width/dashed`; daire `points` = [merkez, kenar]. Motor:
+> kesikli çizgi/kenar ayrı katman (`line-dasharray` öğe başına verilemiyor). ATAK'a daire ve
+> dikdörtgen kapalı serbest çizim (`u-d-f`, 72 köşeli çokgen) olarak gider: `u-d-c-c` / `u-d-r`
+> ayrıntı yapısı doğrulanmadı; kalınlık (`strokeWeight`) gidip döner, kesikli stil ATAK'a gitmez.
+>
+> G2: **3B şekiller**: kapalı çizimlerde (alan / daire / dikdörtgen) kaydederken "3B yükseklik"
+> Düz / 10 / 25 / 50 / 100 m (drift v14 `map_graphics.height`). Mapbox `fill-extrusion` katmanı;
+> harita eğikken (pusula okuna uzun bas → 3B) kutu olarak yükselir, düz bakışta alan gibi. Düz
+> dolgu katmanı yükseklikli şekilleri çizmez. ATAK'a yükseklik gitmez (yapısı doğrulanmadı).
+>
+> G6: **İz arama** (İzler paneli): ad ya da tarih ("12.11") ile arama (Türkçe büyük/küçük harf
+> duyarsız), Bugün / 7 gün / 30 gün / Tümü süzgeci, en yeni üstte; listede iz tarihi görünür.
 
 | Özellik (ATAK s.) | Ne yapılacak | Efor |
 |---|---|---|

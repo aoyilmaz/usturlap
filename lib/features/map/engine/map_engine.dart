@@ -39,6 +39,10 @@ abstract class MapEngineController {
   /// Radyal menü nesnenin etrafına çizilir. Harita hazır değilse null.
   Future<Offset?> screenPointOf(LatLng point);
 
+  /// Harita widget'ı içindeki ekran noktalarının (mantıksal piksel) coğrafi
+  /// konumları, aynı sırayla (serbest çizim). Harita hazır değilse null.
+  Future<List<LatLng>?> latLngsAt(List<Offset> points);
+
   /// [layerId] taban katmanı için açılmış kaynakları (dosya bağlantısı,
   /// önbellek) serbest bırakır — ör. içe aktarılmış katman silinince.
   void releaseBaseLayer(String layerId);

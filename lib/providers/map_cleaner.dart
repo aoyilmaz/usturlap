@@ -17,6 +17,8 @@ import 'overlay_providers.dart';
 import 'range_line_providers.dart';
 import 'route_providers.dart';
 import 'tool_providers.dart';
+import 'terrain_analysis_providers.dart';
+import 'viewshed_providers.dart';
 import 'track_providers.dart';
 import 'waypoint_providers.dart';
 
@@ -31,6 +33,8 @@ class MapClearTargets {
     required this.navTarget,
     required this.activeRoute,
     required this.displayedTrackId,
+    required this.viewshed,
+    required this.terrain,
     required this.waypoints,
     required this.graphics,
   });
@@ -43,6 +47,8 @@ class MapClearTargets {
   final NavTarget? navTarget;
   final RoutePlan? activeRoute;
   final int? displayedTrackId;
+  final ViewshedState? viewshed;
+  final TerrainAnalysisState? terrain;
   final List<Waypoint> waypoints;
   final List<MapGraphic> graphics;
 
@@ -55,6 +61,10 @@ class MapClearTargets {
     ClearItem.navTarget => navTarget == null ? 0 : 1,
     ClearItem.activeRoute => activeRoute == null ? 0 : 1,
     ClearItem.displayedTrack => displayedTrackId == null ? 0 : 1,
+    ClearItem.viewshed => viewshed?.grid == null ? 0 : 1,
+    ClearItem.terrain =>
+      (terrain?.contours.isNotEmpty == true ? 1 : 0) +
+          (terrain?.image == null ? 0 : 1),
     ClearItem.waypoints => waypoints.length,
     ClearItem.graphics => graphics.length,
   };
@@ -80,6 +90,8 @@ final mapClearTargetsProvider = Provider<MapClearTargets>((ref) {
     navTarget: ref.watch(navTargetProvider),
     activeRoute: ref.watch(activeRouteProvider)?.route,
     displayedTrackId: ref.watch(displayedTrackIdProvider),
+    viewshed: ref.watch(viewshedProvider),
+    terrain: ref.watch(terrainAnalysisProvider),
     waypoints: [
       for (final w in ref.watch(waypointsProvider).value ?? const <Waypoint>[])
         if (vis.showsWaypoint(w)) w,
@@ -159,6 +171,12 @@ class MapCleaner {
     if (s.clears(ClearItem.displayedTrack)) {
       _ref.read(displayedTrackIdProvider.notifier).show(null);
     }
+    if (s.clears(ClearItem.viewshed)) {
+      _ref.read(viewshedProvider.notifier).clear();
+    }
+    if (s.clears(ClearItem.terrain)) {
+      _ref.read(terrainAnalysisProvider.notifier).clear();
+    }
     if (s.deletes(ClearItem.rangeLines)) {
       final repo = _ref.read(rangeLineRepositoryProvider);
       for (final l in t.rangeLines) {
@@ -218,6 +236,12 @@ class MapCleaner {
     if (s.clears(ClearItem.displayedTrack)) {
       _ref.read(displayedTrackIdProvider.notifier).show(t.displayedTrackId);
     }
+    if (s.clears(ClearItem.viewshed)) {
+      _ref.read(viewshedProvider.notifier).restore(t.viewshed);
+    }
+    if (s.clears(ClearItem.terrain)) {
+      _ref.read(terrainAnalysisProvider.notifier).restore(t.terrain);
+    }
     if (s.deletes(ClearItem.rangeLines)) {
       final repo = _ref.read(rangeLineRepositoryProvider);
       for (final l in t.rangeLines) {
@@ -269,6 +293,9 @@ class MapCleaner {
           points: g.points,
           colorValue: g.colorValue,
           uid: g.uid,
+          strokeWidth: g.strokeWidth,
+          dashed: g.dashed,
+          height: g.height,
         );
       }
     }

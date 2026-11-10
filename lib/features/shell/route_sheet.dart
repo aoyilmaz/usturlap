@@ -13,7 +13,7 @@ import '../../providers/nav_providers.dart';
 import '../../providers/route_providers.dart';
 import '../../providers/settings_providers.dart';
 import '../../providers/waypoint_providers.dart';
-import '../routes/route_profile_panel.dart';
+import '../elevation/elevation_profile_panel.dart';
 import '../tools/measure_common.dart';
 import 'adaptive_sheet.dart';
 

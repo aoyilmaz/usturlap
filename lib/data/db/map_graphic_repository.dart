@@ -27,6 +27,9 @@ class MapGraphicRepository {
     required List<LatLng> points,
     required int colorValue,
     String? uid,
+    double strokeWidth = MapGraphic.defaultStrokeWidth,
+    bool dashed = false,
+    double? height,
   }) {
     return _db.into(_db.mapGraphics).insert(
           MapGraphicsCompanion.insert(
@@ -36,6 +39,9 @@ class MapGraphicRepository {
             color: colorValue,
             createdAt: DateTime.now(),
             uid: Value(uid ?? newUuidV4()),
+            strokeWidth: Value(strokeWidth),
+            dashed: Value(dashed),
+            height: Value(height),
           ),
         );
   }
@@ -65,5 +71,8 @@ class MapGraphicRepository {
         points: _decode(r.pointsJson),
         colorValue: r.color,
         createdAt: r.createdAt,
+        strokeWidth: r.strokeWidth ?? MapGraphic.defaultStrokeWidth,
+        dashed: r.dashed ?? false,
+        height: r.height,
       );
 }

@@ -13,17 +13,40 @@ import 'tool_banner.dart';
 ///
 /// ✕ çubuğu kapatır ve aracı sıfırlar.
 class RangeToolsBar extends ConsumerWidget {
-  const RangeToolsBar({super.key, required this.onClose});
+  const RangeToolsBar({
+    super.key,
+    required this.onClose,
+    this.tools = rangeTools,
+    this.closeLabel = 'Ölçüm araçlarını kapat',
+    this.hint = 'Bir ölçüm aracı seçin',
+  });
 
   final VoidCallback onClose;
+  final List<(ToolMode, IconData, String)> tools;
+  final String closeLabel;
+  final String hint;
 
-  /// Çubuktaki araçlar (ATAK sırası: halka, R&B çizgisi; Pusula'nın diğerleri).
-  static const tools = <(ToolMode, IconData, String)>[
+  /// Çizim araçları çubuğu (ATAK Drawing Tools, kılavuz s.40–42).
+  const RangeToolsBar.drawing({super.key, required this.onClose})
+    : tools = drawTools,
+      closeLabel = 'Çizim araçlarını kapat',
+      hint = 'Bir çizim aracı seçin';
+
+  /// Ölçüm araçları (ATAK sırası: halka, R&B çizgisi; Pusula'nın diğerleri).
+  static const rangeTools = <(ToolMode, IconData, String)>[
     (ToolMode.rangeRings, Icons.radar, 'Menzil halkası'),
     (ToolMode.distance, Icons.straighten, 'Mesafe / R&B çizgisi'),
     (ToolMode.polygon, Icons.pentagon_outlined, 'Alan'),
     (ToolMode.sector, Icons.pie_chart_outline, 'Sektör'),
     (ToolMode.lineOfSight, Icons.landscape_outlined, 'Görüş hattı'),
+  ];
+
+  static const drawTools = <(ToolMode, IconData, String)>[
+    (ToolMode.polyline, Icons.polyline_outlined, 'Çizgi'),
+    (ToolMode.polygon, Icons.pentagon_outlined, 'Alan'),
+    (ToolMode.circle, Icons.circle_outlined, 'Daire'),
+    (ToolMode.rectangle, Icons.crop_square, 'Dikdörtgen'),
+    (ToolMode.freehand, Icons.gesture, 'Serbest çizim'),
   ];
 
   @override
@@ -89,7 +112,7 @@ class RangeToolsBar extends ConsumerWidget {
                   margin: const EdgeInsets.symmetric(horizontal: 2),
                   color: Colors.white24,
                 ),
-                button(Icons.close, 'Ölçüm araçlarını kapat', false, onClose),
+                button(Icons.close, closeLabel, false, onClose),
               ],
             ),
           ),
@@ -100,7 +123,7 @@ class RangeToolsBar extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.only(top: 6, left: 4),
             child: Text(
-              'Bir ölçüm aracı seçin',
+              hint,
               style: TextStyle(
                 color: idle,
                 fontSize: 12,

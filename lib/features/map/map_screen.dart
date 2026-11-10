@@ -12,12 +12,14 @@ import '../../core/constants.dart';
 import '../../core/coord_format.dart';
 import '../../core/bearing_format.dart';
 import '../../core/geo_math.dart';
+import '../../data/elevation/elevation_store.dart';
 import '../../core/nav_math.dart';
 import '../../core/sequential_name.dart';
 import '../../domain/models/contact.dart';
 import '../../domain/models/imported_layer.dart';
 import '../../domain/models/bloodhound.dart';
 import '../../domain/models/bullseye.dart';
+import '../../domain/usecases/viewshed.dart';
 import '../../domain/models/map_graphic.dart';
 import '../../domain/models/range_line.dart';
 import '../../domain/models/repeater.dart';
@@ -25,9 +27,12 @@ import '../../domain/models/track.dart';
 import '../../domain/models/waypoint.dart';
 import '../../providers/bloodhound_providers.dart';
 import '../../providers/bullseye_providers.dart';
+import '../../providers/elevation_providers.dart';
 import '../../providers/graphic_providers.dart';
 import '../../providers/range_line_providers.dart';
 import '../../providers/resection_providers.dart';
+import '../../providers/terrain_analysis_providers.dart';
+import '../../providers/viewshed_providers.dart';
 import '../../providers/layer_providers.dart';
 import '../../providers/location_providers.dart';
 import '../../providers/nav_providers.dart';
@@ -63,12 +68,16 @@ import '../tools/graphic_list_sheet.dart';
 import '../layers/import_layer_action.dart';
 import '../nav/nav_banner.dart';
 import '../symbols/nato_symbol.dart';
+import '../elevation/elevation_data_panel.dart';
+import '../elevation/terrain_analysis_panel.dart';
+import '../elevation/viewshed_panel.dart';
 import '../hud/resection_panel.dart';
 import '../nav/bloodhound_panel.dart';
 import '../routes/route_alerts.dart';
 import '../nav/tactical_compass_page.dart';
 import '../tools/bullseye_panel.dart';
 import 'clear_map_sheet.dart';
+import '../tools/freehand_layer.dart';
 import '../tools/measure_common.dart';
 import '../tools/range_line_panel.dart';
 import '../tools/range_ring_panel.dart';
@@ -139,6 +148,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// (ör. ≡ ızgarasından) çubuk zaten görünür.
   bool _rangeBarOpen = false;
 
+  /// Çizim araçları çubuğu (ATAK Drawing Tools) açık mı.
+  bool _drawBarOpen = false;
+
   /// Çevrimdışı bölge çerçeveleme modu açık mı.
   bool _framing = false;
 
@@ -170,6 +182,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   /// Rota listesinden "haritada göster" denen rota (dokununca kaybolur).
   RoutePlan? _previewRoute;
+
+  /// Görüş alanı resmi: aynı sonuç için bir kez üretilir (motor aynı
+  /// nesneyi görünce yeniden yüklemez).
+  ViewshedGrid? _viewshedFor;
+  MapImage? _viewshedImage;
+
+  /// Arazi renkli katmanı resmi (aynı sonuç için bir kez).
+  TerrainLayerImage? _terrainFor;
+  MapImage? _terrainImage;
 
   @override
   void initState() {
@@ -733,22 +754,31 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         ),
       );
 
-  /// Kalıcı taktik grafikler (çizgi + alan). Alanlar çizgilerin altında.
+  /// Kalıcı taktik grafikler (çizgi, alan, daire, dikdörtgen). Kapalı
+  /// şekiller çizgilerin altında; kalınlık ve kesikli stil grafiğin kendi.
   List<MapOverlay> _graphicOverlays(List<MapGraphic> graphics) {
     final areas = <MapOverlay>[];
     final lines = <MapOverlay>[];
     for (final g in graphics) {
-      if (g.points.length < 2) continue;
+      final pts = g.outline;
+      if (pts.length < 2) continue;
       final color = Color(g.colorValue);
-      if (g.type == GraphicType.area && g.points.length >= 3) {
+      if (g.closed && pts.length >= 3) {
         areas.add(MapArea(
-          points: g.points,
+          points: pts,
           fillColor: color.withValues(alpha: 0.22),
           strokeColor: color,
-          strokeWidth: 3,
+          strokeWidth: g.strokeWidth,
+          dashed: g.dashed,
+          height: g.height,
         ));
       } else {
-        lines.add(MapLine(points: g.points, width: 4, color: color));
+        lines.add(MapLine(
+          points: pts,
+          width: g.strokeWidth,
+          color: color,
+          dashed: g.dashed,
+        ));
       }
     }
     return [...areas, ...lines];
@@ -811,9 +841,39 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           out.add(MapLine(points: [pts[0], pts[1]], width: 2, color: amber));
         }
         break;
+      case ToolMode.polyline:
+      case ToolMode.freehand:
+        if (pts.length >= 2) {
+          out.add(MapLine(points: pts, width: 4, color: amber));
+        }
+        break;
+      case ToolMode.circle:
+        if (pts.length >= 2) {
+          out.add(MapCircle(
+            center: pts[0],
+            radiusMeters: GeoMath.distance(pts[0], pts[1]),
+            fillColor: fill,
+            strokeColor: amber,
+            strokeWidth: 3,
+          ));
+          out.add(MapLine(points: [pts[0], pts[1]], width: 2, color: amber));
+        }
+        break;
+      case ToolMode.rectangle:
+        if (pts.length >= 2) {
+          out.add(MapArea(
+              points: GeoMath.rectangleCorners(pts[0], pts[1]),
+              fillColor: fill,
+              strokeColor: amber,
+              strokeWidth: 3));
+        }
+        break;
       case ToolMode.none:
         break;
     }
+
+    // Serbest çizimde nokta çok: köşe işareti yok.
+    if (tool.mode == ToolMode.freehand) return out;
 
     // Dokunulan köşeleri küçük noktalarla göster.
     for (var i = 0; i < pts.length; i++) {
@@ -867,6 +927,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         onEdit: (w) => showEditWaypointDialog(this.context, ref, w),
         onShare: _shareWaypoint,
         onDelete: _deleteWaypoint,
+        onViewshed: (w) => _openViewshed(observer: w.position, name: w.name),
       ),
     );
   }
@@ -1220,6 +1281,117 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     ));
   }
 
+  void _openViewshed({LatLng? observer, String? name}) => showViewshedPanel(
+        context,
+        mapCenter: () => _map.camera.center,
+        onCenter: _centerOn,
+        observer: observer,
+        observerName: name,
+      );
+
+  /// Görüş alanı katmanı + gözlemci ve yarıçap.
+  List<MapOverlay> _viewshedOverlays(ViewshedState? v, bool night) {
+    final grid = v?.grid;
+    if (v == null || grid == null) return const [];
+    if (!identical(grid, _viewshedFor)) {
+      _viewshedFor = grid;
+      _viewshedImage = MapImage(
+        id: 'viewshed',
+        north: grid.north,
+        south: grid.south,
+        east: grid.east,
+        west: grid.west,
+        width: grid.size,
+        height: grid.size,
+        pixels: grid.toRgba(),
+      );
+    }
+    final color = night ? Colors.redAccent : Colors.white;
+    return [
+      _viewshedImage!,
+      MapCircle(
+        center: v.params.observer,
+        radiusMeters: v.params.radius,
+        fillColor: Colors.transparent,
+        strokeColor: color.withValues(alpha: 0.7),
+        strokeWidth: 1.5,
+      ),
+      MapMarker(
+        id: 'viewshed:observer',
+        imageKey: 'viewshed:observer:${color.toARGB32()}',
+        point: v.params.observer,
+        width: 30,
+        height: 30,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.6),
+            shape: BoxShape.circle,
+            border: Border.all(color: color, width: 1.5),
+          ),
+          child: Icon(Icons.visibility, color: color, size: 18),
+        ),
+      ),
+    ];
+  }
+
+  /// Arazi analizi: renkli katman (resim) ve eş yükselti eğrileri.
+  List<MapOverlay> _terrainOverlays(TerrainAnalysisState? t, bool night) {
+    if (t == null) return const [];
+    final out = <MapOverlay>[];
+    final img = t.image;
+    if (img != null) {
+      if (!identical(img, _terrainFor)) {
+        _terrainFor = img;
+        _terrainImage = MapImage(
+          id: 'terrain',
+          north: img.north,
+          south: img.south,
+          east: img.east,
+          west: img.west,
+          width: img.width,
+          height: img.height,
+          pixels: img.pixels,
+        );
+      }
+      out.add(_terrainImage!);
+    }
+    final interval = t.interval;
+    if (interval == null) return out;
+    final color = night ? Colors.redAccent : const Color(0xFFE8B060);
+    // Her beşinci eğri (ana eğri) kalın ve etiketli; etiket sayısı sınırlı.
+    bool major(double level) => (level / (interval * 5)).round() * interval * 5 == level;
+    var labels = 0;
+    for (final c in t.contours) {
+      if (c.points.length < 2) continue;
+      final isMajor = major(c.level);
+      out.add(MapLine(
+        points: c.points,
+        width: isMajor ? 2 : 1,
+        color: color.withValues(alpha: isMajor ? 0.95 : 0.7),
+      ));
+      if (isMajor && c.points.length >= 12 && labels < 40) {
+        labels++;
+        final at = c.points[c.points.length ~/ 2];
+        out.add(_labelMarker(
+          id: 'contour:$labels',
+          text: '${c.level.round()}',
+          color: color,
+          point: at,
+          onTap: () => showTerrainAnalysisPanel(context,
+              mapCenter: () => _map.camera.center),
+        ));
+      }
+    }
+    return out;
+  }
+
+  /// Serbest çizim bitti: ekran noktaları konuma çevrilip araca verilir.
+  Future<void> _finishFreehand(List<Offset> points) async {
+    final ll = await _map.latLngsAt(points);
+    if (ll == null || ll.length < 2 || !mounted) return;
+    ref.read(toolProvider.notifier).setPath(ll);
+  }
+
   void _openBullseye() {
     showBullseyePanel(
       context,
@@ -1542,12 +1714,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         toolItem(ToolMode.rangeRings, Icons.radar, 'Menzil halkası'),
         toolItem(ToolMode.lineOfSight, Icons.landscape_outlined, 'Görüş hattı'),
         catalog(ToolbarTool.bullseye),
+        catalog(ToolbarTool.viewshed),
+        catalog(ToolbarTool.terrainAnalysis),
       ]),
       ToolGridSection('Veri', [
         catalog(ToolbarTool.dropPoint),
         catalog(ToolbarTool.record),
         catalog(ToolbarTool.waypoints),
         catalog(ToolbarTool.tracks),
+        catalog(ToolbarTool.draw),
         catalog(ToolbarTool.graphics),
         ToolGridItem(
             icon: Icons.file_open_outlined,
@@ -1559,6 +1734,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         catalog(ToolbarTool.overlays),
         catalog(ToolbarTool.savedViews),
         catalog(ToolbarTool.clearMap),
+        catalog(ToolbarTool.elevationData),
         catalog(ToolbarTool.offlineRegions),
         ToolGridItem(
             icon: Icons.file_download_outlined,
@@ -1595,13 +1771,34 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         return ToolbarItem(
           icon: t.icon,
           label: t.label,
-          active: _rangeBarOpen || tool.active,
+          active: _rangeBarOpen || (tool.active && !tool.mode.isDrawing),
           // R&B: ölçüm araçları çubuğunu aç/kapat.
           onTap: () {
-            final open = !(_rangeBarOpen || ref.read(toolProvider).active);
-            if (!open) ref.read(toolProvider.notifier).reset();
+            final t = ref.read(toolProvider);
+            final open = !(_rangeBarOpen || (t.active && !t.mode.isDrawing));
+            if (!open || t.mode.isDrawing) {
+              ref.read(toolProvider.notifier).reset();
+            }
             setState(() {
               _rangeBarOpen = open;
+              _drawBarOpen = false;
+              _dropMode = false;
+            });
+          },
+        );
+      case ToolbarTool.draw:
+        final tool = ref.read(toolProvider);
+        return ToolbarItem(
+          icon: t.icon,
+          label: t.label,
+          active: _drawBarOpen || tool.mode.isDrawing,
+          // Çizim araçları çubuğunu aç/kapat.
+          onTap: () {
+            final open = !(_drawBarOpen || ref.read(toolProvider).mode.isDrawing);
+            ref.read(toolProvider.notifier).reset();
+            setState(() {
+              _drawBarOpen = open;
+              _rangeBarOpen = false;
               _dropMode = false;
             });
           },
@@ -1676,6 +1873,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       case ToolbarTool.savedViews:
         return ToolbarItem(
             icon: t.icon, label: t.label, onTap: _openSavedViews);
+      case ToolbarTool.elevationData:
+        return ToolbarItem(
+            icon: t.icon,
+            label: t.label,
+            onTap: () =>
+                showElevationDataPanel(context, onCenter: _centerOn));
       case ToolbarTool.clearMap:
         return ToolbarItem(
             icon: t.icon,
@@ -1696,6 +1899,21 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       case ToolbarTool.resection:
         return ToolbarItem(
             icon: t.icon, label: t.label, onTap: _openResection);
+      case ToolbarTool.viewshed:
+        return ToolbarItem(
+          icon: t.icon,
+          label: t.label,
+          active: ref.read(viewshedProvider)?.grid != null,
+          onTap: () => _openViewshed(),
+        );
+      case ToolbarTool.terrainAnalysis:
+        return ToolbarItem(
+          icon: t.icon,
+          label: t.label,
+          active: ref.read(terrainAnalysisProvider) != null,
+          onTap: () => showTerrainAnalysisPanel(context,
+              mapCenter: () => _map.camera.center),
+        );
       case ToolbarTool.bullseye:
         return ToolbarItem(
           icon: t.icon,
@@ -1752,6 +1970,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       _dropMode = on;
       if (on) {
         _rangeBarOpen = false;
+        _drawBarOpen = false;
         _moving = null;
         _placingSelf = false;
       }
@@ -1826,6 +2045,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final bullseye = ref.watch(resolvedBullseyeProvider);
     final bloodhounds = ref.watch(resolvedBloodhoundsProvider);
     final resection = ref.watch(resectionPreviewProvider);
+    final viewshed = ref.watch(viewshedProvider);
+    final terrain = ref.watch(terrainAnalysisProvider);
+    // Yükseklik verisi kapsamı (Yükseklik verisi panelinden açılır).
+    final elevationTiles = ref.watch(showElevationCoverageProvider)
+        ? ref.watch(elevationTilesProvider).value ??
+            const <ElevationTileInfo>[]
+        : const <ElevationTileInfo>[];
     // Rota takibi: nokta geçildi / rota bitti / saptın → titreşim + uyarı.
     ref.listen<ActiveRouteState?>(activeRouteProvider, (prev, next) {
       final p = next?.progress;
@@ -1902,8 +2128,24 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
     // Harita üstü çizimler — liste sırası = çizim sırası (alttan üste).
     final overlays = <MapOverlay>[
+      // Arazi analizi (renkli katman + eş yükselti eğrileri) ve görüş alanı.
+      ..._terrainOverlays(terrain, nightMode),
+      ..._viewshedOverlays(viewshed, nightMode),
       // İndirilmiş bölgelerin sınırları (çerçevelerken hepsi, yoksa seçilen).
       ..._regionOutlines(),
+      // Yükseklik verisi kareleri (1°×1°).
+      for (final t in elevationTiles)
+        MapArea(
+          points: [
+            LatLng(t.south.toDouble(), t.west.toDouble()),
+            LatLng(t.south.toDouble(), t.west + 1.0),
+            LatLng(t.south + 1.0, t.west + 1.0),
+            LatLng(t.south + 1.0, t.west.toDouble()),
+          ],
+          fillColor: Colors.cyanAccent.withValues(alpha: 0.06),
+          strokeColor: Colors.cyanAccent.withValues(alpha: 0.8),
+          strokeWidth: 1.5,
+        ),
       // Kalıcı taktik grafikler (çizgi/alan).
       ..._graphicOverlays([
         for (final g in graphics)
@@ -2138,6 +2380,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             ),
           ),
 
+          // Serbest çizim: parmak izi yakalanır, harita kaymaz (araç
+          // çubukları üstte kaldığı için dokunulabilir).
+          if (tool.mode == ToolMode.freehand)
+            Positioned.fill(
+              child: FreehandLayer(
+                color: nightMode ? Colors.redAccent : Colors.amber,
+                onDone: _finishFreehand,
+              ),
+            ),
+
           // Katman tembel yüklenirken gösterge (ör. ilk kez büyük topo seçilince).
           if (layerLoading)
             const Positioned.fill(
@@ -2317,7 +2569,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                                 )
                               : null,
                         ),
-                      if (!planning.active && (_rangeBarOpen || tool.active))
+                      if (!planning.active &&
+                          (_drawBarOpen || tool.mode.isDrawing))
+                        RangeToolsBar.drawing(
+                          onClose: () {
+                            ref.read(toolProvider.notifier).reset();
+                            setState(() => _drawBarOpen = false);
+                          },
+                        )
+                      else if (!planning.active &&
+                          (_rangeBarOpen || tool.active))
                         RangeToolsBar(
                           onClose: () {
                             ref.read(toolProvider.notifier).reset();
@@ -2426,6 +2687,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       _follow = false;
       _previewRoute = null;
       _rangeBarOpen = false;
+      _drawBarOpen = false;
       _dropMode = false;
       _moving = null;
       _placingSelf = false;

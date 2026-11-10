@@ -1963,6 +1963,38 @@ class $MapGraphicsTable extends MapGraphics
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _strokeWidthMeta = const VerificationMeta(
+    'strokeWidth',
+  );
+  @override
+  late final GeneratedColumn<double> strokeWidth = GeneratedColumn<double>(
+    'stroke_width',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _dashedMeta = const VerificationMeta('dashed');
+  @override
+  late final GeneratedColumn<bool> dashed = GeneratedColumn<bool>(
+    'dashed',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("dashed" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _heightMeta = const VerificationMeta('height');
+  @override
+  late final GeneratedColumn<double> height = GeneratedColumn<double>(
+    'height',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1972,6 +2004,9 @@ class $MapGraphicsTable extends MapGraphics
     color,
     createdAt,
     uid,
+    strokeWidth,
+    dashed,
+    height,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2034,6 +2069,27 @@ class $MapGraphicsTable extends MapGraphics
         uid.isAcceptableOrUnknown(data['uid']!, _uidMeta),
       );
     }
+    if (data.containsKey('stroke_width')) {
+      context.handle(
+        _strokeWidthMeta,
+        strokeWidth.isAcceptableOrUnknown(
+          data['stroke_width']!,
+          _strokeWidthMeta,
+        ),
+      );
+    }
+    if (data.containsKey('dashed')) {
+      context.handle(
+        _dashedMeta,
+        dashed.isAcceptableOrUnknown(data['dashed']!, _dashedMeta),
+      );
+    }
+    if (data.containsKey('height')) {
+      context.handle(
+        _heightMeta,
+        height.isAcceptableOrUnknown(data['height']!, _heightMeta),
+      );
+    }
     return context;
   }
 
@@ -2071,6 +2127,18 @@ class $MapGraphicsTable extends MapGraphics
         DriftSqlType.string,
         data['${effectivePrefix}uid'],
       ),
+      strokeWidth: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}stroke_width'],
+      ),
+      dashed: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}dashed'],
+      ),
+      height: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}height'],
+      ),
     );
   }
 
@@ -2088,6 +2156,9 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
   final int color;
   final DateTime createdAt;
   final String? uid;
+  final double? strokeWidth;
+  final bool? dashed;
+  final double? height;
   const MapGraphicRow({
     required this.id,
     required this.name,
@@ -2096,6 +2167,9 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
     required this.color,
     required this.createdAt,
     this.uid,
+    this.strokeWidth,
+    this.dashed,
+    this.height,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2109,6 +2183,15 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
     if (!nullToAbsent || uid != null) {
       map['uid'] = Variable<String>(uid);
     }
+    if (!nullToAbsent || strokeWidth != null) {
+      map['stroke_width'] = Variable<double>(strokeWidth);
+    }
+    if (!nullToAbsent || dashed != null) {
+      map['dashed'] = Variable<bool>(dashed);
+    }
+    if (!nullToAbsent || height != null) {
+      map['height'] = Variable<double>(height);
+    }
     return map;
   }
 
@@ -2121,6 +2204,15 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
       color: Value(color),
       createdAt: Value(createdAt),
       uid: uid == null && nullToAbsent ? const Value.absent() : Value(uid),
+      strokeWidth: strokeWidth == null && nullToAbsent
+          ? const Value.absent()
+          : Value(strokeWidth),
+      dashed: dashed == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dashed),
+      height: height == null && nullToAbsent
+          ? const Value.absent()
+          : Value(height),
     );
   }
 
@@ -2137,6 +2229,9 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
       color: serializer.fromJson<int>(json['color']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       uid: serializer.fromJson<String?>(json['uid']),
+      strokeWidth: serializer.fromJson<double?>(json['strokeWidth']),
+      dashed: serializer.fromJson<bool?>(json['dashed']),
+      height: serializer.fromJson<double?>(json['height']),
     );
   }
   @override
@@ -2150,6 +2245,9 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
       'color': serializer.toJson<int>(color),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'uid': serializer.toJson<String?>(uid),
+      'strokeWidth': serializer.toJson<double?>(strokeWidth),
+      'dashed': serializer.toJson<bool?>(dashed),
+      'height': serializer.toJson<double?>(height),
     };
   }
 
@@ -2161,6 +2259,9 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
     int? color,
     DateTime? createdAt,
     Value<String?> uid = const Value.absent(),
+    Value<double?> strokeWidth = const Value.absent(),
+    Value<bool?> dashed = const Value.absent(),
+    Value<double?> height = const Value.absent(),
   }) => MapGraphicRow(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -2169,6 +2270,9 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
     color: color ?? this.color,
     createdAt: createdAt ?? this.createdAt,
     uid: uid.present ? uid.value : this.uid,
+    strokeWidth: strokeWidth.present ? strokeWidth.value : this.strokeWidth,
+    dashed: dashed.present ? dashed.value : this.dashed,
+    height: height.present ? height.value : this.height,
   );
   MapGraphicRow copyWithCompanion(MapGraphicsCompanion data) {
     return MapGraphicRow(
@@ -2181,6 +2285,11 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
       color: data.color.present ? data.color.value : this.color,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       uid: data.uid.present ? data.uid.value : this.uid,
+      strokeWidth: data.strokeWidth.present
+          ? data.strokeWidth.value
+          : this.strokeWidth,
+      dashed: data.dashed.present ? data.dashed.value : this.dashed,
+      height: data.height.present ? data.height.value : this.height,
     );
   }
 
@@ -2193,14 +2302,27 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
           ..write('pointsJson: $pointsJson, ')
           ..write('color: $color, ')
           ..write('createdAt: $createdAt, ')
-          ..write('uid: $uid')
+          ..write('uid: $uid, ')
+          ..write('strokeWidth: $strokeWidth, ')
+          ..write('dashed: $dashed, ')
+          ..write('height: $height')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, name, type, pointsJson, color, createdAt, uid);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    type,
+    pointsJson,
+    color,
+    createdAt,
+    uid,
+    strokeWidth,
+    dashed,
+    height,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2211,7 +2333,10 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
           other.pointsJson == this.pointsJson &&
           other.color == this.color &&
           other.createdAt == this.createdAt &&
-          other.uid == this.uid);
+          other.uid == this.uid &&
+          other.strokeWidth == this.strokeWidth &&
+          other.dashed == this.dashed &&
+          other.height == this.height);
 }
 
 class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
@@ -2222,6 +2347,9 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
   final Value<int> color;
   final Value<DateTime> createdAt;
   final Value<String?> uid;
+  final Value<double?> strokeWidth;
+  final Value<bool?> dashed;
+  final Value<double?> height;
   const MapGraphicsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -2230,6 +2358,9 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
     this.color = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.uid = const Value.absent(),
+    this.strokeWidth = const Value.absent(),
+    this.dashed = const Value.absent(),
+    this.height = const Value.absent(),
   });
   MapGraphicsCompanion.insert({
     this.id = const Value.absent(),
@@ -2239,6 +2370,9 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
     required int color,
     required DateTime createdAt,
     this.uid = const Value.absent(),
+    this.strokeWidth = const Value.absent(),
+    this.dashed = const Value.absent(),
+    this.height = const Value.absent(),
   }) : name = Value(name),
        type = Value(type),
        pointsJson = Value(pointsJson),
@@ -2252,6 +2386,9 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
     Expression<int>? color,
     Expression<DateTime>? createdAt,
     Expression<String>? uid,
+    Expression<double>? strokeWidth,
+    Expression<bool>? dashed,
+    Expression<double>? height,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -2261,6 +2398,9 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
       if (color != null) 'color': color,
       if (createdAt != null) 'created_at': createdAt,
       if (uid != null) 'uid': uid,
+      if (strokeWidth != null) 'stroke_width': strokeWidth,
+      if (dashed != null) 'dashed': dashed,
+      if (height != null) 'height': height,
     });
   }
 
@@ -2272,6 +2412,9 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
     Value<int>? color,
     Value<DateTime>? createdAt,
     Value<String?>? uid,
+    Value<double?>? strokeWidth,
+    Value<bool?>? dashed,
+    Value<double?>? height,
   }) {
     return MapGraphicsCompanion(
       id: id ?? this.id,
@@ -2281,6 +2424,9 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
       color: color ?? this.color,
       createdAt: createdAt ?? this.createdAt,
       uid: uid ?? this.uid,
+      strokeWidth: strokeWidth ?? this.strokeWidth,
+      dashed: dashed ?? this.dashed,
+      height: height ?? this.height,
     );
   }
 
@@ -2308,6 +2454,15 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
     if (uid.present) {
       map['uid'] = Variable<String>(uid.value);
     }
+    if (strokeWidth.present) {
+      map['stroke_width'] = Variable<double>(strokeWidth.value);
+    }
+    if (dashed.present) {
+      map['dashed'] = Variable<bool>(dashed.value);
+    }
+    if (height.present) {
+      map['height'] = Variable<double>(height.value);
+    }
     return map;
   }
 
@@ -2320,7 +2475,10 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
           ..write('pointsJson: $pointsJson, ')
           ..write('color: $color, ')
           ..write('createdAt: $createdAt, ')
-          ..write('uid: $uid')
+          ..write('uid: $uid, ')
+          ..write('strokeWidth: $strokeWidth, ')
+          ..write('dashed: $dashed, ')
+          ..write('height: $height')
           ..write(')'))
         .toString();
   }
@@ -5780,6 +5938,9 @@ typedef $$MapGraphicsTableCreateCompanionBuilder =
       required int color,
       required DateTime createdAt,
       Value<String?> uid,
+      Value<double?> strokeWidth,
+      Value<bool?> dashed,
+      Value<double?> height,
     });
 typedef $$MapGraphicsTableUpdateCompanionBuilder =
     MapGraphicsCompanion Function({
@@ -5790,6 +5951,9 @@ typedef $$MapGraphicsTableUpdateCompanionBuilder =
       Value<int> color,
       Value<DateTime> createdAt,
       Value<String?> uid,
+      Value<double?> strokeWidth,
+      Value<bool?> dashed,
+      Value<double?> height,
     });
 
 class $$MapGraphicsTableFilterComposer
@@ -5833,6 +5997,21 @@ class $$MapGraphicsTableFilterComposer
 
   ColumnFilters<String> get uid => $composableBuilder(
     column: $table.uid,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get strokeWidth => $composableBuilder(
+    column: $table.strokeWidth,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get dashed => $composableBuilder(
+    column: $table.dashed,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get height => $composableBuilder(
+    column: $table.height,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -5880,6 +6059,21 @@ class $$MapGraphicsTableOrderingComposer
     column: $table.uid,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<double> get strokeWidth => $composableBuilder(
+    column: $table.strokeWidth,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get dashed => $composableBuilder(
+    column: $table.dashed,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get height => $composableBuilder(
+    column: $table.height,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$MapGraphicsTableAnnotationComposer
@@ -5913,6 +6107,17 @@ class $$MapGraphicsTableAnnotationComposer
 
   GeneratedColumn<String> get uid =>
       $composableBuilder(column: $table.uid, builder: (column) => column);
+
+  GeneratedColumn<double> get strokeWidth => $composableBuilder(
+    column: $table.strokeWidth,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get dashed =>
+      $composableBuilder(column: $table.dashed, builder: (column) => column);
+
+  GeneratedColumn<double> get height =>
+      $composableBuilder(column: $table.height, builder: (column) => column);
 }
 
 class $$MapGraphicsTableTableManager
@@ -5953,6 +6158,9 @@ class $$MapGraphicsTableTableManager
                 Value<int> color = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<String?> uid = const Value.absent(),
+                Value<double?> strokeWidth = const Value.absent(),
+                Value<bool?> dashed = const Value.absent(),
+                Value<double?> height = const Value.absent(),
               }) => MapGraphicsCompanion(
                 id: id,
                 name: name,
@@ -5961,6 +6169,9 @@ class $$MapGraphicsTableTableManager
                 color: color,
                 createdAt: createdAt,
                 uid: uid,
+                strokeWidth: strokeWidth,
+                dashed: dashed,
+                height: height,
               ),
           createCompanionCallback:
               ({
@@ -5971,6 +6182,9 @@ class $$MapGraphicsTableTableManager
                 required int color,
                 required DateTime createdAt,
                 Value<String?> uid = const Value.absent(),
+                Value<double?> strokeWidth = const Value.absent(),
+                Value<bool?> dashed = const Value.absent(),
+                Value<double?> height = const Value.absent(),
               }) => MapGraphicsCompanion.insert(
                 id: id,
                 name: name,
@@ -5979,6 +6193,9 @@ class $$MapGraphicsTableTableManager
                 color: color,
                 createdAt: createdAt,
                 uid: uid,
+                strokeWidth: strokeWidth,
+                dashed: dashed,
+                height: height,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

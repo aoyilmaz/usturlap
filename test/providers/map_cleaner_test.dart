@@ -10,6 +10,7 @@ import 'package:kerteriz/domain/models/clear_item.dart';
 import 'package:kerteriz/domain/models/map_graphic.dart';
 import 'package:kerteriz/domain/models/range_line.dart';
 import 'package:kerteriz/domain/models/sensor_fov.dart';
+import 'package:kerteriz/domain/usecases/viewshed.dart';
 import 'package:kerteriz/providers/bloodhound_providers.dart';
 import 'package:kerteriz/providers/bullseye_providers.dart';
 import 'package:kerteriz/providers/graphic_providers.dart';
@@ -19,6 +20,7 @@ import 'package:kerteriz/providers/nav_providers.dart';
 import 'package:kerteriz/providers/overlay_providers.dart';
 import 'package:kerteriz/providers/range_line_providers.dart';
 import 'package:kerteriz/providers/tool_providers.dart';
+import 'package:kerteriz/providers/viewshed_providers.dart';
 import 'package:kerteriz/providers/waypoint_providers.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -193,6 +195,24 @@ void main() {
       await c.read(attachmentRepositoryProvider).watchFor('sn1').first,
       hasLength(1),
     );
+  });
+
+  test('görüş alanı temizlenir, geri alınır', () async {
+    final grid = Viewshed.compute(
+      const ViewshedParams(observer: p1, radius: 200),
+      (lat, lon) => 10,
+    );
+    final state = ViewshedState(
+      params: const ViewshedParams(observer: p1, radius: 200),
+      grid: grid,
+    );
+    c.read(viewshedProvider.notifier).restore(state);
+    expect(targets().count(ClearItem.viewshed), 1);
+    final cleaner = c.read(mapCleanerProvider);
+    final s = await cleaner.clear({ClearItem.viewshed});
+    expect(c.read(viewshedProvider), isNull);
+    await cleaner.undo(s);
+    expect(identical(c.read(viewshedProvider), state), isTrue);
   });
 
   test('Overlay yöneticisinde gizlenmiş nokta temizlenmez', () async {

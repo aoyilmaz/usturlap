@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -115,5 +116,65 @@ void main() {
         (png[o] << 24) | (png[o + 1] << 16) | (png[o + 2] << 8) | png[o + 3];
     expect(be32(16), 120);
     expect(be32(20), 120);
+  });
+
+  test('resim katmanı GeoJSON\'a girmez, ayrı listede', () {
+    final im = MapImage(
+      id: 'viewshed',
+      north: 1,
+      south: 0,
+      east: 1,
+      west: 0,
+      width: 2,
+      height: 1,
+      pixels: Uint8List(8),
+    );
+    final d = MapboxOverlayData.from([
+      im,
+      const MapLine(points: [LatLng(0, 0), LatLng(1, 1)], color: Colors.red),
+    ]);
+    expect(d.images, [im]);
+    expect(d.areas, contains('"features":[]'));
+    expect(d.lines, contains('LineString'));
+  });
+
+  test('kesikli çizgi ve kenar "dashed" özelliği taşır', () {
+    final d = MapboxOverlayData.from([
+      const MapLine(
+        points: [LatLng(0, 0), LatLng(1, 1)],
+        color: Colors.red,
+        dashed: true,
+      ),
+      const MapLine(points: [LatLng(0, 0), LatLng(1, 0)], color: Colors.red),
+      const MapArea(
+        points: [LatLng(0, 0), LatLng(1, 0), LatLng(1, 1)],
+        fillColor: Colors.red,
+        strokeColor: Colors.red,
+        dashed: true,
+      ),
+    ]);
+    final lines = _features(d.lines);
+    expect(lines[0]['properties']['dashed'], true);
+    expect((lines[1]['properties'] as Map).containsKey('dashed'), isFalse);
+    expect(_features(d.areas).single['properties']['dashed'], true);
+  });
+
+  test('3B alan "height" özelliği taşır; düz alanda yok', () {
+    final d = MapboxOverlayData.from([
+      const MapArea(
+        points: [LatLng(0, 0), LatLng(1, 0), LatLng(1, 1)],
+        fillColor: Colors.red,
+        strokeColor: Colors.red,
+        height: 25,
+      ),
+      const MapArea(
+        points: [LatLng(0, 0), LatLng(1, 0), LatLng(1, 1)],
+        fillColor: Colors.red,
+        strokeColor: Colors.red,
+      ),
+    ]);
+    final areas = _features(d.areas);
+    expect(areas[0]['properties']['height'], 25);
+    expect((areas[1]['properties'] as Map).containsKey('height'), isFalse);
   });
 }

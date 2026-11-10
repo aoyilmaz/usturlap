@@ -41,7 +41,7 @@ void main() {
 
   Future<void> expectUpgraded(AppDatabase db) async {
     final v = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(v.read<int>('user_version'), 12);
+    expect(v.read<int>('user_version'), 14);
     for (final t in ['waypoints', 'map_graphics', 'tracks', 'route_plans']) {
       final empty = await db
           .customSelect('SELECT count(*) AS n FROM $t WHERE uid IS NULL')

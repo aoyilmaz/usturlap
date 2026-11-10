@@ -38,7 +38,7 @@ void main() {
     );
     addTearDown(db.close);
     final v = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(v.read<int>('user_version'), 12);
+    expect(v.read<int>('user_version'), 14);
     final rings = RangeRingRepository(db);
     await rings.add(
       name: 'HALKA-1',

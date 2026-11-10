@@ -14,9 +14,10 @@ class RouteProfileSample {
   final double? elevation;
 }
 
-/// Rota boyunca yükseklik profili (ATAK Routes, kılavuz s.15–19): toplam
-/// çıkış / iniş, en yüksek / en alçak. Yükseklik kaynağı dışarıdan verilir
-/// (arazi verisi), hesap saf Dart.
+/// Bir rota ya da çizgi boyunca yükseklik profili (ATAK Routes s.15–19,
+/// Elevation Tools s.48): toplam çıkış / iniş, en yüksek / en alçak, en dik
+/// çıkış / iniş eğimi. Yükseklik kaynağı dışarıdan verilir (arazi verisi),
+/// hesap saf Dart.
 class RouteProfile {
   const RouteProfile(this.samples, this.pointDistances);
 
@@ -53,6 +54,32 @@ class RouteProfile {
     }
     return total;
   }
+
+  /// Ardışık bilinen örnekler arasındaki eğimler (%; + çıkış), örnek
+  /// çiftinin başlangıç mesafesiyle.
+  List<(double distance, double grade)> get grades {
+    final out = <(double, double)>[];
+    RouteProfileSample? prev;
+    for (final s in samples) {
+      if (s.elevation == null) {
+        prev = null; // boşluğun üstünden eğim hesaplanmaz
+        continue;
+      }
+      final p = prev;
+      if (p != null && s.distance - p.distance >= 1) {
+        out.add((
+          p.distance,
+          (s.elevation! - p.elevation!) / (s.distance - p.distance) * 100,
+        ));
+      }
+      prev = s;
+    }
+    return out;
+  }
+
+  /// En dik çıkış (%, ≥ 0) ve en dik iniş (%, ≤ 0).
+  double get maxClimb => grades.fold(0.0, (m, g) => math.max(m, g.$2));
+  double get maxDescent => grades.fold(0.0, (m, g) => math.min(m, g.$2));
 
   /// Örnek aralığı: uzunluğun 1/200'ü, 20 m ile 500 m arası (SRTM ~30 m).
   static double defaultStep(double length) => (length / 200).clamp(20, 500);

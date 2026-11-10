@@ -9,6 +9,15 @@ enum ToolMode {
   sector, // merkez + yarıçap + iki kerteriz
   lineOfSight, // Görüş hattı analizi
   rangeRings, // merkez + yarıçap → R, 2R, 3R menzil halkaları (ATAK R&B Circle)
+  // Çizim araçları (ATAK Drawing Tools, kılavuz s.40–42):
+  polyline, // çoklu nokta çizgi (2 noktada da çizim; R&B değil)
+  circle, // merkez + kenar noktası
+  rectangle, // iki çapraz köşe
+  freehand; // parmakla serbest çizim (dokunuş değil, sürükleme)
+
+  /// Yalnız çizim çubuğunda olan araçlar (alan iki çubukta da var).
+  bool get isDrawing =>
+      this == polyline || this == circle || this == rectangle || this == freehand;
 }
 
 class ToolState {
@@ -59,11 +68,15 @@ class ToolNotifier extends Notifier<ToolState> {
   void addPoint(LatLng p, {String? ref}) {
     if (state.mode == ToolMode.none) return;
     if (state.mode == ToolMode.sector && state.points.length >= 3) return;
+    // Serbest çizim dokunuşla değil, sürüklemeyle ([setPath]).
+    if (state.mode == ToolMode.freehand) return;
     final refs = [
       for (var i = 0; i < state.points.length; i++) state.refAt(i),
     ];
-    // Menzil halkası: merkez sabit, sonraki dokunuşlar yarıçapı değiştirir.
-    if (state.mode == ToolMode.rangeRings && state.points.length >= 2) {
+    // Menzil halkası / daire / dikdörtgen: ilk nokta sabit, sonraki
+    // dokunuşlar ikinciyi (yarıçap / karşı köşe) değiştirir.
+    const twoPoint = {ToolMode.rangeRings, ToolMode.circle, ToolMode.rectangle};
+    if (twoPoint.contains(state.mode) && state.points.length >= 2) {
       state = state.copyWith(
         points: [state.points.first, p],
         refs: [refs.first, ref],
@@ -91,6 +104,12 @@ class ToolNotifier extends Notifier<ToolState> {
 
   /// Aracı tamamen kapat.
   void reset() => state = const ToolState();
+
+  /// Serbest çizim: parmak izinin konumları (öncekinin yerine).
+  void setPath(List<LatLng> path) {
+    if (state.mode != ToolMode.freehand) return;
+    state = state.copyWith(points: List.unmodifiable(path), refs: const []);
+  }
 
   /// Önceki durumu geri yükler ("Haritayı temizle" → Geri al).
   void restore(ToolState s) => state = s;

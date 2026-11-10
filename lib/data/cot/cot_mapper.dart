@@ -81,17 +81,20 @@ class CotMapper {
     );
   }
 
+  /// Daire ve dikdörtgen de kapalı serbest çizim (çokgen) olarak gider;
+  /// ATAK'ın `u-d-c-c` / `u-d-r` ayrıntı yapısı henüz doğrulanmadı.
   CotEvent fromGraphic(MapGraphic g) {
-    final closed = g.type == GraphicType.area;
+    final closed = g.closed;
+    final outline = g.outline;
     final pts = [
-      ...g.points,
-      if (closed && g.points.isNotEmpty) g.points.first,
+      ...outline,
+      if (closed && outline.isNotEmpty) outline.first,
     ];
     final d = _detail([
       for (final p in pts)
         _el('link', {'point': '${p.latitude},${p.longitude}'}),
       _el('strokeColor', {'value': '${toSigned(g.colorValue)}'}),
-      _el('strokeWeight', {'value': '3.0'}),
+      _el('strokeWeight', {'value': g.strokeWidth.toStringAsFixed(1)}),
       // Alan yarı saydam dolgulu (Pusula çiziminde de öyle), çizgi dolgusuz.
       _el('fillColor', {
         'value':
@@ -109,7 +112,7 @@ class CotMapper {
       uid: g.uid,
       type: CotType.freeform,
       how: 'h-e',
-      at: _centroid(g.points),
+      at: _centroid(outline),
       detail: d,
     );
   }
@@ -208,6 +211,11 @@ class CotMapper {
           int.tryParse(e.child('strokeColor')?.getAttribute('value') ?? '') ??
               toSigned(0xFFFFFFFF),
         ),
+        strokeWidth:
+            double.tryParse(
+              e.child('strokeWeight')?.getAttribute('value') ?? '',
+            )?.clamp(1.0, 12.0) ??
+            MapGraphic.defaultStrokeWidth,
         createdAt: e.time,
       );
     }

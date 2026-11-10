@@ -13,45 +13,93 @@ import '../shell/adaptive_sheet.dart';
 /// Arazi yüksekliği kaynağı (testte sahtesi takılır). null = veri yok.
 typedef ElevationAt = Future<double?> Function(LatLng p);
 
-final routeElevationAtProvider = Provider<ElevationAt>((ref) {
+/// Ara değerli (çift doğrusal) arazi yüksekliği.
+final elevationAtProvider = Provider<ElevationAt>((ref) {
   final parser = ref.watch(hgtParserProvider);
   return (p) async {
-    final v = await parser.getElevation(p.latitude, p.longitude);
-    // SRTM boşluk değeri (-32768): veri yok.
-    return v == null || v < -500 ? null : v.toDouble();
+    final v = await parser.elevationAt(p.latitude, p.longitude);
+    // SRTM boşluk değeri: veri yok.
+    return v == null || v < -500 ? null : v;
   };
 });
 
-/// Rota boyunca yükseklik profili: grafik, kontrol noktaları, toplam çıkış /
-/// iniş, en yüksek / en alçak. Veri cihazdaki arazi dosyalarından.
-Future<void> showRouteProfilePanel(BuildContext context, RoutePlan route) {
+/// Eğim rengi: < %10 yeşil, < %20 sarı, üstü kırmızı (çıkış ya da iniş).
+Color gradeColor(double grade) {
+  final g = grade.abs();
+  if (g < 10) return Colors.lightGreenAccent;
+  if (g < 20) return Colors.amber;
+  return Colors.redAccent;
+}
+
+/// "%18" / "−%12" (Türkçede yüzde işareti önde).
+String fmtGrade(double grade) =>
+    '${grade < 0 ? '−' : ''}%${grade.abs().round()}';
+
+/// Rota boyunca yükseklik profili (noktalar rota adlarıyla).
+Future<void> showRouteProfilePanel(BuildContext context, RoutePlan route) =>
+    showElevationProfilePanel(
+      context,
+      id: 'route-profile:${route.uid}',
+      title: '${route.name}: yükseklik profili',
+      points: route.points,
+      pointNames: [
+        for (var i = 0; i < route.points.length; i++) route.nameOf(i),
+      ],
+    );
+
+/// Bir çizgi boyunca yükseklik profili (ATAK Elevation Tools, kılavuz
+/// s.48): grafik (eğime göre renkli), toplam çıkış / iniş, en yüksek /
+/// en alçak, en dik çıkış / iniş. Veri cihazdaki arazi dosyalarından.
+Future<void> showElevationProfilePanel(
+  BuildContext context, {
+  required String title,
+  required List<LatLng> points,
+  List<String>? pointNames,
+  String? id,
+}) {
   return showAdaptiveSheet<void>(
     context: context,
-    id: 'route-profile:${route.uid}',
+    id: id ?? 'profile',
     isScrollControlled: true,
-    builder: (_) => RouteProfilePanel(route: route),
+    builder: (_) => ElevationProfilePanel(
+      title: title,
+      points: points,
+      pointNames: pointNames,
+    ),
   );
 }
 
-class RouteProfilePanel extends ConsumerStatefulWidget {
-  const RouteProfilePanel({super.key, required this.route});
+class ElevationProfilePanel extends ConsumerStatefulWidget {
+  const ElevationProfilePanel({
+    super.key,
+    required this.title,
+    required this.points,
+    this.pointNames,
+  });
 
-  final RoutePlan route;
+  final String title;
+  final List<LatLng> points;
+
+  /// Köşe adları (grafikte dikey çizgilerin üstünde); yoksa 1, 2, 3…
+  final List<String>? pointNames;
 
   @override
-  ConsumerState<RouteProfilePanel> createState() => _RouteProfilePanelState();
+  ConsumerState<ElevationProfilePanel> createState() =>
+      _ElevationProfilePanelState();
 }
 
-class _RouteProfilePanelState extends ConsumerState<RouteProfilePanel> {
+class _ElevationProfilePanelState extends ConsumerState<ElevationProfilePanel> {
   late final Future<RouteProfile> _profile = RouteProfile.build(
-    widget.route.points,
-    ref.read(routeElevationAtProvider),
+    widget.points,
+    ref.read(elevationAtProvider),
   );
 
   @override
   Widget build(BuildContext context) {
-    final r = widget.route;
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    final names =
+        widget.pointNames ??
+        [for (var i = 0; i < widget.points.length; i++) '${i + 1}'];
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
       child: Column(
@@ -59,7 +107,7 @@ class _RouteProfilePanelState extends ConsumerState<RouteProfilePanel> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${r.name}: yükseklik profili',
+            widget.title,
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
@@ -81,8 +129,8 @@ class _RouteProfilePanelState extends ConsumerState<RouteProfilePanel> {
               }
               if (!p.hasData) {
                 return Text(
-                  'Bu rota için arazi verisi yok. Yükseklik dosyaları '
-                  '(HGT) cihaza yüklenince profil çıkar.',
+                  'Bu çizgi için arazi verisi yok. Yükseklik dosyaları '
+                  '(≡ → Harita → Yükseklik verisi) yüklenince profil çıkar.',
                   style: TextStyle(color: muted),
                 );
               }
@@ -96,7 +144,9 @@ class _RouteProfilePanelState extends ConsumerState<RouteProfilePanel> {
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   Text(
-                    'Uzunluk ${GeoMath.fmtDistance(p.length)}',
+                    'En dik çıkış ${fmtGrade(p.maxClimb)} · '
+                    'en dik iniş ${fmtGrade(p.maxDescent)} · '
+                    'uzunluk ${GeoMath.fmtDistance(p.length)}',
                     style: TextStyle(color: muted, fontSize: 12),
                   ),
                   const SizedBox(height: 10),
@@ -106,13 +156,17 @@ class _RouteProfilePanelState extends ConsumerState<RouteProfilePanel> {
                     child: CustomPaint(
                       painter: RouteProfilePainter(
                         profile: p,
-                        pointNames: [
-                          for (var i = 0; i < r.points.length; i++) r.nameOf(i),
-                        ],
+                        pointNames: names,
                         line: Theme.of(context).colorScheme.primary,
                         text: muted,
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Renk eğimi gösterir: yeşil < %10, sarı < %20, '
+                    'kırmızı daha dik.',
+                    style: TextStyle(color: muted, fontSize: 11),
                   ),
                 ],
               );
@@ -174,13 +228,27 @@ class RouteProfilePainter extends CustomPainter {
       ..lineTo(left, top + h)
       ..close();
     canvas.drawPath(fill, Paint()..color = line.withValues(alpha: 0.15));
-    canvas.drawPath(
-      curve,
-      Paint()
-        ..color = line
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
-    );
+    // Çizgi parça parça, eğime göre renkli.
+    RouteProfileSample? prev;
+    for (final s in profile.samples) {
+      final e = s.elevation;
+      final p = prev;
+      if (e != null && p != null) {
+        final grade =
+            (e - p.elevation!) /
+            (s.distance - p.distance).clamp(1, double.infinity) *
+            100;
+        canvas.drawLine(
+          at(p.distance, p.elevation!),
+          at(s.distance, e),
+          Paint()
+            ..color = gradeColor(grade)
+            ..strokeWidth = 2.5
+            ..strokeCap = StrokeCap.round,
+        );
+      }
+      prev = e == null ? null : s;
+    }
 
     void label(String s, Offset o, {bool center = false}) {
       final tp = TextPainter(

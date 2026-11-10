@@ -13,6 +13,7 @@ import '../../providers/bullseye_providers.dart';
 import '../../providers/elevation_providers.dart';
 import '../../providers/settings_providers.dart';
 import '../../providers/waypoint_providers.dart';
+import '../shell/adaptive_sheet.dart';
 import '../tools/bullseye_panel.dart';
 import 'fov_editor.dart';
 
@@ -45,6 +46,7 @@ class WaypointDetailPanel extends ConsumerWidget {
     required this.onEdit,
     required this.onShare,
     required this.onDelete,
+    this.onViewshed,
   });
 
   /// Açılıştaki hali (liste gelene kadar ve nokta silinirse).
@@ -54,6 +56,9 @@ class WaypointDetailPanel extends ConsumerWidget {
   final ValueChanged<Waypoint> onEdit;
   final ValueChanged<Waypoint> onShare;
   final ValueChanged<Waypoint> onDelete;
+
+  /// Bu noktadan görüş alanı (panel bunun üstüne açılır).
+  final ValueChanged<Waypoint>? onViewshed;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -120,6 +125,12 @@ class WaypointDetailPanel extends ConsumerWidget {
               icon: const Icon(Icons.ios_share),
               label: const Text('Paylaş'),
             ),
+            if (onViewshed != null)
+              OutlinedButton.icon(
+                onPressed: () => openStacked(context, () => onViewshed!(wp)),
+                icon: const Icon(Icons.visibility),
+                label: const Text('Görüş alanı'),
+              ),
             OutlinedButton.icon(
               // Tek bullseye: varsa yerini alır. Nokta taşınınca o da gider.
               onPressed: () {

@@ -38,6 +38,19 @@ void main() {
     expect(p.samples.where((s) => s.elevation == null), isNotEmpty);
   });
 
+  test('eğimler: boşluk üstünden hesaplanmaz; en dik çıkış / iniş', () async {
+    // 0–500 m %10 çık, 500–1000 m %30 in; 600–700 m arası veri yok.
+    final p = await RouteProfile.build([a, b], (pt) async {
+      final d = GeoMath.distance(a, pt);
+      if (d > 590 && d < 710) return null;
+      return d <= 500 ? 100 + d * 0.1 : 150 - (d - 500) * 0.3;
+    }, step: 100);
+    expect(p.maxClimb, closeTo(10, 0.5));
+    expect(p.maxDescent, closeTo(-30, 0.5));
+    // 500 → 600 tamam; 600 → 700 boşluk (çift yok).
+    expect(p.grades.where((g) => g.$1 > 590 && g.$1 < 710), isEmpty);
+  });
+
   test('veri yoksa hasData false', () async {
     final p = await RouteProfile.build([a, b], (_) async => null);
     expect(p.hasData, isFalse);

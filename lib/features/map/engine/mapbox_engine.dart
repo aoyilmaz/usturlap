@@ -148,6 +148,16 @@ class MapboxEngineController implements MapEngineController {
   }
 
   @override
+  Future<List<LatLng>?> latLngsAt(List<Offset> points) async {
+    final map = _map;
+    if (map == null) return null;
+    final pts = await map.coordinatesForPixels([
+      for (final o in points) ScreenCoordinate(x: o.dx, y: o.dy),
+    ]);
+    return [for (final p in pts) _ll(p)];
+  }
+
+  @override
   Future<Offset?> screenPointOf(LatLng point) async {
     final map = _map;
     if (map == null) return null;
@@ -321,6 +331,9 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
   bool _styleReady = false;
   bool _layersAdded = false;
   final Set<String> _imagesInStyle = {};
+
+  /// Stile eklenmiş resim katmanları (kaynak id → son gönderilen).
+  final Map<String, MapImage> _imageLayers = {};
   MapboxOverlayData? _data;
   double _dpr = 3;
 
@@ -366,6 +379,7 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
     _styleGen++;
     _layersAdded = false;
     _imagesInStyle.clear();
+    _imageLayers.clear();
     await _scheduleSync();
     try {
       await map.triggerRepaint();
@@ -505,6 +519,7 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
     _styleGen++;
     _layersAdded = false;
     _imagesInStyle.clear();
+    _imageLayers.clear();
     try {
       if (widget.terrain3d) await _applyTerrain(true, animate: false);
       if (widget.nightMode) await _applyNight();
@@ -605,6 +620,7 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
       // beklenmeden çizgiler geri gelsin).
       _layersAdded = false;
       _imagesInStyle.clear();
+      _imageLayers.clear();
       if (!_retryScheduled && mounted) {
         _retryScheduled = true;
         Future<void>.delayed(const Duration(seconds: 1), () {
@@ -653,6 +669,9 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
       await map.setStyleSourceProperty(_srcMarkers, 'data', data.markers);
     }
 
+    // 2b) Resim katmanları (görüş alanı vb.): çizimlerin altında.
+    await _syncImages(map, data.images);
+
     // 3) Değişken resimler (ör. R&B etiketi "045° · 1,2 km"): artık hiçbir
     // işaretçinin kullanmadığı eski sürümler stilden ve önbellekten atılır;
     // yoksa konum değiştikçe bellek büyür. Veri güncellendikten SONRA:
@@ -668,6 +687,77 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
       }
     }
     _c._png.removeWhere((k, _) => stale(k));
+  }
+
+  static String _imgSource(String id) => 'pz-img-$id';
+  static String _imgLayer(String id) => 'pz-img-layer-$id';
+
+  /// Resim katmanlarını istenenle eşitler: yeni → kaynak + raster katman
+  /// (çizimlerin altına), değişen → pikseller / köşeler güncellenir,
+  /// istenmeyen → kaldırılır.
+  Future<void> _syncImages(MapboxMap map, List<MapImage> images) async {
+    final want = {for (final im in images) im.id: im};
+    for (final id in [..._imageLayers.keys]) {
+      if (want.containsKey(id)) continue;
+      _imageLayers.remove(id);
+      try {
+        if (await map.styleLayerExists(_imgLayer(id))) {
+          await map.removeStyleLayer(_imgLayer(id));
+        }
+        if (await map.styleSourceExists(_imgSource(id))) {
+          await map.removeStyleSource(_imgSource(id));
+        }
+      } catch (e) {
+        debugPrint('Mapbox resim katmanı silme hatası ($id): $e');
+      }
+    }
+    for (final im in images) {
+      final old = _imageLayers[im.id];
+      if (identical(old, im)) continue;
+      final src = _imgSource(im.id);
+      final corners = [
+        [im.west, im.north],
+        [im.east, im.north],
+        [im.east, im.south],
+        [im.west, im.south],
+      ];
+      if (old == null) {
+        if (!await map.styleSourceExists(src)) {
+          await map.addSource(ImageSource(id: src, coordinates: corners));
+        }
+        if (!await map.styleLayerExists(_imgLayer(im.id))) {
+          final below = await map.styleLayerExists('pz-areas-fill');
+          await map.addStyleLayer(
+            jsonEncode({
+              'id': _imgLayer(im.id),
+              'type': 'raster',
+              'source': src,
+              'paint': {
+                'raster-opacity': im.opacity,
+                'raster-fade-duration': 0,
+              },
+            }),
+            below ? LayerPosition(below: 'pz-areas-fill') : null,
+          );
+        }
+      } else {
+        await map.setStyleSourceProperty(src, 'coordinates', corners);
+        await map.setStyleLayerProperty(
+          _imgLayer(im.id),
+          'raster-opacity',
+          im.opacity,
+        );
+      }
+      await map.updateImageForSource(
+        src,
+        StyleImage.rgba(
+          width: im.width,
+          height: im.height,
+          pixels: im.pixels,
+        ),
+      );
+      _imageLayers[im.id] = im;
+    }
   }
 
   Future<void> _addSourcesAndLayers(
@@ -692,6 +782,8 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
       'id': 'pz-areas-fill',
       'type': 'fill',
       'source': _srcAreas,
+      // Yükseklikli (3B) alanları fill-extrusion katmanı çizer.
+      'filter': ['!', ['has', 'height']],
       'layout': {
         'fill-sort-key': ['get', 'order'],
       },
@@ -699,10 +791,29 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
         'fill-color': ['get', 'fill'],
       },
     });
+    // 3B şekiller (yükseklikli alanlar): harita eğikken kutu olarak
+    // yükselir. Düz dolgu katmanı bunları çizmez.
+    await layer({
+      'id': 'pz-areas-3d',
+      'type': 'fill-extrusion',
+      'source': _srcAreas,
+      'filter': ['has', 'height'],
+      'paint': {
+        'fill-extrusion-color': ['get', 'stroke'],
+        'fill-extrusion-height': ['get', 'height'],
+        'fill-extrusion-base': 0,
+        'fill-extrusion-opacity': 0.6,
+      },
+    });
+    // Kesikli kenar / çizgi: dasharray öğe başına verilemediği için ayrı
+    // katman ("dashed" özelliğine göre süzülür).
+    const solid = ['!=', ['get', 'dashed'], true];
+    const dashed = ['==', ['get', 'dashed'], true];
     await layer({
       'id': 'pz-areas-line',
       'type': 'line',
       'source': _srcAreas,
+      'filter': solid,
       'layout': {'line-join': 'round'},
       'paint': {
         'line-color': ['get', 'stroke'],
@@ -710,9 +821,22 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
       },
     });
     await layer({
+      'id': 'pz-areas-line-dashed',
+      'type': 'line',
+      'source': _srcAreas,
+      'filter': dashed,
+      'layout': {'line-join': 'round'},
+      'paint': {
+        'line-color': ['get', 'stroke'],
+        'line-width': ['get', 'width'],
+        'line-dasharray': [2, 1.5],
+      },
+    });
+    await layer({
       'id': 'pz-lines',
       'type': 'line',
       'source': _srcLines,
+      'filter': solid,
       'layout': {
         'line-join': 'round',
         'line-cap': 'round',
@@ -721,6 +845,21 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
       'paint': {
         'line-color': ['get', 'color'],
         'line-width': ['get', 'width'],
+      },
+    });
+    await layer({
+      'id': 'pz-lines-dashed',
+      'type': 'line',
+      'source': _srcLines,
+      'filter': dashed,
+      'layout': {
+        'line-join': 'round',
+        'line-sort-key': ['get', 'order'],
+      },
+      'paint': {
+        'line-color': ['get', 'color'],
+        'line-width': ['get', 'width'],
+        'line-dasharray': [2, 1.5],
       },
     });
     await layer({

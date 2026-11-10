@@ -10,7 +10,13 @@ import 'map_types.dart';
 /// Üç kaynak, sabit katman sırasıyla çizilir: alanlar (+daireler) < çizgiler <
 /// işaretçiler. Aynı kaynak içinde liste sırası korunur (`order`).
 class MapboxOverlayData {
-  MapboxOverlayData._(this.areas, this.lines, this.markers, this.markerById);
+  MapboxOverlayData._(
+    this.areas,
+    this.lines,
+    this.markers,
+    this.markerById, [
+    this.images = const [],
+  ]);
 
   /// FeatureCollection JSON metinleri.
   final String areas;
@@ -20,6 +26,9 @@ class MapboxOverlayData {
   /// İşaretçi id → işaretçi (dokunma ve resim üretimi için).
   final Map<String, MapMarker> markerById;
 
+  /// Resim katmanları (GeoJSON değil; ayrı resim kaynağı + raster katman).
+  final List<MapImage> images;
+
   static const _emptyFc = '{"type":"FeatureCollection","features":[]}';
 
   factory MapboxOverlayData.from(List<MapOverlay> overlays) {
@@ -27,6 +36,7 @@ class MapboxOverlayData {
     final lines = <Map<String, Object?>>[];
     final markers = <Map<String, Object?>>[];
     final byId = <String, MapMarker>{};
+    final images = <MapImage>[];
 
     for (var i = 0; i < overlays.length; i++) {
       switch (overlays[i]) {
@@ -39,6 +49,8 @@ class MapboxOverlayData {
               'stroke': mapboxColor(a.strokeColor),
               'width': a.strokeWidth,
               'order': i,
+              if (a.dashed) 'dashed': true,
+              if (a.height != null && a.height! > 0) 'height': a.height,
             },
           ));
         case MapCircle c:
@@ -58,8 +70,15 @@ class MapboxOverlayData {
           if (l.points.length < 2) break;
           lines.add(_feature(
             {'type': 'LineString', 'coordinates': _coords(l.points)},
-            {'color': mapboxColor(l.color), 'width': l.width, 'order': i},
+            {
+              'color': mapboxColor(l.color),
+              'width': l.width,
+              'order': i,
+              if (l.dashed) 'dashed': true,
+            },
           ));
+        case MapImage im:
+          images.add(im);
         case MapMarker m:
           byId[m.id] = m;
           markers.add(_feature(
@@ -79,7 +98,13 @@ class MapboxOverlayData {
     String fc(List<Map<String, Object?>> f) => f.isEmpty
         ? _emptyFc
         : jsonEncode({'type': 'FeatureCollection', 'features': f});
-    return MapboxOverlayData._(fc(areas), fc(lines), fc(markers), byId);
+    return MapboxOverlayData._(
+      fc(areas),
+      fc(lines),
+      fc(markers),
+      byId,
+      images,
+    );
   }
 
   static Map<String, Object?> _feature(

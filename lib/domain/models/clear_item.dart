@@ -14,6 +14,8 @@ enum ClearItem {
   navTarget('"Git" hedefi', permanent: false, canHide: false),
   activeRoute('Rota takibi', permanent: false, canHide: false),
   displayedTrack('Gösterilen iz', permanent: false, canHide: false),
+  viewshed('Görüş alanı', permanent: false, canHide: false),
+  terrain('Arazi katmanları', permanent: false, canHide: false),
   waypoints('Noktalar', permanent: true, canHide: true),
   graphics('Çizimler', permanent: true, canHide: true);
 

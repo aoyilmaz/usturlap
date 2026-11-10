@@ -56,6 +56,11 @@ class MapGraphics extends Table {
   // dolu (eklemede repository üretir, yükseltmede backfillUids doldurur) ve
   // benzersiz indeksli.
   TextColumn get uid => text().nullable()();
+  // v13: çizgi kalınlığı (null = varsayılan) ve kesikli stil.
+  RealColumn get strokeWidth => real().nullable()();
+  BoolColumn get dashed => boolean().nullable()();
+  // v14: 3B yükseklik (m); null = düz alan.
+  RealColumn get height => real().nullable()();
 }
 
 /// Uygulama içinden içe-aktarılmış harita paketleri (Documents'taki .pmtiles/
@@ -204,7 +209,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -275,6 +280,15 @@ class AppDatabase extends _$AppDatabase {
             await _addColumnIfMissing(m, waypoints, waypoints.fovAzimuth);
             await _addColumnIfMissing(m, waypoints, waypoints.fovWidth);
             await _addColumnIfMissing(m, waypoints, waypoints.fovRange);
+          }
+          // v13: çizimlerde kalınlık ve kesikli stil.
+          if (from < 13) {
+            await _addColumnIfMissing(m, mapGraphics, mapGraphics.strokeWidth);
+            await _addColumnIfMissing(m, mapGraphics, mapGraphics.dashed);
+          }
+          // v14: kapalı çizimlerde 3B yükseklik.
+          if (from < 14) {
+            await _addColumnIfMissing(m, mapGraphics, mapGraphics.height);
           }
         },
         beforeOpen: (details) async {

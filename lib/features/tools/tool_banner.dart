@@ -12,6 +12,7 @@ import '../../providers/range_line_providers.dart';
 import '../../providers/settings_providers.dart';
 import '../../providers/tool_providers.dart';
 import '../../providers/waypoint_providers.dart';
+import '../elevation/elevation_profile_panel.dart';
 import 'save_graphic_dialog.dart';
 
 /// İki noktalı ölçümü kalıcı R&B çizgisi yapar (ATAK R&B Line): ad sıra
@@ -98,14 +99,24 @@ class ToolBanner extends ConsumerWidget {
     final rangeLine =
         tool.mode == ToolMode.distance && tool.points.length == 2;
     final ring = tool.mode == ToolMode.rangeRings && tool.points.length == 2;
-    final GraphicType? savable;
-    if (tool.mode == ToolMode.distance && tool.points.length >= 3) {
-      savable = GraphicType.line;
-    } else if (tool.mode == ToolMode.polygon && tool.points.length >= 3) {
-      savable = GraphicType.area;
-    } else {
-      savable = null;
-    }
+    final n = tool.points.length;
+    final GraphicType? savable = switch (tool.mode) {
+      ToolMode.distance when n >= 3 => GraphicType.line,
+      ToolMode.polyline || ToolMode.freehand when n >= 2 => GraphicType.line,
+      ToolMode.polygon when n >= 3 => GraphicType.area,
+      ToolMode.circle when n == 2 => GraphicType.circle,
+      ToolMode.rectangle when n == 2 => GraphicType.rectangle,
+      _ => null,
+    };
+    // Kaydedilecek noktalar: daire merkez + kenar, dikdörtgen 4 köşe.
+    final graphicPoints = savable == GraphicType.rectangle
+        ? GeoMath.rectangleCorners(tool.points[0], tool.points[1])
+        : List.of(tool.points);
+    final isLine = const {
+      ToolMode.distance,
+      ToolMode.polyline,
+      ToolMode.freehand,
+    }.contains(tool.mode);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
@@ -129,6 +140,18 @@ class ToolBanner extends ConsumerWidget {
               ),
             ),
           ),
+          // Mesafe çizgisi boyunca yükseklik profili (F2).
+          if (isLine && tool.points.length >= 2)
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              icon: Icon(Icons.area_chart_outlined, color: accent, size: 20),
+              tooltip: 'Yükseklik profili',
+              onPressed: () => showElevationProfilePanel(
+                context,
+                title: 'Ölçüm: yükseklik profili',
+                points: List.of(tool.points),
+              ),
+            ),
           IconButton(
             visualDensity: VisualDensity.compact,
             icon: Icon(Icons.bookmark_add_outlined,
@@ -148,7 +171,7 @@ class ToolBanner extends ConsumerWidget {
                     : savable == null
                     ? null
                     : () => showSaveGraphicDialog(context, ref,
-                        type: savable!, points: tool.points),
+                        type: savable, points: graphicPoints),
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
@@ -188,6 +211,14 @@ class ToolBanner extends ConsumerWidget {
         return Icons.landscape_outlined;
       case ToolMode.rangeRings:
         return Icons.radar;
+      case ToolMode.polyline:
+        return Icons.polyline_outlined;
+      case ToolMode.circle:
+        return Icons.circle_outlined;
+      case ToolMode.rectangle:
+        return Icons.crop_square;
+      case ToolMode.freehand:
+        return Icons.gesture;
     }
   }
 
@@ -234,6 +265,27 @@ class ToolBanner extends ConsumerWidget {
         final r = GeoMath.distance(pts[0], pts[1]);
         return 'Menzil: R=${GeoMath.fmtDistance(r)} · ${GeoMath.fmtDistance(2 * r)}'
             ' · ${GeoMath.fmtDistance(3 * r)}';
+      case ToolMode.polyline:
+        if (pts.length < 2) return 'Çizgi: nokta koyun (${pts.length})';
+        return 'Çizgi: ${GeoMath.fmtDistance(GeoMath.pathLength(pts))}'
+            ' · ${pts.length} nokta';
+      case ToolMode.circle:
+        if (pts.isEmpty) return 'Daire: merkezi seçin';
+        if (pts.length == 1) return 'Daire: kenar için dokunun';
+        final r = GeoMath.distance(pts[0], pts[1]);
+        return 'Daire: r = ${GeoMath.fmtDistance(r)}'
+            ' · alan ${GeoMath.fmtArea(3.141592653589793 * r * r)}';
+      case ToolMode.rectangle:
+        if (pts.isEmpty) return 'Dikdörtgen: bir köşe seçin';
+        if (pts.length == 1) return 'Dikdörtgen: karşı köşe için dokunun';
+        final c = GeoMath.rectangleCorners(pts[0], pts[1]);
+        return 'Dikdörtgen: ${GeoMath.fmtDistance(GeoMath.distance(c[0], c[1]))}'
+            ' × ${GeoMath.fmtDistance(GeoMath.distance(c[1], c[2]))}'
+            ' · alan ${GeoMath.fmtArea(GeoMath.polygonArea(c))}';
+      case ToolMode.freehand:
+        if (pts.length < 2) return 'Serbest: haritada parmağınla çiz';
+        return 'Serbest: ${GeoMath.fmtDistance(GeoMath.pathLength(pts))}'
+            ' (yeniden çizebilirsin)';
     }
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kerteriz/core/geo_math.dart';
 import 'package:kerteriz/data/cot/cot_event.dart';
 import 'package:kerteriz/data/cot/cot_mapper.dart';
 import 'package:kerteriz/data/cot/cot_xml.dart';
@@ -226,6 +227,29 @@ void main() {
       expect(back.type, GraphicType.line);
       expect(back.points, hasLength(2));
     });
+  });
+
+  test('daire ve dikdörtgen kapalı çokgen olarak gider; kalınlık döner', () {
+    final edge = GeoMath.destination(const LatLng(37, 37), 300, 0);
+    final circle = MapGraphic(
+      uid: 'c1',
+      name: 'DAİRE-1',
+      type: GraphicType.circle,
+      points: [const LatLng(37, 37), edge],
+      colorValue: 0xFF2E7DFF,
+      createdAt: DateTime.utc(2026),
+      strokeWidth: 5,
+    );
+    final e = mapper.fromGraphic(circle);
+    expect(e.type, 'u-d-f');
+    final links = e.children('link').toList();
+    expect(links, hasLength(73)); // 72 + kapanış
+    expect(links.first.getAttribute('point'), links.last.getAttribute('point'));
+    expect(e.child('strokeWeight')!.getAttribute('value'), '5.0');
+    final back = roundTrip(circle) as MapGraphic;
+    expect(back.type, GraphicType.area);
+    expect(back.points, hasLength(72));
+    expect(back.strokeWidth, 5);
   });
 
   group('rota', () {

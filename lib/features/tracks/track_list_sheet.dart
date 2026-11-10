@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../data/export/track_exporter.dart';
 import '../../domain/models/track.dart';
+import '../../domain/usecases/track_search.dart';
 import '../../providers/track_providers.dart';
 import '../import/import_action.dart';
 import '../shell/adaptive_sheet.dart';
@@ -20,11 +21,19 @@ Future<void> showTrackListSheet(BuildContext context, WidgetRef ref) {
   );
 }
 
-class _TrackListBody extends ConsumerWidget {
+class _TrackListBody extends ConsumerStatefulWidget {
   const _TrackListBody();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_TrackListBody> createState() => _TrackListBodyState();
+}
+
+class _TrackListBodyState extends ConsumerState<_TrackListBody> {
+  String _query = '';
+  TrackPeriod _period = TrackPeriod.all;
+
+  @override
+  Widget build(BuildContext context) {
     final async = ref.watch(tracksProvider);
     return SafeArea(
       child: ConstrainedBox(
@@ -51,12 +60,56 @@ class _TrackListBody extends ConsumerWidget {
                 ],
               ),
             ),
+            // İz arama (ATAK Track Search): ad ya da tarih + zaman süzgeci.
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextField(
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.search),
+                  hintText: 'Ad ya da tarih (ör. 12.11)',
+                  isDense: true,
+                ),
+                onChanged: (v) => setState(() => _query = v),
+              ),
+            ),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
+              child: Row(
+                children: [
+                  for (final p in TrackPeriod.values)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(p.label),
+                        selected: _period == p,
+                        onSelected: (_) => setState(() => _period = p),
+                      ),
+                    ),
+                ],
+              ),
+            ),
             Flexible(
               child: async.when(
                 loading: () =>
                     const Center(child: CircularProgressIndicator()),
                 error: (e, _) => Center(child: Text('Hata: $e')),
-                data: (list) {
+                data: (all) {
+                  final list = searchTracks(
+                    all,
+                    query: _query,
+                    period: _period,
+                    now: DateTime.now(),
+                  );
+                  if (all.isNotEmpty && list.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Text(
+                        'Aramaya uyan iz yok.',
+                        textAlign: TextAlign.center,
+                      ),
+                    );
+                  }
                   if (list.isEmpty) {
                     return const Padding(
                       padding: EdgeInsets.all(24),
@@ -96,7 +149,8 @@ class _TrackTile extends ConsumerWidget {
         color: track.isRecording ? Colors.redAccent : Colors.lightBlueAccent,
       ),
       title: Text(track.name),
-      subtitle: Text('${track.pointCount} nokta · $dur'
+      subtitle: Text('${trackDate(track.startedAt)} · '
+          '${track.pointCount} nokta · $dur'
           '${track.isRecording ? ' · kaydediliyor' : ''}'),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,

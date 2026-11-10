@@ -15,6 +15,7 @@ import '../../providers/track_providers.dart';
 import '../../providers/waypoint_providers.dart';
 import '../map/clear_map_sheet.dart';
 import '../shell/adaptive_sheet.dart';
+import '../tools/graphic_labels.dart';
 import '../symbols/nato_symbol.dart';
 
 /// Overlay yöneticisi (ATAK Overlay Manager + Hashtags, kılavuz s.23–24).
@@ -251,16 +252,11 @@ class OverlayManager extends ConsumerWidget {
         ),
         for (final g in gfx)
           item(
-            leading: Icon(
-              g.type == GraphicType.area
-                  ? Icons.pentagon_outlined
-                  : Icons.timeline,
-              color: Color(g.colorValue),
-            ),
+            leading: Icon(graphicIcon(g.type), color: Color(g.colorValue)),
             name: g.name,
             itemTags: OverlayVisibility.tagsOfName(g.name),
             onMap: vis.showsGraphic(g),
-            onTap: g.points.isEmpty ? null : () => onCenter(_middle(g.points)),
+            onTap: g.points.isEmpty ? null : () => onCenter(_middle(g.outline)),
             trailing: eye(
               visible: !vis.hiddenUids.contains(g.uid),
               name: g.name,

@@ -9,6 +9,7 @@ import '../../providers/elevation_providers.dart';
 import '../../providers/range_line_providers.dart';
 import '../../providers/settings_providers.dart';
 import '../../providers/waypoint_providers.dart';
+import '../elevation/elevation_profile_panel.dart';
 import '../shell/adaptive_sheet.dart';
 import 'measure_common.dart';
 
@@ -110,6 +111,16 @@ class RangeLinePanel extends ConsumerWidget {
               onPressed: () => onCenter(r.middle),
               icon: const Icon(Icons.center_focus_strong),
               label: const Text('Ortala'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => showElevationProfilePanel(
+                context,
+                title: '${r.line.name}: yükseklik profili',
+                points: [r.from, r.to],
+                pointNames: const ['BAŞ', 'SON'],
+              ),
+              icon: const Icon(Icons.area_chart_outlined),
+              label: const Text('Profil'),
             ),
             OutlinedButton.icon(
               onPressed: () async {
