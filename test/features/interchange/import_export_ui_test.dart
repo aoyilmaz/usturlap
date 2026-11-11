@@ -12,6 +12,7 @@ import 'package:kerteriz/data/db/map_graphic_repository.dart';
 import 'package:kerteriz/data/db/waypoint_repository.dart';
 import 'package:kerteriz/data/export/geo_exporter.dart';
 import 'package:kerteriz/data/import/geo_import.dart';
+import 'package:kerteriz/data/package/data_package.dart';
 import 'package:kerteriz/domain/models/map_graphic.dart';
 import 'package:kerteriz/domain/models/waypoint.dart';
 import 'package:kerteriz/features/export/export_sheet.dart';
@@ -147,6 +148,48 @@ void main() {
     await tester.pump(const Duration(seconds: 5));
   });
 
+  testWidgets('veri paketi önizlemesi: ad, alınmayacaklar, güvenlik notu', (
+    tester,
+  ) async {
+    final (r, ctx) = await pump(tester);
+    final zip = DataPackage.build(
+      ExportSet(
+        waypoints: [
+          Waypoint(
+            uid: 'p-1',
+            name: 'P-1',
+            position: const LatLng(39, 32),
+            createdAt: t0,
+          ),
+        ],
+      ),
+      name: 'Görev',
+      creatorUid: 'KERTERIZ-x',
+      creatorCallsign: 'KURT',
+    );
+    final bundle = GeoImport.parse(zip);
+    final withSkipped = ImportBundle(
+      bundle.result,
+      format: bundle.format,
+      packageName: bundle.packageName,
+      skipped: const [SkippedEntry('ayar.pref', 'ayar dosyası')],
+    );
+    final done = importBundle(ctx, r, withSkipped, fileName: 'gorev.zip');
+    await tester.pumpAndSettle();
+    expect(find.text('Veri paketi: Görev'), findsOneWidget);
+    expect(find.text('Alınmayacak (1)'), findsOneWidget);
+    expect(find.text('• ayar.pref: ayar dosyası'), findsOneWidget);
+    expect(
+      find.textContaining('ayarlar, uygulamalar ve komutlar'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('İçe aktar (1)'));
+    await settle(tester);
+    expect((await done)!.waypoints, 1);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 5));
+  });
+
   testWidgets('dışa aktar paneli: sayılar, GPX çizimleri dışarıda bırakır', (
     tester,
   ) async {
@@ -186,6 +229,8 @@ void main() {
     expect(find.text('Noktalar (2)'), findsOneWidget);
     expect(find.text('Çizimler (1)'), findsOneWidget);
     expect(find.text('Paylaş (3 nesne, KMZ)'), findsOneWidget);
+    expect(find.widgetWithText(ChoiceChip, 'Veri paketi'), findsOneWidget);
+    expect(find.text('Rotalar (0)'), findsOneWidget);
     await tester.tap(find.text('Noktalar (2)'));
     await tester.pump();
     expect(find.text('Paylaş (1 nesne, KMZ)'), findsOneWidget);

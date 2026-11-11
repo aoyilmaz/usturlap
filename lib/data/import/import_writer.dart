@@ -5,6 +5,7 @@ import '../db/attachment_repository.dart';
 import '../db/map_graphic_repository.dart';
 import '../db/range_line_repository.dart';
 import '../db/range_ring_repository.dart';
+import '../db/route_repository.dart';
 import '../db/track_repository.dart';
 import '../db/waypoint_repository.dart';
 import 'geo_import.dart';
@@ -16,12 +17,14 @@ class ImportReport {
   int tracks = 0;
   int rangeLines = 0;
   int rangeRings = 0;
+  int routes = 0;
   int photos = 0;
 
   /// Kimliği zaten olan (daha önce içe aktarılmış) nesneler.
   int skipped = 0;
 
-  int get added => waypoints + graphics + tracks + rangeLines + rangeRings;
+  int get added =>
+      waypoints + graphics + tracks + rangeLines + rangeRings + routes;
 
   String get summary => [
     if (waypoints > 0) '$waypoints nokta',
@@ -29,6 +32,7 @@ class ImportReport {
     if (tracks > 0) '$tracks iz',
     if (rangeLines > 0) '$rangeLines R&B',
     if (rangeRings > 0) '$rangeRings halka',
+    if (routes > 0) '$routes rota',
     if (photos > 0) '$photos fotoğraf',
   ].join(', ');
 }
@@ -44,6 +48,7 @@ class ImportWriter {
     required this.rangeLines,
     required this.rangeRings,
     required this.attachments,
+    this.routes,
     Directory? tempDir,
   }) : _tempDir = tempDir ?? Directory.systemTemp;
 
@@ -53,6 +58,9 @@ class ImportWriter {
   final RangeLineRepository rangeLines;
   final RangeRingRepository rangeRings;
   final AttachmentRepository attachments;
+
+  /// Rotalar (verilmezse rota içe aktarılmaz).
+  final RouteRepository? routes;
   final Directory _tempDir;
 
   Future<ImportReport> write(ImportBundle b) async {
@@ -156,6 +164,24 @@ class ImportWriter {
         uid: x.uid,
       );
       report.rangeRings++;
+    }
+
+    final routeRepo = routes;
+    if (routeRepo != null && r.routes.isNotEmpty) {
+      final uids = {for (final x in await routeRepo.watchAll().first) x.uid};
+      for (final x in r.routes) {
+        if (!uids.add(x.uid)) {
+          report.skipped++;
+          continue;
+        }
+        await routeRepo.add(
+          name: x.name,
+          points: x.points,
+          pointNames: x.pointNames,
+          uid: x.uid,
+        );
+        report.routes++;
+      }
     }
     return report;
   }

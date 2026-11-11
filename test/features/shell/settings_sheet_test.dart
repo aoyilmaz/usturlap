@@ -78,8 +78,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(mem.values['angle_unit'], 'mils');
 
-    // Seçili çip vurgulu.
-    await reveal(tester, chip('Manyetik'));
+    // Seçili çip vurgulu (yukarıda kaldı: geri kaydır).
+    await tester.scrollUntilVisible(
+      chip('Manyetik'),
+      -120,
+      scrollable: find.byType(Scrollable).last,
+    );
     expect(tester.widget<ChoiceChip>(chip('Manyetik')).selected, isTrue);
     expect(tester.widget<ChoiceChip>(chip('Coğrafi')).selected, isFalse);
   });

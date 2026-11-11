@@ -113,9 +113,10 @@ class DevicePositionSource implements PositionSource {
     }
   }
 
-  /// Platforma göre konum ayarları. `_backgroundEnabled` true ise (yalnızca iz
-  /// kaydında) iOS arka plan güncellemeleri + gösterge, Android foreground
-  /// servis bildirimi açılır. Aksi halde ön-plan (batarya dostu).
+  /// Platforma göre konum ayarları. `_backgroundEnabled` true ise (iz kaydı ya
+  /// da arka planda izlenen geofence) iOS arka plan güncellemeleri + gösterge,
+  /// Android foreground servis bildirimi açılır. Aksi halde ön-plan (batarya
+  /// dostu).
   LocationSettings _buildLocationSettings() {
     const accuracy = LocationAccuracy.best;
     // Batarya optimizasyonu için Mesafe Filtresi (Distance Filter)
@@ -140,7 +141,7 @@ class DevicePositionSource implements PositionSource {
           foregroundNotificationConfig: _backgroundEnabled
               ? const ForegroundNotificationConfig(
                   notificationTitle: 'Kerteriz',
-                  notificationText: 'İz kaydı: konum izleniyor',
+                  notificationText: 'Konum izleniyor (iz kaydı / geofence)',
                   enableWakeLock: true,
                 )
               : null,

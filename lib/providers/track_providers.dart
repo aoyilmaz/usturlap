@@ -73,9 +73,9 @@ class RecordingNotifier extends Notifier<RecordingState> {
     final n = await repo.trackCount() + 1;
     final id = await repo.startTrack('${ref.read(callsignProvider)} İZ-$n');
     _lastPoint = null;
+    // Ekran kapalıyken de iz sürsün: arka plan konumunu harita ekranı
+    // açar (backgroundLocationNeededProvider; geofence de kullanır).
     state = RecordingState(isRecording: true, trackId: id);
-    // Ekran kapalıyken de iz sürsün diye arka plan konumunu aç.
-    await ref.read(positionSourceProvider).setBackgroundEnabled(true);
     // İlk noktayı hemen ekle (varsa).
     _onPosition(ref.read(gpsSelfContactProvider));
   }
@@ -84,8 +84,8 @@ class RecordingNotifier extends Notifier<RecordingState> {
     final id = state.trackId;
     state = const RecordingState();
     _lastPoint = null;
-    // Arka plan konumunu kapat (batarya tasarrufu).
-    await ref.read(positionSourceProvider).setBackgroundEnabled(false);
+    // Arka plan konumu: backgroundLocationNeededProvider (geofence yoksa
+    // kapanır, batarya tasarrufu).
     if (id != null) await ref.read(trackRepositoryProvider).endTrack(id);
   }
 }

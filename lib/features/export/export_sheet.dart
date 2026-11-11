@@ -6,14 +6,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../data/db/settings_repository.dart';
 import '../../data/export/geo_exporter.dart';
+import '../../data/package/data_package.dart';
 import '../../domain/models/map_graphic.dart';
 import '../../domain/models/range_line.dart';
 import '../../domain/models/range_ring.dart';
+import '../../domain/models/route_plan.dart';
 import '../../domain/models/track.dart';
 import '../../domain/models/waypoint.dart';
 import '../../providers/graphic_providers.dart';
 import '../../providers/range_line_providers.dart';
+import '../../providers/route_providers.dart';
+import '../../providers/settings_providers.dart';
 import '../../providers/track_providers.dart';
 import '../../providers/waypoint_providers.dart';
 import '../shell/adaptive_sheet.dart';
@@ -24,14 +29,15 @@ enum ExportKind {
   graphics('Çizimler', Icons.draw_outlined),
   tracks('İzler', Icons.timeline),
   rangeLines('R&B çizgileri', Icons.straighten),
-  rangeRings('Menzil halkaları', Icons.radar);
+  rangeRings('Menzil halkaları', Icons.radar),
+  routes('Rotalar', Icons.route);
 
   const ExportKind(this.label, this.icon);
   final String label;
   final IconData icon;
 
   /// GPX'e girer mi.
-  bool get inGpx => this == waypoints || this == tracks;
+  bool get inGpx => this == waypoints || this == tracks || this == routes;
 }
 
 /// Dışa aktar paneli (G7; ATAK Export): ne gideceği ve biçimi seçilir,
@@ -87,12 +93,15 @@ class _ExportPanelState extends ConsumerState<ExportPanel> {
         p?.rangeRings ??
         ref.watch(rangeRingsProvider).value ??
         const <RangeRing>[];
+    final routes =
+        p?.routes ?? ref.watch(routesProvider).value ?? const <RoutePlan>[];
     final counts = {
       ExportKind.waypoints: waypoints.length,
       ExportKind.graphics: graphics.length,
       ExportKind.tracks: tracks.where((t) => t.endedAt != null).length,
       ExportKind.rangeLines: rangeLines.length,
       ExportKind.rangeRings: rangeRings.length,
+      ExportKind.routes: routes.length,
     };
     bool on(ExportKind k) =>
         !_off.contains(k) &&
@@ -163,6 +172,7 @@ class _ExportPanelState extends ConsumerState<ExportPanel> {
                       : const [],
                   rangeLines: on(ExportKind.rangeLines) ? rangeLines : const [],
                   rangeRings: on(ExportKind.rangeRings) ? rangeRings : const [],
+                  routes: on(ExportKind.routes) ? routes : const [],
                 ),
           icon: _busy
               ? const SizedBox(
@@ -183,6 +193,7 @@ class _ExportPanelState extends ConsumerState<ExportPanel> {
     required List<Track> tracks,
     required List<RangeLine> rangeLines,
     required List<RangeRing> rangeRings,
+    required List<RoutePlan> routes,
   }) async {
     final messenger = ScaffoldMessenger.maybeOf(context);
     setState(() => _busy = true);
@@ -193,6 +204,7 @@ class _ExportPanelState extends ConsumerState<ExportPanel> {
         graphics: graphics,
         rangeLines: rangeLines,
         rangeRings: rangeRings,
+        routes: routes,
         tracks: [
           for (final t in tracks)
             TrackExport(t, await trackRepo.pointsOf(t.id!)),
@@ -212,6 +224,14 @@ class _ExportPanelState extends ConsumerState<ExportPanel> {
             name: name,
             photos: await _photos(waypoints),
           );
+        case ExportFormat.package:
+          bytes = DataPackage.build(
+            set,
+            name: '$name $stamp',
+            creatorUid: await ref.read(settingsRepositoryProvider).deviceUid(),
+            creatorCallsign: ref.read(callsignProvider),
+            photos: await _photos(waypoints),
+          );
         case ExportFormat.kml:
           bytes = utf8.encode(GeoExporter.toKml(set, name: name));
         case ExportFormat.gpx:
@@ -220,7 +240,9 @@ class _ExportPanelState extends ConsumerState<ExportPanel> {
           bytes = utf8.encode(GeoExporter.toGeoJson(set, name: name));
       }
       final path =
-          '${Directory.systemTemp.path}/kerteriz_$stamp.${_format.extension}';
+          '${Directory.systemTemp.path}/kerteriz_'
+          '${_format == ExportFormat.package ? 'paket_' : ''}'
+          '$stamp.${_format.extension}';
       await File(path).writeAsBytes(bytes, flush: true);
       await SharePlus.instance.share(
         ShareParams(

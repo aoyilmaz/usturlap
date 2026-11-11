@@ -20,6 +20,7 @@ import '../../domain/models/imported_layer.dart';
 import '../../domain/models/bloodhound.dart';
 import '../../domain/models/bullseye.dart';
 import '../../domain/models/clear_item.dart';
+import '../../domain/ports/alert_output.dart';
 import '../../domain/usecases/graphic_hit.dart';
 import '../../domain/usecases/shape_edit.dart';
 import '../../domain/usecases/viewshed.dart';
@@ -31,6 +32,8 @@ import '../../domain/models/waypoint.dart';
 import '../../providers/bloodhound_providers.dart';
 import '../../providers/bullseye_providers.dart';
 import '../../providers/elevation_providers.dart';
+import '../../providers/alert_providers.dart';
+import '../../providers/background_location_providers.dart';
 import '../../providers/geofence_providers.dart';
 import '../../providers/graphic_providers.dart';
 import '../../providers/range_line_providers.dart';
@@ -59,6 +62,7 @@ import '../../providers/waypoint_providers.dart';
 import '../hud/manual_position_sheet.dart';
 import '../hud/self_info_box.dart';
 import '../import/import_action.dart';
+import '../import/incoming_files.dart';
 import '../routes/route_widgets.dart';
 import '../shell/coordinate_sheet.dart';
 import '../shell/atak_toolbar.dart';
@@ -220,6 +224,33 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
     // Açılışta yalnızca varsayılan katmanı yükle (büyük topo'yu değil).
     _ready = _ensureResolved(_selected);
+    // Arka plan konumu tek yerden: iz kaydı ya da arka planda izlenen
+    // geofence varken açık.
+    ref.listenManual<bool>(
+      backgroundLocationNeededProvider,
+      (_, need) => ref.read(positionSourceProvider).setBackgroundEnabled(need),
+      fireImmediately: true,
+    );
+    // Uyarı bildirimi gerekecek (geofence / rota takibi) → izin iste
+    // (iOS yalnız ilk seferde sorar; açılışta boşuna sormaz).
+    ref.listenManual<bool>(
+      alertPermissionWantedProvider,
+      (prev, want) {
+        if (want && prev != true) {
+          ref.read(alertNotificationsProvider).requestPermission();
+        }
+      },
+      fireImmediately: true,
+    );
+    // "Kerteriz ile aç" (AirDrop / Dosyalar): gelen dosya önizletilir.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => IncomingFiles.listen(_openIncoming),
+    );
+  }
+
+  Future<void> _openIncoming(String path) async {
+    if (!mounted) return;
+    await importFromPath(context, ref, path, deleteAfter: true);
   }
 
   /// Katmanı (gerekirse) tembel çözer: internet katmanı anında; dosya tabanlı
@@ -280,6 +311,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   @override
   void dispose() {
+    IncomingFiles.stop();
     _cameraTick.dispose();
     _scaleCamera.dispose();
     _map.dispose(); // motorun açtığı kaynakları da kapatır
@@ -2271,6 +2303,18 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       final text = next.latest
           .map((e) => '${e.name}: ${e.entered ? 'girildi' : 'çıkıldı'}')
           .join(' · ');
+      // Önde: sesli; arka planda: bildirim.
+      final alerts = ref.read(alertDispatcherProvider);
+      for (final e in next.latest) {
+        final what = e.entered ? 'Alana girildi' : 'Alandan çıkıldı';
+        final t = e.at.toLocal();
+        alerts.alert(
+          title: 'Geofence: ${e.name}',
+          body: '$what (${t.hour.toString().padLeft(2, '0')}:'
+              '${t.minute.toString().padLeft(2, '0')})',
+          speech: '${spokenName(e.name)}. $what.',
+        );
+      }
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(
@@ -2303,6 +2347,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               : bearingFmt.format(b, self));
       if (a == null) return;
       a.strong ? HapticFeedback.heavyImpact() : HapticFeedback.mediumImpact();
+      ref
+          .read(alertDispatcherProvider)
+          .alert(title: 'Rota: ${next.route.name}', body: a.text, speech: a.speech);
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text(a.text)));
@@ -2321,6 +2368,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             before[r.bloodhound.id] != EtaLevel.close) {
           HapticFeedback.heavyImpact();
           final eta = r.reading.eta!;
+          ref.read(alertDispatcherProvider).alert(
+                title: 'Takip',
+                body: 'Varışa ${NavMath.fmtDuration(eta)}',
+                speech: 'Takip. Varışa ${spokenDuration(eta)}.',
+              );
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('Takip: varışa ${NavMath.fmtDuration(eta)}'),
           ));

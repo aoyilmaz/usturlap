@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -8,12 +9,15 @@ import 'package:kerteriz/data/db/attachment_repository.dart';
 import 'package:kerteriz/data/db/map_graphic_repository.dart';
 import 'package:kerteriz/data/db/range_line_repository.dart';
 import 'package:kerteriz/data/db/range_ring_repository.dart';
+import 'package:kerteriz/data/db/route_repository.dart';
+import 'package:kerteriz/data/db/settings_repository.dart';
 import 'package:kerteriz/data/db/track_repository.dart';
 import 'package:kerteriz/data/db/waypoint_repository.dart';
 import 'package:kerteriz/data/export/geo_exporter.dart';
 import 'package:kerteriz/data/import/geo_import.dart';
 import 'package:kerteriz/data/import/import_writer.dart';
 import 'package:kerteriz/domain/models/map_graphic.dart';
+import 'package:kerteriz/domain/models/route_plan.dart';
 import 'package:kerteriz/domain/models/sensor_fov.dart';
 import 'package:kerteriz/domain/models/waypoint.dart';
 import 'package:latlong2/latlong.dart';
@@ -34,6 +38,7 @@ void main() {
       rangeLines: RangeLineRepository(db),
       rangeRings: RangeRingRepository(db),
       attachments: AttachmentRepository(db, documentsDir: () async => root),
+      routes: RouteRepository(db),
       tempDir: root,
     );
   });
@@ -119,6 +124,36 @@ void main() {
       expect(await WaypointRepository(db).watchAll().first, hasLength(1));
     },
   );
+
+  test('rotalar: nokta adlarıyla; aynı kimlik atlanır', () async {
+    final kml = GeoExporter.toKml(
+      ExportSet(
+        routes: [
+          RoutePlan(
+            uid: 'r-1',
+            name: 'DEVRİYE',
+            points: const [LatLng(39, 32), LatLng(39.1, 32)],
+            pointNames: const [null, 'KÖPRÜ'],
+            createdAt: DateTime.utc(2026, 11, 11),
+          ),
+        ],
+      ),
+      name: 'T',
+    );
+    final b = GeoImport.parse(Uint8List.fromList(utf8.encode(kml)));
+    expect((await writer.write(b)).summary, '1 rota');
+    final r = (await RouteRepository(db).watchAll().first).single;
+    expect(r.uid, 'r-1');
+    expect(r.nameOf(1), 'KÖPRÜ');
+    expect((await writer.write(b)).skipped, 1);
+  });
+
+  test('cihaz kimliği bir kez üretilir, sonra aynı', () async {
+    final s = SettingsRepository(db);
+    final a = await s.deviceUid();
+    expect(a, startsWith('KERTERIZ-'));
+    expect(await s.deviceUid(), a);
+  });
 
   test('kimliksiz dış veri her seferinde yeni eklenir', () async {
     final gpx = GeoImport.parse(

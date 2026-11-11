@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 import '../../domain/models/map_graphic.dart';
 import '../../domain/models/range_line.dart';
 import '../../domain/models/range_ring.dart';
+import '../../domain/models/route_plan.dart';
 import 'gpx_kml_importer.dart';
 import 'kerteriz_data.dart';
 
@@ -60,6 +61,7 @@ class _Collector {
   final graphics = <MapGraphic>[];
   final rangeLines = <RangeLine>[];
   final rangeRings = <RangeRing>[];
+  final routes = <RoutePlan>[];
 
   ImportResult result() => ImportResult(
     waypoints,
@@ -67,6 +69,7 @@ class _Collector {
     graphics: graphics,
     rangeLines: rangeLines,
     rangeRings: rangeRings,
+    routes: routes,
   );
 
   void feature(Map<String, dynamic> f) {
@@ -130,6 +133,9 @@ class _Collector {
       case 'rangeRing':
         final r = KerterizData.rangeRing(k!, name: _name(p, 'HALKA'));
         if (r != null) return rangeRings.add(r);
+      case 'route':
+        final r = KerterizData.route(k!, name: _name(p, 'ROTA'));
+        if (r != null) return routes.add(r);
     }
     switch (g['type']) {
       case 'Point':

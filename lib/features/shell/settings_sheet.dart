@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/bearing_format.dart';
 import '../../core/coord_format.dart';
 import '../../core/wmm.dart';
+import '../../providers/alert_providers.dart';
 import '../../providers/location_providers.dart';
 import '../../providers/repeater_providers.dart';
 import '../../providers/settings_providers.dart';
@@ -29,6 +30,7 @@ class _SettingsSheet extends ConsumerWidget {
     final format = ref.watch(coordFormatProvider);
     final callsign = ref.watch(callsignProvider);
     final accFilter = ref.watch(accuracyFilterProvider);
+    final voice = ref.watch(voiceAlertsProvider);
     final repeatersOn = ref.watch(showRepeatersProvider);
     final repeaterCount = ref.watch(repeatersProvider).value?.length ?? 0;
     final band = ref.watch(repeaterBandProvider);
@@ -111,6 +113,31 @@ class _SettingsSheet extends ConsumerWidget {
                 style: const TextStyle(color: Colors.grey, fontSize: 12),
               ),
             ),
+            // Sesli uyarılar: rota takibi, geofence, takip ETA'sı.
+            SwitchListTile(
+              secondary: const Icon(Icons.record_voice_over_outlined),
+              title: const Text('Sesli uyarılar'),
+              subtitle: const Text(
+                'Rota, geofence ve takip uyarılarını okur. Ses düzeyi '
+                'medya sesidir; telefon sessizdeyken de konuşur.',
+              ),
+              value: voice,
+              onChanged: (v) => ref.read(voiceAlertsProvider.notifier).set(v),
+            ),
+            if (voice)
+              Padding(
+                padding: const EdgeInsets.only(left: 56, bottom: 4),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () => ref
+                        .read(speakerProvider)
+                        .speak('Sesli uyarılar açık. Rotadan saptınız.'),
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text('Sesi dene'),
+                  ),
+                ),
+              ),
             SwitchListTile(
               secondary: const Icon(Icons.gps_fixed),
               title: const Text('İz doğruluk filtresi'),

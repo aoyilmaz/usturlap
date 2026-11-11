@@ -10,10 +10,11 @@ import '../../data/import/geo_import.dart';
 import '../../data/import/import_writer.dart';
 import '../../providers/graphic_providers.dart';
 import '../../providers/range_line_providers.dart';
+import '../../providers/route_providers.dart';
 import '../../providers/track_providers.dart';
 import '../../providers/waypoint_providers.dart';
 
-/// Dosyalar'dan bir KMZ / KML / GPX / GeoJSON seçtirir, okur, önizletir
+/// Dosyalar'dan bir veri paketi / KMZ / KML / GPX / GeoJSON seçtirir, okur, önizletir
 /// ve onaylanınca ekler (G7). İçe aktarma düğmelerinin ortak eylemi.
 ///
 /// Seçici bütün dosyaları gösterir: iOS KMZ / GeoJSON'u tanımıyor
@@ -21,20 +22,39 @@ import '../../providers/waypoint_providers.dart';
 /// anlaşılır, tanınmayan dosya Türkçe hatayla reddedilir.
 Future<void> runImport(BuildContext context, WidgetRef ref) async {
   final messenger = ScaffoldMessenger.of(context);
+  final FilePickerResult? res;
   try {
-    final res = await FilePicker.pickFiles(
+    res = await FilePicker.pickFiles(
       type: FileType.any,
       // Büyük dosya belleğe alınmasın: önce boyutu denetlenir.
       withData: false,
     );
-    if (res == null || res.files.isEmpty) return;
-    final file = res.files.single;
-    final path = file.path;
-    if (path == null) {
-      messenger.showSnackBar(const SnackBar(content: Text('Dosya okunamadı.')));
-      return;
-    }
-    final f = File(path);
+  } catch (e) {
+    messenger.showSnackBar(SnackBar(content: Text('Dosya seçilemedi: $e')));
+    return;
+  }
+  if (res == null || res.files.isEmpty || !context.mounted) return;
+  final path = res.files.single.path;
+  if (path == null) {
+    messenger.showSnackBar(const SnackBar(content: Text('Dosya okunamadı.')));
+    return;
+  }
+  await importFromPath(context, ref, path);
+}
+
+/// Diskteki bir dosyayı okur, önizletir, onaylanınca ekler. "Kerteriz ile
+/// aç" ile gelen dosyalar da buradan geçer ([deleteAfter]: geçici kopya
+/// işlem bitince silinir).
+Future<void> importFromPath(
+  BuildContext context,
+  WidgetRef ref,
+  String path, {
+  bool deleteAfter = false,
+}) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final f = File(path);
+  final fileName = path.split('/').last;
+  try {
     if (await f.length() > GeoImport.maxFileBytes) {
       messenger.showSnackBar(
         const SnackBar(content: Text('Dosya çok büyük (en çok 50 MB).')),
@@ -45,13 +65,21 @@ Future<void> runImport(BuildContext context, WidgetRef ref) async {
     // Büyük dosya arayüzü dondurmasın: ayrıştırma ayrı iş parçacığında.
     final bundle = await Isolate.run(() => GeoImport.parse(bytes));
     if (!context.mounted) return;
-    await importBundle(context, ref, bundle, fileName: file.name);
+    await importBundle(context, ref, bundle, fileName: fileName);
   } on FormatException catch (e) {
     messenger.showSnackBar(
-      SnackBar(content: Text('Geçersiz dosya: ${e.message}')),
+      SnackBar(content: Text('Geçersiz dosya ($fileName): ${e.message}')),
     );
   } catch (e) {
     messenger.showSnackBar(SnackBar(content: Text('İçe aktarma hatası: $e')));
+  } finally {
+    if (deleteAfter) {
+      try {
+        await f.parent.delete(recursive: true);
+      } catch (_) {
+        // Geçici klasör; silinemezse iOS zamanla temizler.
+      }
+    }
   }
 }
 
@@ -66,7 +94,15 @@ Future<ImportReport?> importBundle(
   final r = bundle.result;
   if (r.isEmpty) {
     messenger.showSnackBar(
-      const SnackBar(content: Text('İçe aktarılacak veri bulunamadı.')),
+      SnackBar(
+        content: Text(
+          bundle.skipped.isEmpty
+              ? 'İçe aktarılacak veri bulunamadı.'
+              : 'İçe aktarılacak veri yok; ${bundle.skipped.length} dosya '
+                    'atlandı (${bundle.skipped.first.name}: '
+                    '${bundle.skipped.first.reason}).',
+        ),
+      ),
     );
     return null;
   }
@@ -87,7 +123,11 @@ Future<ImportReport?> importBundle(
             );
       final photos = bundle.files.length;
       return AlertDialog(
-        title: const Text('İçe aktar'),
+        title: Text(
+          bundle.packageName == null
+              ? 'İçe aktar'
+              : 'Veri paketi: ${bundle.packageName}',
+        ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -108,6 +148,32 @@ Future<ImportReport?> importBundle(
               row(Icons.timeline, 'İzler', r.tracks.length),
               row(Icons.straighten, 'R&B çizgileri', r.rangeLines.length),
               row(Icons.radar, 'Menzil halkaları', r.rangeRings.length),
+              row(Icons.route, 'Rotalar', r.routes.length),
+              if (bundle.skipped.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Alınmayacak (${bundle.skipped.length})',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                for (final s in bundle.skipped.take(8))
+                  Text(
+                    '• ${s.name}: ${s.reason}',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                if (bundle.skipped.length > 8)
+                  Text(
+                    '… ve ${bundle.skipped.length - 8} dosya daha',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+              ],
+              if (bundle.format == 'Veri paketi') ...[
+                const SizedBox(height: 8),
+                const Text(
+                  'Paketteki ayarlar, uygulamalar ve komutlar uygulanmaz; '
+                  'yalnız harita nesneleri ve fotoğraflar alınır.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
               const SizedBox(height: 8),
               const Text(
                 'Daha önce içe aktarılmış olanlar (aynı kimlik) atlanır.',
@@ -137,6 +203,7 @@ Future<ImportReport?> importBundle(
     rangeLines: ref.read(rangeLineRepositoryProvider),
     rangeRings: ref.read(rangeRingRepositoryProvider),
     attachments: ref.read(attachmentRepositoryProvider),
+    routes: ref.read(routeRepositoryProvider),
   ).write(bundle);
   final skipped = report.skipped > 0
       ? ' (${report.skipped} tanesi zaten vardı)'

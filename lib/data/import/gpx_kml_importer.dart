@@ -6,6 +6,7 @@ import 'package:xml/xml.dart';
 import '../../domain/models/map_graphic.dart';
 import '../../domain/models/range_line.dart';
 import '../../domain/models/range_ring.dart';
+import '../../domain/models/route_plan.dart';
 import '../../domain/models/sensor_fov.dart';
 import '../../domain/models/waypoint.dart';
 import 'kerteriz_data.dart';
@@ -63,12 +64,16 @@ class ImportResult {
   final List<RangeLine> rangeLines;
   final List<RangeRing> rangeRings;
 
+  /// Rotalar (Pusula'dan çıkmış KML / GeoJSON, veri paketi CoT'u).
+  final List<RoutePlan> routes;
+
   const ImportResult(
     this.waypoints,
     this.tracks, {
     this.graphics = const [],
     this.rangeLines = const [],
     this.rangeRings = const [],
+    this.routes = const [],
   });
 
   bool get isEmpty => total == 0;
@@ -77,7 +82,8 @@ class ImportResult {
       tracks.length +
       graphics.length +
       rangeLines.length +
-      rangeRings.length;
+      rangeRings.length +
+      routes.length;
 
   /// Noktalara bağlı fotoğraf sayısı.
   int get photoCount => waypoints.fold(0, (n, w) => n + w.photos.length);
@@ -168,6 +174,7 @@ class GpxKmlImporter {
     final graphics = <MapGraphic>[];
     final rangeLines = <RangeLine>[];
     final rangeRings = <RangeRing>[];
+    final routes = <RoutePlan>[];
     final styles = _KmlStyles(root);
 
     for (final pm in _all(root, 'Placemark')) {
@@ -193,6 +200,12 @@ class GpxKmlImporter {
           final r = KerterizData.rangeRing(data!, name: name);
           if (r != null) {
             rangeRings.add(r);
+            continue;
+          }
+        case 'route':
+          final r = KerterizData.route(data!, name: name);
+          if (r != null) {
+            routes.add(r);
             continue;
           }
       }
@@ -270,6 +283,7 @@ class GpxKmlImporter {
       graphics: graphics,
       rangeLines: rangeLines,
       rangeRings: rangeRings,
+      routes: routes,
     );
   }
 

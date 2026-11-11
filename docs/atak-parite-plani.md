@@ -289,7 +289,13 @@ konum düzeltme, **D3d** Point Dropper (dördü de cihazda ✓, 2026-11-08), **D
 Adımlar (tablodaki sırayla): **E1** kalıcı / dinamik R&B çizgisi, **E2** kalıcı menzil / tehdit
 halkaları, **E3** Bullseye, **E4** çoklu Bloodhound, **E5** Resection, **E6** taktik pusula, **E7**
 buluşma noktası, **E8** rota eksikleri, **E9** sensör / FOV — **hepsi cihazda ✓ (2026-11-08).**
-Sesli uyarı şimdilik yok (kullanıcı kararı; iOS'ta paket gerekir).
+**Sesli uyarı ve bildirim (2026-11-11, `flutter_tts` 4.2.5 + `flutter_local_notifications`
+22.3.3, onaylı):** rota takibi, geofence ve takip (kırmızı ETA) uyarıları uygulama öndeyken Türkçe
+okunur (ayrı konuşma metni: "KN 1 geçildi. Sıradaki KN 2, 850 metre."; iOS ses oturumu playback →
+medya sesi, sessiz düğmesi kapatmaz; Ayarlar → Sesli uyarılar + Sesi dene); arka plandayken yerel
+bildirim (`providers/alert_providers.dart` AlertDispatcher). Bildirim izni geofence ya da rota takibi
+başlayınca sorulur. Arka plan konumu tek karar noktasında (`backgroundLocationNeededProvider`): iz
+kaydı **ya da** arka planda izlenen geofence (Geofence paneli → "Arka planda da izle", varsayılan açık).
 
 > E1: iki noktalı ölçüm (R&B) şeritteki Kaydet ile kalıcı **R&B çizgisi** olur (R&B-1…; 3+
 > noktalı yol eskisi gibi çizim). Nesneye dokunarak konan uç ona bağlanır (`RbEnd`: `self` /
@@ -428,7 +434,7 @@ resim katmanı eklenecek.
 Adımlar: **G1** çizim araçları, **G2** 3B şekiller, **G6** iz arama (üçü cihazda ✓, 2026-11-10),
 **G4** lasso / çoklu seçim, **G3** geofence, **G5** hızlı fotoğraf / galeri (üçü cihazda ✓,
 commit `f4cb0ff`), **G7** içe/dışa aktarma + çizim düzenleme (cihazda ✓, commit `6a92204`),
-G8 veri paketi (kalan). `archive` 4.6.0 eklendi (onaylı, 2026-11-11).
+**G8** veri paketi (kodda tamam, cihaz testi bekliyor). `archive` 4.6.0 eklendi (onaylı, 2026-11-11).
 
 > G1: **Çizim araçları** çubuğu (araç çubuğuna eklenebilir; ≡ → Veri): Çizgi (çoklu nokta; 2
 > noktada da çizim, R&B değil) · Alan · **Daire** (merkez + kenar) · **Dikdörtgen** (iki çapraz
@@ -496,6 +502,25 @@ G8 veri paketi (kalan). `archive` 4.6.0 eklendi (onaylı, 2026-11-11).
 > ters bölü ve sürücü harfli yollar yok sayılır; yalnız noktaların başvurduğu resimler okunur;
 > koordinatlar aralık denetiminden geçer. SHP desteklenmiyor. "Kerteriz ile aç" (AirDrop /
 > Dosyalar'dan doğrudan açma) yok: G8'de.
+>
+> G8: **Veri paketi** (Mission Package v2; biçim kamuya açık kaynaklardan doğrulandı: TAK
+> eğitim belgesi + MIT lisanslı node-CoT, ATAK kodu kullanılmadı). Zip: `MANIFEST/manifest.xml`
+> (`MissionPackageManifest version="2"`, Configuration `uid` / `name`, her dosya için `Content
+> zipEntry ignore`), nesneler `<uid>/<uid>.cot`, fotoğraflar `<uid>/foto_n.jpg` (manifestte
+> `Parameter uid` = noktanın uid'i). **Dışa aktar** → "Veri paketi": noktalar (+ fotoğraf),
+> çizimler, rotalar CoT; R&B, halkalar, izler `kerteriz/ekler.kml`. Pusula ayrıntısı CoT
+> `<__kerteriz>` JSON (ATAK yok sayar) → kayıpsız. Oluşturan: kalıcı cihaz kimliği
+> `KERTERIZ-<uuid>` (ayarlar `device_uid`) + çağrı adı. **İçe aktar**: zip manifest ya da `.cot`
+> içeriyorsa paket; manifestsizse aynı klasördeki resim o CoT'a eklenir; paket içindeki
+> KML / KMZ / GPX / GeoJSON da okunur (iç içe paket açılmaz). Önizleme: paket adı, sayılar,
+> **alınmayacaklar** ve nedeni (`.pref` ayar dosyası, `.apk`, "yok say" işaretli, desteklenmeyen
+> CoT türü ör. `u-d-c-c`, bağsız resim, güvensiz yol, tanınmayan dosya). Manifestteki
+> `onReceiveAction` / `onReceiveImport` / `onReceiveDelete` yok sayılır (ATAK zaafları 3–4).
+> **"Kerteriz ile aç"**: Info.plist `CFBundleDocumentTypes` (zip, kmz, kml, gpx, geojson;
+> `LSHandlerRank` Alternate) + içe alınan UTI'ler; `AppDelegate.swift` IncomingFilesPlugin
+> (Flutter sahne kancası `addSceneDelegate`; dosya geçici klasöre kopyalanır, Inbox kopyası
+> silinir) → `kerteriz/incoming_files` kanalı → önizleme. Rotalar G7 biçimlerine de eklendi
+> (KML / GeoJSON kayıpsız, GPX `rte`).
 >
 > G5: **Hızlı fotoğraf** (≡ → Veri): kamerayı açar; çekilen fotoğraf konumumda (konum yoksa harita
 > ortasında) yeni FOTO-n noktasına eklenir (not: "Hızlı fotoğraf gg.aa.yyyy ss:dd"). **Galeri**:

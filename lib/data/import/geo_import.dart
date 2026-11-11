@@ -3,12 +3,20 @@ import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 
+import '../package/data_package.dart';
 import 'geojson_importer.dart';
 import 'gpx_kml_importer.dart';
 
-/// İçe aktarılan dosyanın tamamı: nesneler + (KMZ'de) fotoğraf dosyaları.
+/// İçe aktarılan dosyanın tamamı: nesneler + (KMZ / veri paketinde)
+/// fotoğraf dosyaları + atlananlar.
 class ImportBundle {
-  const ImportBundle(this.result, {this.files = const {}, this.format = ''});
+  const ImportBundle(
+    this.result, {
+    this.files = const {},
+    this.format = '',
+    this.skipped = const [],
+    this.packageName,
+  });
 
   final ImportResult result;
 
@@ -16,12 +24,18 @@ class ImportBundle {
   /// başvurduğu resimler.
   final Map<String, Uint8List> files;
 
-  /// Saptanan biçim (KMZ, KML, GPX, GeoJSON).
+  /// Saptanan biçim (Veri paketi, KMZ, KML, GPX, GeoJSON).
   final String format;
+
+  /// Paketten alınmayan dosyalar ve nedenleri (önizlemede gösterilir).
+  final List<SkippedEntry> skipped;
+
+  /// Veri paketinin manifestteki adı.
+  final String? packageName;
 }
 
-/// Dosyanın biçimini içeriğinden saptayıp okur: KMZ (zip), GPX / KML (XML),
-/// GeoJSON. Dışarıdan gelen dosya: boyut ve zip sınırları denetlenir;
+/// Dosyanın biçimini içeriğinden saptayıp okur: ATAK veri paketi (zip +
+/// manifest / .cot), KMZ (zip + KML), GPX / KML (XML), GeoJSON. Dışarıdan gelen dosya: boyut ve zip sınırları denetlenir;
 /// sorun [FormatException] (Türkçe) olarak yükseltilir. Saf Dart.
 class GeoImport {
   GeoImport._();
@@ -36,7 +50,9 @@ class GeoImport {
 
   static const _images = {'.jpg', '.jpeg', '.png', '.heic', '.gif'};
 
-  static ImportBundle parse(Uint8List bytes) {
+  /// [allowPackage]: paket içindeki dosyalar okunurken false (iç içe
+  /// paket açılmaz).
+  static ImportBundle parse(Uint8List bytes, {bool allowPackage = true}) {
     if (bytes.length > maxFileBytes) {
       throw const FormatException('Dosya çok büyük (en çok 50 MB).');
     }
@@ -46,7 +62,7 @@ class GeoImport {
         bytes[1] == 0x4B &&
         bytes[2] == 0x03 &&
         bytes[3] == 0x04) {
-      return _kmz(bytes);
+      return _zip(bytes, allowPackage: allowPackage);
     }
     final text = utf8.decode(bytes, allowMalformed: true);
     final start = text.trimLeft();
@@ -76,7 +92,7 @@ class GeoImport {
     return dot < 0 ? '' : name.substring(dot).toLowerCase();
   }
 
-  static ImportBundle _kmz(Uint8List bytes) {
+  static ImportBundle _zip(Uint8List bytes, {required bool allowPackage}) {
     final Archive archive;
     try {
       archive = ZipDecoder().decodeBytes(bytes, throwOnError: true);
@@ -102,6 +118,25 @@ class GeoImport {
     }
     if (total > maxTotalBytes) {
       throw const FormatException('Paket açılınca çok büyük.');
+    }
+
+    if (allowPackage && DataPackage.looksLike(entries)) {
+      final p = DataPackage.read(
+        entries,
+        readGeo: (b) => parse(b, allowPackage: false).result,
+      );
+      return ImportBundle(
+        p.result,
+        files: p.files,
+        format: 'Veri paketi',
+        skipped: [
+          for (final f in archive.files)
+            if (f.isFile && !safePath(f.name))
+              SkippedEntry(f.name, 'güvensiz yol (klasör dışı)'),
+          ...p.skipped,
+        ],
+        packageName: p.name,
+      );
     }
 
     // Ana belge: kökteki doc.kml, yoksa en kısa yollu .kml.

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../domain/models/map_graphic.dart';
+import '../../providers/alert_providers.dart';
 import '../../providers/geofence_providers.dart';
 import '../../providers/graphic_providers.dart';
 import '../shell/adaptive_sheet.dart';
@@ -130,10 +131,22 @@ class GeofencePanel extends ConsumerWidget {
         const SizedBox(height: 4),
         Text(
           'Kapalı bir çizime (alan, daire, dikdörtgen) giriş / çıkış uyarısı '
-          'koy: Çizimler listesindeki çit simgeli düğme ya da kaydederken. Uygulama '
-          'açıkken titreşir ve uyarı gösterir; arka planda (iz kaydı '
-          'sürerken) olanlar aşağıdaki listeye yazılır.',
+          'koy: haritada çizime dokun → Geofence, ya da kaydederken. Uygulama '
+          'açıkken titreşir, uyarı gösterir ve sesli okur; arka plandayken '
+          'bildirim gelir.',
           style: TextStyle(fontSize: 13, color: muted),
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Arka planda da izle'),
+          subtitle: Text(
+            'Uygulama kapalıyken (ekran kilitli) konum izlenir, bildirim gelir. '
+            'iOS mavi konum göstergesini gösterir; pil biraz daha harcanır.',
+            style: TextStyle(fontSize: 12, color: muted),
+          ),
+          value: ref.watch(geofenceBackgroundProvider),
+          onChanged: (v) =>
+              ref.read(geofenceBackgroundProvider.notifier).set(v),
         ),
         caption('Uyarılı alanlar (${fences.length})'),
         if (fences.isEmpty) Text('Henüz yok.', style: TextStyle(color: muted)),

@@ -4,6 +4,7 @@ import '../../core/uuid.dart';
 import '../../domain/models/map_graphic.dart';
 import '../../domain/models/range_line.dart';
 import '../../domain/models/range_ring.dart';
+import '../../domain/models/route_plan.dart';
 import '../../domain/models/sensor_fov.dart';
 import '../../domain/models/waypoint.dart';
 import 'gpx_kml_importer.dart';
@@ -114,6 +115,26 @@ class KerterizData {
       center: RbEnd(c),
       radii: radii,
       colorValue: _color(d['color']) ?? 0xFFFFFFFF,
+      createdAt: DateTime.now(),
+    );
+  }
+
+  static RoutePlan? route(Map<String, dynamic> d, {required String name}) {
+    final raw = d['points'];
+    if (raw is! List) return null;
+    final pts = [for (final p in raw) ?_ll(p)];
+    if (pts.length < 2 || pts.length != raw.length) return null;
+    final names = d['pointNames'];
+    return RoutePlan(
+      uid: _uid(d['uid']) ?? newUuidV4(),
+      name: name,
+      points: pts,
+      pointNames: names is List && names.length == pts.length
+          ? [
+              for (final n in names)
+                n is String && n.trim().isNotEmpty && n.length <= 40 ? n : null,
+            ]
+          : const [],
       createdAt: DateTime.now(),
     );
   }

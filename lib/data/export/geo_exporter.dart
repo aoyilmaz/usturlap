@@ -8,6 +8,7 @@ import '../../core/geo_math.dart';
 import '../../domain/models/map_graphic.dart';
 import '../../domain/models/range_line.dart';
 import '../../domain/models/range_ring.dart';
+import '../../domain/models/route_plan.dart';
 import '../../domain/models/track.dart';
 import '../../domain/models/waypoint.dart';
 
@@ -19,6 +20,7 @@ class ExportSet {
     this.rangeLines = const [],
     this.rangeRings = const [],
     this.tracks = const [],
+    this.routes = const [],
   });
 
   final List<Waypoint> waypoints;
@@ -26,13 +28,15 @@ class ExportSet {
   final List<RangeLine> rangeLines;
   final List<RangeRing> rangeRings;
   final List<TrackExport> tracks;
+  final List<RoutePlan> routes;
 
   int get count =>
       waypoints.length +
       graphics.length +
       rangeLines.length +
       rangeRings.length +
-      tracks.length;
+      tracks.length +
+      routes.length;
 
   bool get isEmpty => count == 0;
 }
@@ -57,8 +61,13 @@ class KmzPhoto {
 /// Dışa aktarma biçimleri.
 enum ExportFormat {
   kmz('KMZ', 'kmz', 'Fotoğraflarla; Google Earth, ATAK'),
+  package(
+    'Veri paketi',
+    'zip',
+    'ATAK görev paketi (CoT + fotoğraflar); ATAK ve Kerteriz açar',
+  ),
   kml('KML', 'kml', 'Google Earth, ATAK, çoğu harita'),
-  gpx('GPX', 'gpx', 'Yalnız noktalar ve izler; GPS cihazları'),
+  gpx('GPX', 'gpx', 'Yalnız noktalar, izler ve rotalar; GPS cihazları'),
   geojson('GeoJSON', 'geojson', 'CBS yazılımları (QGIS vb.)');
 
   const ExportFormat(this.label, this.extension, this.hint);
@@ -164,6 +173,17 @@ class GeoExporter {
         )
         ..writeln('    </Placemark>');
     }
+    for (final r in s.routes) {
+      _shape(
+        b,
+        r.name,
+        r.points,
+        closed: false,
+        argb: 0xFF7CFC00,
+        width: 4,
+        data: routeData(r),
+      );
+    }
     b
       ..writeln('  </Document>')
       ..writeln('</kml>');
@@ -258,6 +278,13 @@ class GeoExporter {
     'color': l.colorValue,
   };
 
+  static Map<String, Object?> routeData(RoutePlan r) => {
+    'kind': 'route',
+    'uid': r.uid,
+    'points': [for (final p in r.points) _ll(p)],
+    if (r.pointNames.any((n) => n != null)) 'pointNames': r.pointNames,
+  };
+
   static Map<String, Object?> rangeRingData(RangeRing r) => {
     'kind': 'rangeRing',
     'uid': r.uid,
@@ -309,8 +336,8 @@ class GeoExporter {
 
   // ------------------------------------------------------------------ GPX
 
-  /// GPX 1.1: noktalar (`wpt`) ve izler (`trk`). Çizimler ve ölçümler
-  /// GPX'te yer almaz.
+  /// GPX 1.1: noktalar (`wpt`), izler (`trk`) ve rotalar (`rte`). Çizimler
+  /// ve ölçümler GPX'te yer almaz.
   static String toGpx(ExportSet s, {required String name}) {
     final b = StringBuffer()
       ..writeln('<?xml version="1.0" encoding="UTF-8"?>')
@@ -351,6 +378,19 @@ class GeoExporter {
       b
         ..writeln('    </trkseg>')
         ..writeln('  </trk>');
+    }
+    for (final r in s.routes) {
+      b
+        ..writeln('  <rte>')
+        ..writeln('    <name>${_xml(r.name)}</name>');
+      for (var i = 0; i < r.points.length; i++) {
+        final p = r.points[i];
+        b.writeln(
+          '    <rtept lat="${p.latitude}" lon="${p.longitude}">'
+          '<name>${_xml(r.nameOf(i))}</name></rtept>',
+        );
+      }
+      b.writeln('  </rte>');
     }
     b.writeln('</gpx>');
     return b.toString();
@@ -439,6 +479,13 @@ class GeoExporter {
               dataKey: {'kind': 'track', 'uid': t.track.uid},
             },
           ),
+      for (final r in s.routes)
+        if (r.points.length >= 2)
+          feature(shape(r.points, false), {
+            'name': r.name,
+            'stroke': '#7cfc00',
+            dataKey: routeData(r),
+          }),
     ];
     return const JsonEncoder.withIndent('  ').convert({
       'type': 'FeatureCollection',

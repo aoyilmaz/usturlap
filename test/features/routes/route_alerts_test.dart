@@ -41,6 +41,8 @@ void main() {
     final enter = routeAlert(p(0), p(1), route, bearing: brg)!;
     expect(enter.text, 'Rotaya girildi · sıradaki KÖPRÜ: 090° · 1.11 km');
     expect(enter.strong, isFalse);
+    // Sesli: kısaltma ve simge yok.
+    expect(enter.speech, 'Rotaya girildi. Sıradaki KÖPRÜ, 1,1 kilometre.');
     final pass = routeAlert(p(1), p(2), route, bearing: brg)!;
     expect(pass.text, startsWith('KÖPRÜ geçildi · sıradaki KN2'));
   });
@@ -49,6 +51,7 @@ void main() {
     final done = routeAlert(p(2), p(3, finished: true), route, bearing: brg)!;
     expect(done.text, 'Rota bitti: KN2 — vardınız');
     expect(done.strong, isTrue);
+    expect(done.speech, 'Rota bitti. KN2. Vardınız.');
     final off = routeAlert(
       p(1),
       p(1, off: true, xt: -62),
@@ -56,6 +59,7 @@ void main() {
       bearing: brg,
     )!;
     expect(off.text, 'Rotadan saptınız: 62 m solunda');
+    expect(off.speech, 'Rotadan saptınız. Rotanın 62 metre solundasınız.');
     expect(off.strong, isTrue);
     // Sapma sürerken tekrar uyarmaz.
     expect(
