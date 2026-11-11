@@ -122,4 +122,24 @@ void main() {
     c.read(manualPositionProvider.notifier).clear();
     expect(c.read(selfContactProvider)?.position, gps);
   });
+
+  test('kendi işaretin adı çağrı adından (GPS kaynağının adı değil)', () async {
+    final src = _FakeSource();
+    final c = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        positionSourceProvider.overrideWithValue(src),
+      ],
+    );
+    addTearDown(c.dispose);
+    c.listen(selfContactProvider, (_, _) {});
+    await _settle();
+    src.emit(const LatLng(39.9, 32.85));
+    await _settle();
+    c.read(callsignProvider.notifier).set('TA2STZ');
+    expect(c.read(selfContactProvider)?.callsign, 'TA2STZ');
+    expect(c.read(selfContactProvider)?.position, const LatLng(39.9, 32.85));
+    c.read(manualPositionProvider.notifier).set(const LatLng(40, 33));
+    expect(c.read(selfContactProvider)?.callsign, 'TA2STZ');
+  });
 }

@@ -53,7 +53,7 @@ class _TrackListBodyState extends ConsumerState<_TrackListBody> {
                           fontSize: 18, fontWeight: FontWeight.bold)),
                   const Spacer(),
                   TextButton.icon(
-                    onPressed: () => runGpxKmlImport(context, ref),
+                    onPressed: () => runImport(context, ref),
                     icon: const Icon(Icons.file_download_outlined),
                     label: const Text('İçe aktar'),
                   ),

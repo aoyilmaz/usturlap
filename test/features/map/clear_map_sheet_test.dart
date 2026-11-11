@@ -109,4 +109,52 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 7));
   });
+
+  testWidgets('Geri al şeridi süre dolunca kendiliğinden kapanır', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1170, 5400);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await tester.runAsync(
+      () => RangeLineRepository(
+        db,
+      ).add(name: 'R&B-1', start: const RbEnd(p1), end: const RbEnd(p2)),
+    );
+    late BuildContext ctx;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(db),
+          selfContactProvider.overrideWithValue(null),
+        ],
+        child: MaterialApp(
+          home: PanelHost(
+            child: Builder(
+              builder: (c) {
+                ctx = c;
+                return const SizedBox.expand();
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    showClearMapSheet(ctx);
+    await settle(tester);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Temizle (1)'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Temizle (1)'));
+    await settle(tester);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Harita temizlendi.'), findsOneWidget);
+    // Düğmeli şerit Flutter'da varsayılan kalıcı; bizde süre dolunca kapanır.
+    await tester.pump(ClearMapPanel.undoWindow);
+    await tester.pumpAndSettle();
+    expect(find.text('Harita temizlendi.'), findsNothing);
+    expect(ClearMapPanel.undoWindow, const Duration(seconds: 3));
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 1));
+  });
 }

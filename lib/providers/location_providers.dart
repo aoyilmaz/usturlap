@@ -58,12 +58,15 @@ final manualPositionProvider =
 
 /// Kendi konumumuz: elle konum verildiyse o (doğruluk bilinmez, yön
 /// pusuladan), yoksa GPS. Harita, konum kutusu, navigasyon bunu kullanır.
+/// Ad her zaman ayarlardaki çağrı adı (GPS kaynağı varsayılan adı taşır;
+/// konum kutusunda ad değişince haritadaki işaret de değişsin).
 final selfContactProvider = Provider<Contact?>((ref) {
   final gps = ref.watch(gpsSelfContactProvider);
   final manual = ref.watch(manualPositionProvider);
-  if (manual == null) return gps;
+  final callsign = ref.watch(callsignProvider);
+  if (manual == null) return gps?.copyWith(callsign: callsign);
   return Contact(
-    callsign: gps?.callsign ?? ref.watch(callsignProvider),
+    callsign: callsign,
     position: manual,
     timestamp: DateTime.now(),
     headingDeg: gps?.headingDeg,

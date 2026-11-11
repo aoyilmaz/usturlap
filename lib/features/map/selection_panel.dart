@@ -1,13 +1,11 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../core/hashtags.dart';
 import '../../core/tr_text.dart';
-import '../../data/export/selection_exporter.dart';
+import '../../data/export/geo_exporter.dart';
 import '../../domain/models/clear_item.dart';
 import '../../providers/graphic_providers.dart';
 import '../../providers/map_cleaner.dart';
@@ -15,11 +13,13 @@ import '../../providers/range_line_providers.dart';
 import '../../providers/selection_providers.dart';
 import '../../providers/tool_providers.dart';
 import '../../providers/waypoint_providers.dart';
+import '../export/export_sheet.dart';
 import '../shell/adaptive_sheet.dart';
 import '../tools/measure_common.dart';
+import 'clear_map_sheet.dart';
 
 /// Lasso seçimi paneli (ATAK Multi-Select, kılavuz s.44): seçilenleri
-/// listeler; işareti kaldırılan işleme girmez. Toplu #etiket, KML paylaş,
+/// listeler; işareti kaldırılan işleme girmez. Toplu #etiket, dışa aktar,
 /// sil (Geri al'lı). Panel kapanınca seçim biter.
 Future<void> showSelectionPanel(BuildContext context) {
   return showAdaptiveSheet<void>(
@@ -128,9 +128,23 @@ class _SelectionPanelState extends ConsumerState<SelectionPanel> {
               label: const Text('Etiket ekle'),
             ),
             OutlinedButton.icon(
-              onPressed: on.isEmpty ? null : () => _share(on),
+              onPressed: on.isEmpty
+                  ? null
+                  : () => openStacked(
+                      context,
+                      () => showExportSheet(
+                        context,
+                        title: 'Seçimi dışa aktar',
+                        preset: ExportSet(
+                          waypoints: on.waypoints,
+                          graphics: on.graphics,
+                          rangeLines: on.rangeLines,
+                          rangeRings: on.rangeRings,
+                        ),
+                      ),
+                    ),
               icon: const Icon(Icons.ios_share),
-              label: const Text('KML paylaş'),
+              label: const Text('Dışa aktar'),
             ),
             FilledButton.icon(
               style: FilledButton.styleFrom(
@@ -220,31 +234,7 @@ class _SelectionPanelState extends ConsumerState<SelectionPanel> {
     );
   }
 
-  Future<void> _share(MapSelection on) async {
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    try {
-      final kml = SelectionExporter.toKml(
-        name: 'Pusula seçimi',
-        waypoints: on.waypoints,
-        graphics: on.graphics,
-        rangeLines: on.rangeLines,
-        rangeRings: on.rangeRings,
-      );
-      final path = '${Directory.systemTemp.path}/pusula_secim.kml';
-      await File(path).writeAsString(kml, flush: true);
-      await SharePlus.instance.share(
-        ShareParams(
-          files: [XFile(path)],
-          subject: 'Pusula seçimi',
-          text: 'Pusula seçimi (${on.count} nesne)',
-        ),
-      );
-    } catch (e) {
-      messenger?.showSnackBar(SnackBar(content: Text('Paylaşılamadı: $e')));
-    }
-  }
-
-  /// Seçilenleri siler (Haritayı temizle altyapısı: 6 sn Geri al,
+  /// Seçilenleri siler (Haritayı temizle altyapısı: 3 sn Geri al,
   /// fotoğraflar süre dolunca silinir).
   Future<void> _delete(MapSelection on) async {
     final messenger = ScaffoldMessenger.maybeOf(context);
@@ -275,7 +265,8 @@ class _SelectionPanelState extends ConsumerState<SelectionPanel> {
     if (mounted) Navigator.of(context).pop();
     final bar = messenger?.showSnackBar(
       SnackBar(
-        duration: const Duration(seconds: 6),
+        duration: ClearMapPanel.undoWindow,
+        persist: false,
         content: Text('${on.count} nesne silindi.'),
         action: SnackBarAction(
           label: 'Geri al',

@@ -262,7 +262,7 @@ konum düzeltme, **D3d** Point Dropper (dördü de cihazda ✓, 2026-11-08), **D
 > (Düzelt → Geriden kestirme, Overlay → Haritayı temizle). Android geri tuşu üstteki paneli
 > kapatır; menünün üstündeyse menü de kapanır (iOS önceliği; "← Geri" düğmesi menüye döner).
 > Temizle: `providers/map_cleaner.dart` (`mapClearTargetsProvider` yalnız görünenleri sayar,
-> `MapCleaner.clear/undo/finalize`), `map/clear_map_sheet.dart` (düğme listenin üstünde, 6 sn
+> `MapCleaner.clear/undo/finalize`), `map/clear_map_sheet.dart` (düğme listenin üstünde, 3 sn
 > Geri al); silinen noktaların fotoğrafları Geri al süresi dolunca silinir. Kayıtlı rotalar
 > haritada durmadığı için listede yok.
 
@@ -426,9 +426,9 @@ resim katmanı eklenecek.
 ### Aşama G: Çizim ve veri yönetimi
 
 Adımlar: **G1** çizim araçları, **G2** 3B şekiller, **G6** iz arama (üçü cihazda ✓, 2026-11-10),
-**G4** lasso / çoklu seçim, **G3** geofence, **G5** hızlı fotoğraf / galeri (üçü kodda tamam,
-cihaz testi bekliyor), G7 içe/dışa aktarma (KMZ), G8 veri paketi. G7 ve G8 zip ister →
-`archive` paketi için onay sorulacak.
+**G4** lasso / çoklu seçim, **G3** geofence, **G5** hızlı fotoğraf / galeri (üçü cihazda ✓,
+commit `f4cb0ff`), **G7** içe/dışa aktarma + çizim düzenleme (kodda tamam, cihaz testi
+bekliyor), G8 veri paketi. `archive` 4.6.0 eklendi (onaylı, 2026-11-11).
 
 > G1: **Çizim araçları** çubuğu (araç çubuğuna eklenebilir; ≡ → Veri): Çizgi (çoklu nokta; 2
 > noktada da çizim, R&B değil) · Alan · **Daire** (merkez + kenar) · **Dikdörtgen** (iki çapraz
@@ -452,8 +452,8 @@ cihaz testi bekliyor), G7 içe/dışa aktarma (KMZ), G8 veri paketi. G7 ve G8 zi
 > (serbest çizim katmanı, camgöbeği); içindeki **görünür** noktalar (konum), çizimler (bir köşesi),
 > R&B çizgileri (orta nokta), halkalar (merkez) seçilir (`domain/usecases/lasso.dart`). Seçim
 > paneli: işareti kaldırılan işleme girmez; **#etiket ekle** (noktaların notuna, diğerlerinin
-> adına; zaten varsa eklenmez), **KML paylaş** (`data/export/selection_exporter.dart`), **Sil**
-> (onaylı; Haritayı temizle altyapısı → 6 sn Geri al, fotoğraflar süre dolunca). Seçim alanı
+> adına; zaten varsa eklenmez), **Dışa aktar** (G7 paneli; önceden KML paylaş), **Sil**
+> (onaylı; Haritayı temizle altyapısı → 3 sn Geri al, fotoğraflar süre dolunca). Seçim alanı
 > haritada kesikli çizgiyle; panel kapanınca seçim biter.
 >
 > G3: **Geofence** (≡ → Veri; araç çubuğuna eklenebilir): kapalı çizime (alan / daire /
@@ -465,6 +465,37 @@ cihaz testi bekliyor), G7 içe/dışa aktarma (KMZ), G8 veri paketi. G7 ve G8 zi
 > paneli). Panel: uyarılı alanlar (şu an içeride / dışarıda), son 30 uyarı. **Sınır:** bildirim
 > paketi olmadığından (onaysız paket eklenmedi) arka planda ses/bildirim yok; iz kaydı sürerken
 > arka planda olanlar geçmişe yazılır, uygulama açılınca görünür. ATAK'a geofence ayrıntısı gitmez.
+>
+> **Çizim düzenleme** (2026-11-11, kullanıcı isteği): haritada çizime dokun → radyal menü
+> (Düzenle · Şekil · Geofence · Profil · Sil). Düzenle = kaydetme penceresi dolu gelir (ad, renk,
+> kalınlık, kesikli, 3B, geofence; şekil değişmez). Şekil = köşe tutamaçları: köşeye dokun → seçilir,
+> haritaya / nesneye dokun → oraya taşınır; kenar ortasındaki + köşe ekler; ortadaki tutamaç bütün
+> şekli taşır (boyut / yön korunur); dairede merkez + kenar (yarıçap); dikdörtgen eksenli kalır.
+> Geri al, Köşeyi sil, İptal, Kaydet. Dokunma 24 pt toleransla (`domain/usecases/graphic_hit.dart`,
+> kenar önce, sonra içindeki en küçük şekil); `domain/usecases/shape_edit.dart`. Çizimler listesinde
+> satıra dokun = Düzenle. Sil Geri al'lı.
+>
+> Düzeltmeler (2026-11-11): kendi işaretin adı konum kutusundaki çağrı adından (GPS kaynağı
+> varsayılan "KERTERIZ-1"i taşıyordu); düğmeli uyarı şeritleri Flutter'da varsayılan kalıcı
+> (`SnackBar.persist`) → `persist: false`, Geri al süresi 3 sn.
+>
+> G7: **İçe aktar** (≡ → Veri ya da Noktalar / İzler listesi): KMZ, KML, GPX, GeoJSON; biçim
+> içerikten anlaşılır (seçici bütün dosyaları gösterir: iOS KMZ / GeoJSON'u tanımadığı için
+> file_picker onları seçilemez yapıyordu). KML: Point → nokta, LineString / `gx:Track` → iz,
+> Polygon → alan çizimi (Style / StyleMap rengi ve kalınlığı), MultiGeometry, HTML açıklama nota
+> (resimler KMZ'den noktaya fotoğraf). GeoJSON: Point / LineString / Polygon + Multi* ve
+> GeometryCollection, simplestyle renkleri. Eklemeden önce önizleme (kaç nokta, çizim, iz,
+> fotoğraf) ve onay; aynı kimlik zaten varsa atlanır (`data/import/import_writer.dart`).
+> **Dışa aktar** (≡ → Veri; lasso seçim panelinde de): tür seçimi (noktalar, çizimler, izler, R&B,
+> halkalar) ve biçim: KMZ (fotoğraflarla), KML, GPX (yalnız noktalar + izler), GeoJSON →
+> paylaşım (`data/export/geo_exporter.dart`). Pusula'dan Pusula'ya kayıpsız: daire, kalınlık,
+> kesikli, 3B, geofence, sembol (birlik / kademe / rol / CoT tipi), yükseklik, görüş konisi, kimlik
+> KML `ExtendedData` ("kerteriz" JSON) / GeoJSON "kerteriz" özelliğinde; başka uygulamalar düz
+> geometri görür. Güvenlik: dosya ≤ 50 MB; KMZ ≤ 1000 girdi, girdi ≤ 30 MB, toplam ≤ 150 MB
+> (açmadan önce bildirilen boyutla; `archive` açarken de bildirilen boyutu aşmaz); `..`, mutlak,
+> ters bölü ve sürücü harfli yollar yok sayılır; yalnız noktaların başvurduğu resimler okunur;
+> koordinatlar aralık denetiminden geçer. SHP desteklenmiyor. "Kerteriz ile aç" (AirDrop /
+> Dosyalar'dan doğrudan açma) yok: G8'de.
 >
 > G5: **Hızlı fotoğraf** (≡ → Veri): kamerayı açar; çekilen fotoğraf konumumda (konum yoksa harita
 > ortasında) yeni FOTO-n noktasına eklenir (not: "Hızlı fotoğraf gg.aa.yyyy ss:dd"). **Galeri**:

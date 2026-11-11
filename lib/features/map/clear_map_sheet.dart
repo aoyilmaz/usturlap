@@ -22,7 +22,8 @@ class ClearMapPanel extends ConsumerStatefulWidget {
   const ClearMapPanel({super.key});
 
   /// "Geri al" süresi.
-  static const undoWindow = Duration(seconds: 6);
+  /// Geri al süresi (kısa: şerit haritayı uzun süre kapatmasın).
+  static const undoWindow = Duration(seconds: 3);
 
   @override
   ConsumerState<ClearMapPanel> createState() => _ClearMapPanelState();
@@ -154,6 +155,9 @@ class _ClearMapPanelState extends ConsumerState<ClearMapPanel> {
     final bar = messenger?.showSnackBar(
       SnackBar(
         duration: ClearMapPanel.undoWindow,
+        // Düğmeli şerit Flutter'da varsayılan olarak kalıcı; süre dolunca
+        // kapansın.
+        persist: false,
         content: Text(
           _hideOnly ? 'Harita sadeleştirildi.' : 'Harita temizlendi.',
         ),

@@ -23,19 +23,55 @@ Future<void> showSaveGraphicDialog(
   WidgetRef ref, {
   required GraphicType type,
   required List<LatLng> points,
+}) => _showGraphicDialog(context, ref, type: type, points: points);
+
+/// Kayıtlı çizimin ad, renk, kalınlık, kesikli, 3B ve geofence ayarlarını
+/// değiştirir (şekil değişmez; o haritada "Şekil" ile).
+Future<void> showEditGraphicDialog(
+  BuildContext context,
+  WidgetRef ref,
+  MapGraphic g,
+) => _showGraphicDialog(
+  context,
+  ref,
+  type: g.type,
+  points: g.points,
+  existing: g,
+);
+
+Future<void> _showGraphicDialog(
+  BuildContext context,
+  WidgetRef ref, {
+  required GraphicType type,
+  required List<LatLng> points,
+  MapGraphic? existing,
 }) async {
   final names = [
     for (final g in ref.read(mapGraphicsProvider).value ?? const <MapGraphic>[])
       g.name,
   ];
-  final defaultName = nextSequentialName(graphicPrefix(type), names);
+  final defaultName =
+      existing?.name ?? nextSequentialName(graphicPrefix(type), names);
   final nameCtrl = TextEditingController(text: defaultName);
-  var color = graphicPalette.first;
-  var width = MapGraphic.defaultStrokeWidth;
-  var dashed = false;
-  double? height;
-  GeofenceTrigger? geofence;
+  var color = existing?.colorValue ?? graphicPalette.first;
+  var width = existing?.strokeWidth ?? MapGraphic.defaultStrokeWidth;
+  var dashed = existing?.dashed ?? false;
+  var height = existing?.height;
+  var geofence = existing?.geofence;
   final closed = type != GraphicType.line;
+  // Paletin dışındaki renk (ör. içe aktarılan) seçenek olarak kalsın.
+  final palette = [
+    ...graphicPalette,
+    if (!graphicPalette.contains(color)) color,
+  ];
+  final widths = [
+    ...graphicStrokeWidths,
+    if (!graphicStrokeWidths.contains(width)) width,
+  ];
+  final heights = [
+    ...graphicHeights,
+    if (!graphicHeights.contains(height)) height,
+  ];
 
   await showDialog<void>(
     context: context,
@@ -44,7 +80,11 @@ Future<void> showSaveGraphicDialog(
         builder: (context, setLocal) {
           const caption = TextStyle(fontSize: 12, color: Colors.grey);
           return AlertDialog(
-            title: Text('${type.label} kaydet'),
+            title: Text(
+              existing == null
+                  ? '${type.label} kaydet'
+                  : '${existing.name} düzenle',
+            ),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -63,7 +103,7 @@ Future<void> showSaveGraphicDialog(
                     spacing: 10,
                     runSpacing: 8,
                     children: [
-                      for (final c in graphicPalette)
+                      for (final c in palette)
                         Semantics(
                           button: true,
                           selected: color == c,
@@ -94,9 +134,13 @@ Future<void> showSaveGraphicDialog(
                   Wrap(
                     spacing: 8,
                     children: [
-                      for (final w in graphicStrokeWidths)
+                      for (final w in widths)
                         ChoiceChip(
-                          label: Text('${w.round()}'),
+                          label: Text(
+                            w == w.roundToDouble()
+                                ? '${w.round()}'
+                                : w.toStringAsFixed(1),
+                          ),
                           selected: width == w,
                           onSelected: (_) => setLocal(() => width = w),
                         ),
@@ -116,7 +160,7 @@ Future<void> showSaveGraphicDialog(
                     Wrap(
                       spacing: 8,
                       children: [
-                        for (final h in graphicHeights)
+                        for (final h in heights)
                           ChoiceChip(
                             label: Text(h == null ? 'Düz' : '${h.round()} m'),
                             selected: height == h,
@@ -152,20 +196,31 @@ Future<void> showSaveGraphicDialog(
                   final name = nameCtrl.text.trim().isEmpty
                       ? defaultName
                       : nameCtrl.text.trim();
-                  await ref
-                      .read(mapGraphicRepositoryProvider)
-                      .add(
-                        name: name,
-                        type: type,
-                        points: points,
-                        colorValue: color,
-                        strokeWidth: width,
-                        dashed: dashed,
-                        height: closed ? height : null,
-                        geofence: closed ? geofence : null,
-                      );
-                  // Kaydedildi: aracın geçici noktalarını temizle.
-                  ref.read(toolProvider.notifier).clearPoints();
+                  final repo = ref.read(mapGraphicRepositoryProvider);
+                  if (existing != null) {
+                    await repo.updateStyle(
+                      existing.id!,
+                      name: name,
+                      colorValue: color,
+                      strokeWidth: width,
+                      dashed: dashed,
+                      height: closed ? height : null,
+                      geofence: closed ? geofence : null,
+                    );
+                  } else {
+                    await repo.add(
+                      name: name,
+                      type: type,
+                      points: points,
+                      colorValue: color,
+                      strokeWidth: width,
+                      dashed: dashed,
+                      height: closed ? height : null,
+                      geofence: closed ? geofence : null,
+                    );
+                    // Kaydedildi: aracın geçici noktalarını temizle.
+                    ref.read(toolProvider.notifier).clearPoints();
+                  }
                   if (context.mounted) Navigator.of(context).pop();
                 },
                 child: const Text('Kaydet'),

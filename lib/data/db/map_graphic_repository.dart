@@ -55,6 +55,36 @@ class MapGraphicRepository {
     );
   }
 
+  /// Görünüş ve ayarları günceller (ad, renk, kalınlık, kesikli, 3B
+  /// yükseklik, geofence); şekil değişmez.
+  Future<void> updateStyle(
+    int id, {
+    required String name,
+    required int colorValue,
+    required double strokeWidth,
+    required bool dashed,
+    double? height,
+    GeofenceTrigger? geofence,
+  }) {
+    return (_db.update(_db.mapGraphics)..where((t) => t.id.equals(id))).write(
+      MapGraphicsCompanion(
+        name: Value(name),
+        color: Value(colorValue),
+        strokeWidth: Value(strokeWidth),
+        dashed: Value(dashed),
+        height: Value(height),
+        geofence: Value(geofence?.name),
+      ),
+    );
+  }
+
+  /// Şekli (noktaları) günceller.
+  Future<void> setPoints(int id, List<LatLng> points) {
+    return (_db.update(_db.mapGraphics)..where((t) => t.id.equals(id))).write(
+      MapGraphicsCompanion(pointsJson: Value(_encode(points))),
+    );
+  }
+
   Future<void> rename(int id, String name) {
     return (_db.update(
       _db.mapGraphics,

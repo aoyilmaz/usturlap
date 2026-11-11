@@ -19,6 +19,9 @@ import '../../domain/models/contact.dart';
 import '../../domain/models/imported_layer.dart';
 import '../../domain/models/bloodhound.dart';
 import '../../domain/models/bullseye.dart';
+import '../../domain/models/clear_item.dart';
+import '../../domain/usecases/graphic_hit.dart';
+import '../../domain/usecases/shape_edit.dart';
 import '../../domain/usecases/viewshed.dart';
 import '../../domain/models/map_graphic.dart';
 import '../../domain/models/range_line.dart';
@@ -45,6 +48,7 @@ import '../../domain/models/offline_region.dart';
 import '../offline/offline_frame_panel.dart';
 import '../offline/offline_regions_sheet.dart';
 import '../overlays/overlay_manager_sheet.dart';
+import '../../providers/map_cleaner.dart';
 import '../../providers/overlay_providers.dart';
 import '../../domain/models/saved_view.dart';
 import '../../providers/repeater_providers.dart';
@@ -71,6 +75,8 @@ import '../layers/import_layer_action.dart';
 import '../nav/nav_banner.dart';
 import '../symbols/nato_symbol.dart';
 import '../elevation/elevation_data_panel.dart';
+import '../export/export_sheet.dart';
+import '../elevation/elevation_profile_panel.dart';
 import '../elevation/terrain_analysis_panel.dart';
 import '../elevation/viewshed_panel.dart';
 import '../gallery/gallery_panel.dart';
@@ -87,6 +93,8 @@ import '../tools/measure_common.dart';
 import '../tools/range_line_panel.dart';
 import '../tools/range_ring_panel.dart';
 import '../tools/range_tools_bar.dart';
+import '../tools/save_graphic_dialog.dart';
+import '../tools/shape_edit_layer.dart';
 import '../tracks/track_list_sheet.dart';
 import '../waypoints/add_waypoint_dialog.dart';
 import '../waypoints/edit_waypoint_dialog.dart';
@@ -167,6 +175,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   /// Radyal menü "Taşı": sonraki dokunuş bu noktayı oraya taşır.
   Waypoint? _moving;
+
+  /// Şekli düzenlenen çizim (radyal "Şekil"); null = yok.
+  ShapeEditState? _shapeEdit;
 
   /// Konumu düzelt → "Haritada göster": sonraki dokunuş elle konum olur.
   bool _placingSelf = false;
@@ -971,6 +982,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     VoidCallback? onOpen,
     String? anchor,
   }) {
+    if (_shapeEdit != null) {
+      _shapeEditTap(p);
+      return;
+    }
     if (_moving != null) {
       _finishMove(p);
       return;
@@ -1190,6 +1205,132 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       _rangeBarOpen = false;
       _placingSelf = false;
     });
+  }
+
+  // ------------------------------------------------ çizim düzenleme
+
+  /// Dokunulan noktadaki çizim (görünenler arasında; ~24 pt tolerans).
+  MapGraphic? _graphicAt(LatLng p) {
+    final vis = ref.read(overlayVisibilityProvider);
+    final graphics = [
+      for (final g
+          in ref.read(mapGraphicsProvider).value ?? const <MapGraphic>[])
+        if (vis.showsGraphic(g)) g,
+    ];
+    if (graphics.isEmpty) return null;
+    final tol = 24 * metersPerPixel(_map.camera.zoom, p.latitude);
+    return hitGraphic(p, graphics, tol);
+  }
+
+  /// Çizimin radyal menüsü (ATAK: şekle dokun).
+  List<RadialAction> _graphicActions(MapGraphic g) => [
+        RadialAction(
+            icon: Icons.edit_outlined,
+            label: 'Düzenle',
+            onTap: () => showEditGraphicDialog(context, ref, g)),
+        RadialAction(
+            icon: Icons.polyline_outlined,
+            label: 'Şekil',
+            onTap: () => _startShapeEdit(g)),
+        if (g.closed)
+          RadialAction(
+              icon: Icons.fence,
+              label: 'Geofence',
+              color: g.geofence == null ? null : Colors.orangeAccent,
+              onTap: () => showGeofenceDialog(context, ref, g)),
+        if (g.type == GraphicType.line)
+          RadialAction(
+              icon: Icons.area_chart_outlined,
+              label: 'Profil',
+              onTap: () => showElevationProfilePanel(
+                    context,
+                    title: '${g.name}: yükseklik profili',
+                    points: g.points,
+                  )),
+        RadialAction(
+            icon: Icons.delete_outline,
+            label: 'Sil',
+            color: Colors.redAccent,
+            onTap: () => _confirmDeleteGraphic(g)),
+      ];
+
+  void _startShapeEdit(MapGraphic g) {
+    ref.read(toolProvider.notifier).reset();
+    setState(() {
+      _shapeEdit = ShapeEditState(g);
+      _moving = null;
+      _dropMode = false;
+      _placingSelf = false;
+      _lassoMode = false;
+      _rangeBarOpen = false;
+      _drawBarOpen = false;
+      _radial = null;
+    });
+  }
+
+  void _shapeEditSelect(int i) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      final s = _shapeEdit;
+      if (s == null) return;
+      // Seçili köşeye yeniden dokunmak seçimi bırakır.
+      _shapeEdit = s.select(s.selected == i ? null : i);
+    });
+  }
+
+  /// Şekil düzenlemede haritaya / nesneye dokunuldu: seçili köşe oraya.
+  void _shapeEditTap(LatLng p) {
+    final s = _shapeEdit;
+    if (s == null || s.selected == null) return;
+    HapticFeedback.mediumImpact();
+    setState(() => _shapeEdit = s.moveSelectedTo(p));
+  }
+
+  Future<void> _saveShapeEdit() async {
+    final s = _shapeEdit;
+    if (s == null) return;
+    setState(() => _shapeEdit = null);
+    if (!s.changed) return;
+    HapticFeedback.mediumImpact();
+    await ref.read(mapGraphicRepositoryProvider).setPoints(
+          s.graphic.id!,
+          s.points,
+        );
+  }
+
+  /// Radyal "Sil": onaylı; Geri al'lı (Haritayı temizle altyapısı).
+  Future<void> _confirmDeleteGraphic(MapGraphic g) async {
+    final messenger = ScaffoldMessenger.of(context);
+    if (!await confirmDeleteNamed(context, g.name)) return;
+    final cleaner = ref.read(mapCleanerProvider);
+    final snapshot = await cleaner.clear(
+      {ClearItem.graphics},
+      targets: MapClearTargets(
+        tool: const ToolState(),
+        rangeLines: const [],
+        rangeRings: const [],
+        bullseye: null,
+        bloodhounds: const [],
+        navTarget: null,
+        activeRoute: null,
+        displayedTrackId: null,
+        viewshed: null,
+        terrain: null,
+        waypoints: const [],
+        graphics: [g],
+      ),
+    );
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        duration: ClearMapPanel.undoWindow,
+        persist: false,
+        content: Text('“${g.name}” silindi.'),
+        action: SnackBarAction(
+          label: 'Geri al',
+          onPressed: () => cleaner.undo(snapshot),
+        ),
+      ));
   }
 
   Future<void> _finishMove(LatLng p) async {
@@ -1658,6 +1799,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// imleçteki yere nokta (waypoint) ekleme penceresini açar.
   void _addAtCrosshair() {
     final p = _map.camera.center;
+    if (_shapeEdit != null) {
+      _shapeEditTap(p);
+      return;
+    }
     if (_moving != null) {
       _finishMove(p);
       return;
@@ -1756,10 +1901,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         catalog(ToolbarTool.gallery),
         catalog(ToolbarTool.geofence),
         catalog(ToolbarTool.graphics),
+        // G7: KMZ / KML / GPX / GeoJSON.
         ToolGridItem(
             icon: Icons.file_open_outlined,
-            label: 'GPX / KML içe aktar',
-            onTap: () => runGpxKmlImport(context, ref)),
+            label: 'İçe aktar',
+            onTap: () => runImport(context, ref)),
+        ToolGridItem(
+            icon: Icons.ios_share,
+            label: 'Dışa aktar',
+            onTap: () => showExportSheet(context)),
       ]),
       ToolGridSection('Harita', [
         catalog(ToolbarTool.maps),
@@ -2126,6 +2276,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         ..showSnackBar(SnackBar(
           backgroundColor: Colors.orange.shade900,
           duration: const Duration(seconds: 8),
+          persist: false,
           content: Text('Geofence — $text'),
           action: SnackBarAction(
             label: 'Liste',
@@ -2248,7 +2399,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       // Kalıcı taktik grafikler (çizgi/alan).
       ..._graphicOverlays([
         for (final g in graphics)
-          if (visibility.showsGraphic(g)) g,
+          if (visibility.showsGraphic(g) && g.uid != _shapeEdit?.graphic.uid)
+            g,
+        ?_shapeEdit?.preview,
       ]),
       // Bullseye: halkalar + 30°'de bir ışın (seçili kuzeye hizalı).
       if (bullseye != null)
@@ -2363,6 +2516,18 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           strokeWidth: 1,
         ),
       if (self != null) _selfMarker(self),
+      // Şekil düzenleme tutamaçları en üstte.
+      if (_shapeEdit != null)
+        ...shapeEditHandles(
+          _shapeEdit!,
+          night: nightMode,
+          onVertex: (i) => _shapeEditSelect(i),
+          onMidpoint: (i) {
+            HapticFeedback.selectionClick();
+            setState(() => _shapeEdit = _shapeEdit?.insertMidpoint(i));
+          },
+          onMoveAll: () => _shapeEditSelect(ShapeEditState.moveAll),
+        ),
     ];
 
     return Scaffold(
@@ -2446,6 +2611,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                           _previewRoute = null;
                         });
                       }
+                      if (_shapeEdit != null) {
+                        _shapeEditTap(point);
+                        return;
+                      }
                       if (_moving != null) {
                         _finishMove(point);
                         return;
@@ -2466,6 +2635,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       if (ref.read(toolProvider).active) {
                         HapticFeedback.selectionClick();
                         ref.read(toolProvider.notifier).addPoint(point);
+                        return;
+                      }
+                      // Boş araçta çizime dokunuldu → çizimin menüsü.
+                      final g = _graphicAt(point);
+                      if (g != null) {
+                        _openRadial(point, g.name, _graphicActions(g));
                       }
                     },
                     // Uzun bas → waypoint ekle.
@@ -2670,6 +2845,18 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                                   child: const Text('İmlece'),
                                 )
                               : null,
+                        ),
+                      if (_shapeEdit != null)
+                        ShapeEditBar(
+                          state: _shapeEdit!,
+                          night: nightMode,
+                          onUndo: () =>
+                              setState(() => _shapeEdit = _shapeEdit?.undo()),
+                          onRemove: () => setState(
+                            () => _shapeEdit = _shapeEdit?.removeSelected(),
+                          ),
+                          onCancel: () => setState(() => _shapeEdit = null),
+                          onSave: _saveShapeEdit,
                         ),
                       if (_moving != null)
                         _ModeHint(

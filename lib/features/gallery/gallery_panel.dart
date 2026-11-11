@@ -55,6 +55,7 @@ Future<void> quickPic(
         content: Text(
           '$name kaydedildi${self == null ? ' (harita ortasına)' : ''}.',
         ),
+        persist: false,
         action: onCenter == null
             ? null
             : SnackBarAction(label: 'Göster', onPressed: () => onCenter(at)),

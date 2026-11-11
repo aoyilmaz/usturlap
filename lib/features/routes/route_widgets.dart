@@ -134,6 +134,7 @@ class RoutePlanToolbar extends ConsumerWidget {
     if (route == null || !context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('“$trimmed” kaydedildi · ${GeoMath.fmtDistance(route.length)}'),
+      persist: false,
       action: SnackBarAction(
         label: 'TAKİP ET',
         onPressed: () => ref.read(activeRouteProvider.notifier).start(route),
