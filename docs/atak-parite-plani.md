@@ -426,8 +426,9 @@ resim katmanı eklenecek.
 ### Aşama G: Çizim ve veri yönetimi
 
 Adımlar: **G1** çizim araçları, **G2** 3B şekiller, **G6** iz arama (üçü cihazda ✓, 2026-11-10),
-G3 geofence, G4 lasso / çoklu seçim, G5 konumlu fotoğraf / galeri, G7 içe/dışa aktarma (KMZ),
-G8 veri paketi. G7 ve G8 zip ister → `archive` paketi için onay sorulacak.
+**G4** lasso / çoklu seçim, **G3** geofence, **G5** hızlı fotoğraf / galeri (üçü kodda tamam,
+cihaz testi bekliyor), G7 içe/dışa aktarma (KMZ), G8 veri paketi. G7 ve G8 zip ister →
+`archive` paketi için onay sorulacak.
 
 > G1: **Çizim araçları** çubuğu (araç çubuğuna eklenebilir; ≡ → Veri): Çizgi (çoklu nokta; 2
 > noktada da çizim, R&B değil) · Alan · **Daire** (merkez + kenar) · **Dikdörtgen** (iki çapraz
@@ -446,6 +447,28 @@ G8 veri paketi. G7 ve G8 zip ister → `archive` paketi için onay sorulacak.
 >
 > G6: **İz arama** (İzler paneli): ad ya da tarih ("12.11") ile arama (Türkçe büyük/küçük harf
 > duyarsız), Bugün / 7 gün / 30 gün / Tümü süzgeci, en yeni üstte; listede iz tarihi görünür.
+>
+> G4: **Seç (lasso)** (≡ → Veri; araç çubuğuna eklenebilir): parmakla alanın çevresi çizilir
+> (serbest çizim katmanı, camgöbeği); içindeki **görünür** noktalar (konum), çizimler (bir köşesi),
+> R&B çizgileri (orta nokta), halkalar (merkez) seçilir (`domain/usecases/lasso.dart`). Seçim
+> paneli: işareti kaldırılan işleme girmez; **#etiket ekle** (noktaların notuna, diğerlerinin
+> adına; zaten varsa eklenmez), **KML paylaş** (`data/export/selection_exporter.dart`), **Sil**
+> (onaylı; Haritayı temizle altyapısı → 6 sn Geri al, fotoğraflar süre dolunca). Seçim alanı
+> haritada kesikli çizgiyle; panel kapanınca seçim biter.
+>
+> G3: **Geofence** (≡ → Veri; araç çubuğuna eklenebilir): kapalı çizime (alan / daire /
+> dikdörtgen) uyarı türü — Yok / Girişte / Çıkışta / Giriş ve çıkışta. Kaydet penceresinde ya da
+> Çizimler listesindeki çit düğmesiyle (drift v15 `map_graphics.geofence`). İzleyici
+> (`domain/usecases/geofence_monitor.dart`) her konumda içeride / dışarıda durumunu öncekiyle
+> karşılaştırır; ilk konum yalnız durumu belirler (açılışta boşuna uyarı yok); doğruluğu 50 m'den
+> kötü konum yok sayılır. Uyarı: güçlü titreşim + turuncu ekran uyarısı ("Liste" → Geofence
+> paneli). Panel: uyarılı alanlar (şu an içeride / dışarıda), son 30 uyarı. **Sınır:** bildirim
+> paketi olmadığından (onaysız paket eklenmedi) arka planda ses/bildirim yok; iz kaydı sürerken
+> arka planda olanlar geçmişe yazılır, uygulama açılınca görünür. ATAK'a geofence ayrıntısı gitmez.
+>
+> G5: **Hızlı fotoğraf** (≡ → Veri): kamerayı açar; çekilen fotoğraf konumumda (konum yoksa harita
+> ortasında) yeni FOTO-n noktasına eklenir (not: "Hızlı fotoğraf gg.aa.yyyy ss:dd"). **Galeri**:
+> bütün nokta fotoğrafları 3 sütun; dokununca tam ekran, "Haritada göster" noktaya gider.
 
 | Özellik (ATAK s.) | Ne yapılacak | Efor |
 |---|---|---|

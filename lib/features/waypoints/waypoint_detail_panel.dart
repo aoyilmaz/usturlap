@@ -318,17 +318,26 @@ class AttachmentStrip extends ConsumerWidget {
     return showDialog<void>(
       context: context,
       builder: (context) =>
-          _PhotoViewer(attachment: a, onDelete: () => repo.delete(a)),
+          PhotoViewer(attachment: a, onDelete: () => repo.delete(a)),
     );
   }
 }
 
-/// Tam ekran fotoğraf: iki parmakla yakınlaştır; silme onaylı.
-class _PhotoViewer extends StatelessWidget {
-  const _PhotoViewer({required this.attachment, required this.onDelete});
+/// Tam ekran fotoğraf: iki parmakla yakınlaştır; silme onaylı. Galeriden
+/// açılınca [onShowOnMap] (fotoğrafın noktası) ve [title] (nokta adı).
+class PhotoViewer extends StatelessWidget {
+  const PhotoViewer({
+    super.key,
+    required this.attachment,
+    required this.onDelete,
+    this.onShowOnMap,
+    this.title,
+  });
 
   final Attachment attachment;
   final Future<void> Function() onDelete;
+  final VoidCallback? onShowOnMap;
+  final String? title;
 
   Future<void> _confirmDelete(BuildContext context) async {
     final ok = await showDialog<bool>(
@@ -388,10 +397,19 @@ class _PhotoViewer extends StatelessWidget {
                 ),
                 Expanded(
                   child: Text(
-                    when,
+                    title == null ? when : '$title · $when',
                     style: const TextStyle(color: Colors.white70),
                   ),
                 ),
+                if (onShowOnMap != null)
+                  IconButton(
+                    tooltip: 'Haritada göster',
+                    icon: const Icon(Icons.place, color: Colors.white),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      onShowOnMap!();
+                    },
+                  ),
                 IconButton(
                   tooltip: 'Fotoğrafı sil',
                   icon: const Icon(

@@ -36,7 +36,7 @@ void main() {
 
   Future<void> expectV12(AppDatabase db) async {
     final v = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(v.read<int>('user_version'), 14);
+    expect(v.read<int>('user_version'), 15);
     final repo = WaypointRepository(db);
     final wps = await repo.watchAll().first;
     expect(wps, isNotEmpty);

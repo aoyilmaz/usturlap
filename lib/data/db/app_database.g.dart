@@ -1995,6 +1995,17 @@ class $MapGraphicsTable extends MapGraphics
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _geofenceMeta = const VerificationMeta(
+    'geofence',
+  );
+  @override
+  late final GeneratedColumn<String> geofence = GeneratedColumn<String>(
+    'geofence',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -2007,6 +2018,7 @@ class $MapGraphicsTable extends MapGraphics
     strokeWidth,
     dashed,
     height,
+    geofence,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2090,6 +2102,12 @@ class $MapGraphicsTable extends MapGraphics
         height.isAcceptableOrUnknown(data['height']!, _heightMeta),
       );
     }
+    if (data.containsKey('geofence')) {
+      context.handle(
+        _geofenceMeta,
+        geofence.isAcceptableOrUnknown(data['geofence']!, _geofenceMeta),
+      );
+    }
     return context;
   }
 
@@ -2139,6 +2157,10 @@ class $MapGraphicsTable extends MapGraphics
         DriftSqlType.double,
         data['${effectivePrefix}height'],
       ),
+      geofence: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}geofence'],
+      ),
     );
   }
 
@@ -2159,6 +2181,7 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
   final double? strokeWidth;
   final bool? dashed;
   final double? height;
+  final String? geofence;
   const MapGraphicRow({
     required this.id,
     required this.name,
@@ -2170,6 +2193,7 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
     this.strokeWidth,
     this.dashed,
     this.height,
+    this.geofence,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2192,6 +2216,9 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
     if (!nullToAbsent || height != null) {
       map['height'] = Variable<double>(height);
     }
+    if (!nullToAbsent || geofence != null) {
+      map['geofence'] = Variable<String>(geofence);
+    }
     return map;
   }
 
@@ -2213,6 +2240,9 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
       height: height == null && nullToAbsent
           ? const Value.absent()
           : Value(height),
+      geofence: geofence == null && nullToAbsent
+          ? const Value.absent()
+          : Value(geofence),
     );
   }
 
@@ -2232,6 +2262,7 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
       strokeWidth: serializer.fromJson<double?>(json['strokeWidth']),
       dashed: serializer.fromJson<bool?>(json['dashed']),
       height: serializer.fromJson<double?>(json['height']),
+      geofence: serializer.fromJson<String?>(json['geofence']),
     );
   }
   @override
@@ -2248,6 +2279,7 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
       'strokeWidth': serializer.toJson<double?>(strokeWidth),
       'dashed': serializer.toJson<bool?>(dashed),
       'height': serializer.toJson<double?>(height),
+      'geofence': serializer.toJson<String?>(geofence),
     };
   }
 
@@ -2262,6 +2294,7 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
     Value<double?> strokeWidth = const Value.absent(),
     Value<bool?> dashed = const Value.absent(),
     Value<double?> height = const Value.absent(),
+    Value<String?> geofence = const Value.absent(),
   }) => MapGraphicRow(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -2273,6 +2306,7 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
     strokeWidth: strokeWidth.present ? strokeWidth.value : this.strokeWidth,
     dashed: dashed.present ? dashed.value : this.dashed,
     height: height.present ? height.value : this.height,
+    geofence: geofence.present ? geofence.value : this.geofence,
   );
   MapGraphicRow copyWithCompanion(MapGraphicsCompanion data) {
     return MapGraphicRow(
@@ -2290,6 +2324,7 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
           : this.strokeWidth,
       dashed: data.dashed.present ? data.dashed.value : this.dashed,
       height: data.height.present ? data.height.value : this.height,
+      geofence: data.geofence.present ? data.geofence.value : this.geofence,
     );
   }
 
@@ -2305,7 +2340,8 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
           ..write('uid: $uid, ')
           ..write('strokeWidth: $strokeWidth, ')
           ..write('dashed: $dashed, ')
-          ..write('height: $height')
+          ..write('height: $height, ')
+          ..write('geofence: $geofence')
           ..write(')'))
         .toString();
   }
@@ -2322,6 +2358,7 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
     strokeWidth,
     dashed,
     height,
+    geofence,
   );
   @override
   bool operator ==(Object other) =>
@@ -2336,7 +2373,8 @@ class MapGraphicRow extends DataClass implements Insertable<MapGraphicRow> {
           other.uid == this.uid &&
           other.strokeWidth == this.strokeWidth &&
           other.dashed == this.dashed &&
-          other.height == this.height);
+          other.height == this.height &&
+          other.geofence == this.geofence);
 }
 
 class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
@@ -2350,6 +2388,7 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
   final Value<double?> strokeWidth;
   final Value<bool?> dashed;
   final Value<double?> height;
+  final Value<String?> geofence;
   const MapGraphicsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -2361,6 +2400,7 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
     this.strokeWidth = const Value.absent(),
     this.dashed = const Value.absent(),
     this.height = const Value.absent(),
+    this.geofence = const Value.absent(),
   });
   MapGraphicsCompanion.insert({
     this.id = const Value.absent(),
@@ -2373,6 +2413,7 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
     this.strokeWidth = const Value.absent(),
     this.dashed = const Value.absent(),
     this.height = const Value.absent(),
+    this.geofence = const Value.absent(),
   }) : name = Value(name),
        type = Value(type),
        pointsJson = Value(pointsJson),
@@ -2389,6 +2430,7 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
     Expression<double>? strokeWidth,
     Expression<bool>? dashed,
     Expression<double>? height,
+    Expression<String>? geofence,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -2401,6 +2443,7 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
       if (strokeWidth != null) 'stroke_width': strokeWidth,
       if (dashed != null) 'dashed': dashed,
       if (height != null) 'height': height,
+      if (geofence != null) 'geofence': geofence,
     });
   }
 
@@ -2415,6 +2458,7 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
     Value<double?>? strokeWidth,
     Value<bool?>? dashed,
     Value<double?>? height,
+    Value<String?>? geofence,
   }) {
     return MapGraphicsCompanion(
       id: id ?? this.id,
@@ -2427,6 +2471,7 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
       strokeWidth: strokeWidth ?? this.strokeWidth,
       dashed: dashed ?? this.dashed,
       height: height ?? this.height,
+      geofence: geofence ?? this.geofence,
     );
   }
 
@@ -2463,6 +2508,9 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
     if (height.present) {
       map['height'] = Variable<double>(height.value);
     }
+    if (geofence.present) {
+      map['geofence'] = Variable<String>(geofence.value);
+    }
     return map;
   }
 
@@ -2478,7 +2526,8 @@ class MapGraphicsCompanion extends UpdateCompanion<MapGraphicRow> {
           ..write('uid: $uid, ')
           ..write('strokeWidth: $strokeWidth, ')
           ..write('dashed: $dashed, ')
-          ..write('height: $height')
+          ..write('height: $height, ')
+          ..write('geofence: $geofence')
           ..write(')'))
         .toString();
   }
@@ -5941,6 +5990,7 @@ typedef $$MapGraphicsTableCreateCompanionBuilder =
       Value<double?> strokeWidth,
       Value<bool?> dashed,
       Value<double?> height,
+      Value<String?> geofence,
     });
 typedef $$MapGraphicsTableUpdateCompanionBuilder =
     MapGraphicsCompanion Function({
@@ -5954,6 +6004,7 @@ typedef $$MapGraphicsTableUpdateCompanionBuilder =
       Value<double?> strokeWidth,
       Value<bool?> dashed,
       Value<double?> height,
+      Value<String?> geofence,
     });
 
 class $$MapGraphicsTableFilterComposer
@@ -6012,6 +6063,11 @@ class $$MapGraphicsTableFilterComposer
 
   ColumnFilters<double> get height => $composableBuilder(
     column: $table.height,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get geofence => $composableBuilder(
+    column: $table.geofence,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -6074,6 +6130,11 @@ class $$MapGraphicsTableOrderingComposer
     column: $table.height,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get geofence => $composableBuilder(
+    column: $table.geofence,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$MapGraphicsTableAnnotationComposer
@@ -6118,6 +6179,9 @@ class $$MapGraphicsTableAnnotationComposer
 
   GeneratedColumn<double> get height =>
       $composableBuilder(column: $table.height, builder: (column) => column);
+
+  GeneratedColumn<String> get geofence =>
+      $composableBuilder(column: $table.geofence, builder: (column) => column);
 }
 
 class $$MapGraphicsTableTableManager
@@ -6161,6 +6225,7 @@ class $$MapGraphicsTableTableManager
                 Value<double?> strokeWidth = const Value.absent(),
                 Value<bool?> dashed = const Value.absent(),
                 Value<double?> height = const Value.absent(),
+                Value<String?> geofence = const Value.absent(),
               }) => MapGraphicsCompanion(
                 id: id,
                 name: name,
@@ -6172,6 +6237,7 @@ class $$MapGraphicsTableTableManager
                 strokeWidth: strokeWidth,
                 dashed: dashed,
                 height: height,
+                geofence: geofence,
               ),
           createCompanionCallback:
               ({
@@ -6185,6 +6251,7 @@ class $$MapGraphicsTableTableManager
                 Value<double?> strokeWidth = const Value.absent(),
                 Value<bool?> dashed = const Value.absent(),
                 Value<double?> height = const Value.absent(),
+                Value<String?> geofence = const Value.absent(),
               }) => MapGraphicsCompanion.insert(
                 id: id,
                 name: name,
@@ -6196,6 +6263,7 @@ class $$MapGraphicsTableTableManager
                 strokeWidth: strokeWidth,
                 dashed: dashed,
                 height: height,
+                geofence: geofence,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

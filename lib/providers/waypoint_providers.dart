@@ -27,6 +27,11 @@ final attachmentRepositoryProvider = Provider<AttachmentRepository>((ref) {
 });
 
 /// Bir nesnenin ekleri (fotoğraflar), canlı.
+/// Bütün fotoğraflar (en yeni üstte) — galeri.
+final allAttachmentsProvider = StreamProvider.autoDispose<List<Attachment>>(
+  (ref) => ref.watch(attachmentRepositoryProvider).watchAll(),
+);
+
 final attachmentsProvider = StreamProvider.autoDispose
     .family<List<Attachment>, String>((ref, itemUid) {
       return ref.watch(attachmentRepositoryProvider).watchFor(itemUid);

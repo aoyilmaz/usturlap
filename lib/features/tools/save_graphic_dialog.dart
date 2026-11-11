@@ -6,6 +6,7 @@ import '../../core/sequential_name.dart';
 import '../../domain/models/map_graphic.dart';
 import '../../providers/graphic_providers.dart';
 import '../../providers/tool_providers.dart';
+import 'geofence_panel.dart';
 import 'graphic_labels.dart';
 
 /// Kalınlık seçenekleri (mantıksal piksel).
@@ -33,6 +34,7 @@ Future<void> showSaveGraphicDialog(
   var width = MapGraphic.defaultStrokeWidth;
   var dashed = false;
   double? height;
+  GeofenceTrigger? geofence;
   final closed = type != GraphicType.line;
 
   await showDialog<void>(
@@ -122,6 +124,13 @@ Future<void> showSaveGraphicDialog(
                           ),
                       ],
                     ),
+                    const SizedBox(height: 12),
+                    const Text('Geofence uyarısı', style: caption),
+                    const SizedBox(height: 6),
+                    GeofenceChips(
+                      selected: geofence,
+                      onChanged: (t) => setLocal(() => geofence = t),
+                    ),
                     const SizedBox(height: 8),
                   ],
                   Text(
@@ -153,6 +162,7 @@ Future<void> showSaveGraphicDialog(
                         strokeWidth: width,
                         dashed: dashed,
                         height: closed ? height : null,
+                        geofence: closed ? geofence : null,
                       );
                   // Kaydedildi: aracın geçici noktalarını temizle.
                   ref.read(toolProvider.notifier).clearPoints();

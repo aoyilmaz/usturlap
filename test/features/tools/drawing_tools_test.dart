@@ -67,6 +67,9 @@ void main() {
     await tester.pump();
     await tester.tap(find.text('25 m'));
     await tester.pump();
+    await tester.ensureVisible(find.text('Çıkışta'));
+    await tester.tap(find.text('Çıkışta'));
+    await tester.pump();
     await tester.tap(find.text('Kaydet'));
     for (var i = 0; i < 10; i++) {
       await tester.runAsync(
@@ -83,6 +86,7 @@ void main() {
     expect(g.strokeWidth, 5);
     expect(g.dashed, isTrue);
     expect(g.height, 25);
+    expect(g.geofence, GeofenceTrigger.exit);
     expect(c.read(toolProvider).points, isEmpty);
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 1));

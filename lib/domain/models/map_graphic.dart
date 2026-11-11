@@ -1,6 +1,7 @@
 import 'package:latlong2/latlong.dart';
 
 import '../../core/geo_math.dart';
+import '../usecases/lasso.dart';
 
 import 'cot_type.dart';
 import 'map_item.dart';
@@ -22,6 +23,27 @@ enum GraphicType {
       if (t.name == name) return t;
     }
     return GraphicType.line;
+  }
+}
+
+/// Geofence uyarısı (ATAK Geofencing, kılavuz s.43): kapalı şekle giriş /
+/// çıkış.
+enum GeofenceTrigger {
+  entry('Girişte'),
+  exit('Çıkışta'),
+  both('Giriş ve çıkışta');
+
+  const GeofenceTrigger(this.label);
+  final String label;
+
+  bool get onEntry => this != exit;
+  bool get onExit => this != entry;
+
+  static GeofenceTrigger? fromName(String? name) {
+    for (final t in values) {
+      if (t.name == name) return t;
+    }
+    return null;
   }
 }
 
@@ -52,6 +74,9 @@ class MapGraphic implements MapItem {
   /// null = düz alan.
   final double? height;
 
+  /// Geofence uyarısı (yalnız kapalı şekillerde); null = yok.
+  final GeofenceTrigger? geofence;
+
   @override
   final DateTime createdAt;
 
@@ -66,12 +91,23 @@ class MapGraphic implements MapItem {
     this.strokeWidth = defaultStrokeWidth,
     this.dashed = false,
     this.height,
+    this.geofence,
   });
 
   static const defaultStrokeWidth = 3.0;
 
   /// Kapalı şekil mi (alan, daire, dikdörtgen).
   bool get closed => type != GraphicType.line;
+
+  /// Konum şeklin içinde mi (dairede yarıçap, diğerlerinde çokgen).
+  bool contains(LatLng p) {
+    if (!closed) return false;
+    if (type == GraphicType.circle) {
+      return points.length >= 2 &&
+          GeoMath.distance(points[0], p) <= radiusMeters;
+    }
+    return pointInPolygon(p, points);
+  }
 
   /// Daire yarıçapı (m); daire değilse 0.
   double get radiusMeters =>

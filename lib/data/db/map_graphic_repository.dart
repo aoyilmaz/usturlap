@@ -30,6 +30,7 @@ class MapGraphicRepository {
     double strokeWidth = MapGraphic.defaultStrokeWidth,
     bool dashed = false,
     double? height,
+    GeofenceTrigger? geofence,
   }) {
     return _db.into(_db.mapGraphics).insert(
           MapGraphicsCompanion.insert(
@@ -42,8 +43,22 @@ class MapGraphicRepository {
             strokeWidth: Value(strokeWidth),
             dashed: Value(dashed),
             height: Value(height),
+            geofence: Value(geofence?.name),
           ),
         );
+  }
+
+  /// Geofence uyarısını kurar / kaldırır (null).
+  Future<void> setGeofence(int id, GeofenceTrigger? trigger) {
+    return (_db.update(_db.mapGraphics)..where((t) => t.id.equals(id))).write(
+      MapGraphicsCompanion(geofence: Value(trigger?.name)),
+    );
+  }
+
+  Future<void> rename(int id, String name) {
+    return (_db.update(
+      _db.mapGraphics,
+    )..where((t) => t.id.equals(id))).write(MapGraphicsCompanion(name: Value(name)));
   }
 
   Future<void> delete(int id) {
@@ -74,5 +89,6 @@ class MapGraphicRepository {
         strokeWidth: r.strokeWidth ?? MapGraphic.defaultStrokeWidth,
         dashed: r.dashed ?? false,
         height: r.height,
+        geofence: GeofenceTrigger.fromName(r.geofence),
       );
 }

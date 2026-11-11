@@ -129,11 +129,14 @@ class MapCleaner {
 
   final Ref _ref;
 
+  /// [targets] verilirse yalnız onlar (ör. lasso seçimi); yoksa haritada
+  /// görünenlerin tamamı.
   Future<ClearSnapshot> clear(
     Set<ClearItem> items, {
     bool hideOnly = false,
+    MapClearTargets? targets,
   }) async {
-    final t = _ref.read(mapClearTargetsProvider);
+    final MapClearTargets t = targets ?? _ref.read(mapClearTargetsProvider);
     final s = ClearSnapshot(items, t, hideOnly: hideOnly);
 
     // Gizlenebilenler: "yalnız gizle"de görünürlükten.
@@ -296,6 +299,7 @@ class MapCleaner {
           strokeWidth: g.strokeWidth,
           dashed: g.dashed,
           height: g.height,
+          geofence: g.geofence,
         );
       }
     }

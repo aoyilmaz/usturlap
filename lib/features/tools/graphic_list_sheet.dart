@@ -5,6 +5,7 @@ import '../../domain/models/map_graphic.dart';
 import '../../providers/graphic_providers.dart';
 import '../elevation/elevation_profile_panel.dart';
 import '../shell/adaptive_sheet.dart';
+import 'geofence_panel.dart';
 import 'graphic_labels.dart';
 
 /// Kayıtlı taktik grafikler paneli: renk/tip/ölçü göster, sil.
@@ -68,7 +69,8 @@ class _GraphicListBody extends ConsumerWidget {
                         subtitle: Text(
                           '${g.type.label} · ${graphicMeasure(g)}'
                           '${g.dashed ? ' · kesikli' : ''}'
-                          '${g.height == null ? '' : ' · 3B ${g.height!.round()} m'}',
+                          '${g.height == null ? '' : ' · 3B ${g.height!.round()} m'}'
+                          '${g.geofence == null ? '' : ' · geofence: ${g.geofence!.label.toLowerCase()}'}',
                           style: const TextStyle(fontSize: 12),
                         ),
                         trailing: Row(
@@ -85,6 +87,19 @@ class _GraphicListBody extends ConsumerWidget {
                                   title: '${g.name}: yükseklik profili',
                                   points: g.points,
                                 ),
+                              ),
+                            // Kapalı şekle giriş / çıkış uyarısı (G3).
+                            if (g.closed)
+                              IconButton(
+                                icon: Icon(
+                                  Icons.fence,
+                                  color: g.geofence == null
+                                      ? null
+                                      : Colors.orangeAccent,
+                                ),
+                                tooltip: 'Geofence: ${g.name}',
+                                onPressed: () =>
+                                    showGeofenceDialog(context, ref, g),
                               ),
                             IconButton(
                               icon: const Icon(Icons.delete_outline),

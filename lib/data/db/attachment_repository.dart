@@ -38,6 +38,16 @@ class AttachmentRepository {
     });
   }
 
+  /// Bütün ekler (en yeni üstte) — galeri.
+  Stream<List<Attachment>> watchAll() {
+    final q = _db.select(_db.attachments)
+      ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]);
+    return q.watch().asyncMap((rows) async {
+      final docs = (await _documentsDir()).path;
+      return [for (final r in rows) _toDomain(r, docs)];
+    });
+  }
+
   /// [source]'u nesnenin klasörüne kopyalar ve kaydeder (kaynak dosya,
   /// ör. seçicinin geçici kopyası, olduğu gibi kalır).
   Future<Attachment> addFile(String itemUid, File source) async {

@@ -28,9 +28,11 @@ import '../../domain/models/waypoint.dart';
 import '../../providers/bloodhound_providers.dart';
 import '../../providers/bullseye_providers.dart';
 import '../../providers/elevation_providers.dart';
+import '../../providers/geofence_providers.dart';
 import '../../providers/graphic_providers.dart';
 import '../../providers/range_line_providers.dart';
 import '../../providers/resection_providers.dart';
+import '../../providers/selection_providers.dart';
 import '../../providers/terrain_analysis_providers.dart';
 import '../../providers/viewshed_providers.dart';
 import '../../providers/layer_providers.dart';
@@ -71,13 +73,16 @@ import '../symbols/nato_symbol.dart';
 import '../elevation/elevation_data_panel.dart';
 import '../elevation/terrain_analysis_panel.dart';
 import '../elevation/viewshed_panel.dart';
+import '../gallery/gallery_panel.dart';
 import '../hud/resection_panel.dart';
 import '../nav/bloodhound_panel.dart';
 import '../routes/route_alerts.dart';
 import '../nav/tactical_compass_page.dart';
 import '../tools/bullseye_panel.dart';
 import 'clear_map_sheet.dart';
+import 'selection_panel.dart';
 import '../tools/freehand_layer.dart';
+import '../tools/geofence_panel.dart';
 import '../tools/measure_common.dart';
 import '../tools/range_line_panel.dart';
 import '../tools/range_ring_panel.dart';
@@ -150,6 +155,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   /// Çizim araçları çubuğu (ATAK Drawing Tools) açık mı.
   bool _drawBarOpen = false;
+
+  /// Lasso: seçmek için çevre çiziliyor (harita kaymaz).
+  bool _lassoMode = false;
 
   /// Çevrimdışı bölge çerçeveleme modu açık mı.
   bool _framing = false;
@@ -1385,6 +1393,26 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     return out;
   }
 
+  /// Lasso çizildi: içindeki görünür nesneler seçilir, seçim paneli açılır.
+  Future<void> _finishLasso(List<Offset> points) async {
+    final ll = await _map.latLngsAt(points);
+    if (!mounted) return;
+    if (ll == null || ll.length < 3) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Seçmek için bir alanın çevresini çiz.')));
+      return;
+    }
+    final sel = ref.read(selectionProvider.notifier).select(ll);
+    setState(() => _lassoMode = false);
+    if (sel.isEmpty) {
+      ref.read(selectionProvider.notifier).clear();
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Seçilen alanda nesne yok.')));
+      return;
+    }
+    showSelectionPanel(context);
+  }
+
   /// Serbest çizim bitti: ekran noktaları konuma çevrilip araca verilir.
   Future<void> _finishFreehand(List<Offset> points) async {
     final ll = await _map.latLngsAt(points);
@@ -1723,6 +1751,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         catalog(ToolbarTool.waypoints),
         catalog(ToolbarTool.tracks),
         catalog(ToolbarTool.draw),
+        catalog(ToolbarTool.lasso),
+        catalog(ToolbarTool.quickPic),
+        catalog(ToolbarTool.gallery),
+        catalog(ToolbarTool.geofence),
         catalog(ToolbarTool.graphics),
         ToolGridItem(
             icon: Icons.file_open_outlined,
@@ -1782,6 +1814,40 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             setState(() {
               _rangeBarOpen = open;
               _drawBarOpen = false;
+              _dropMode = false;
+            });
+          },
+        );
+      case ToolbarTool.quickPic:
+        return ToolbarItem(
+          icon: t.icon,
+          label: t.label,
+          onTap: () => quickPic(context, ref,
+              fallback: () => _map.camera.center, onCenter: _centerOn),
+        );
+      case ToolbarTool.gallery:
+        return ToolbarItem(
+          icon: t.icon,
+          label: t.label,
+          onTap: () => showGalleryPanel(context, onCenter: _centerOn),
+        );
+      case ToolbarTool.geofence:
+        return ToolbarItem(
+          icon: t.icon,
+          label: t.label,
+          onTap: () => showGeofencePanel(context, onCenter: _centerOn),
+        );
+      case ToolbarTool.lasso:
+        return ToolbarItem(
+          icon: t.icon,
+          label: t.label,
+          active: _lassoMode,
+          onTap: () {
+            ref.read(toolProvider.notifier).reset();
+            setState(() {
+              _lassoMode = !_lassoMode;
+              _drawBarOpen = false;
+              _rangeBarOpen = false;
               _dropMode = false;
             });
           },
@@ -2046,6 +2112,28 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final bloodhounds = ref.watch(resolvedBloodhoundsProvider);
     final resection = ref.watch(resectionPreviewProvider);
     final viewshed = ref.watch(viewshedProvider);
+    final selection = ref.watch(selectionProvider);
+    // Geofence: giriş / çıkışta güçlü titreşim + uyarı (dinlemek izleyiciyi
+    // de canlı tutar).
+    ref.listen<GeofenceState>(geofenceProvider, (prev, next) {
+      if (identical(prev?.latest, next.latest) || next.latest.isEmpty) return;
+      HapticFeedback.heavyImpact();
+      final text = next.latest
+          .map((e) => '${e.name}: ${e.entered ? 'girildi' : 'çıkıldı'}')
+          .join(' · ');
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(
+          backgroundColor: Colors.orange.shade900,
+          duration: const Duration(seconds: 8),
+          content: Text('Geofence — $text'),
+          action: SnackBarAction(
+            label: 'Liste',
+            textColor: Colors.white,
+            onPressed: () => showGeofencePanel(context, onCenter: _centerOn),
+          ),
+        ));
+    });
     final terrain = ref.watch(terrainAnalysisProvider);
     // Yükseklik verisi kapsamı (Yükseklik verisi panelinden açılır).
     final elevationTiles = ref.watch(showElevationCoverageProvider)
@@ -2117,17 +2205,28 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final crosshairOn = ref.watch(crosshairProvider);
     // Araç seçilince nokta bırakma modu kapanır (aynı anda tek dokunuş işi).
     ref.listen<ToolState>(toolProvider, (prev, next) {
-      if (next.active && (_dropMode || _moving != null || _placingSelf)) {
+      if (next.active &&
+          (_dropMode || _moving != null || _placingSelf || _lassoMode)) {
         setState(() {
           _dropMode = false;
           _moving = null;
           _placingSelf = false;
+          _lassoMode = false;
         });
       }
     });
 
     // Harita üstü çizimler — liste sırası = çizim sırası (alttan üste).
     final overlays = <MapOverlay>[
+      // Lasso seçim alanı (seçim paneli açıkken).
+      if (selection != null && selection.polygon.length >= 3)
+        MapArea(
+          points: selection.polygon,
+          fillColor: Colors.cyanAccent.withValues(alpha: 0.08),
+          strokeColor: Colors.cyanAccent,
+          strokeWidth: 2,
+          dashed: true,
+        ),
       // Arazi analizi (renkli katman + eş yükselti eğrileri) ve görüş alanı.
       ..._terrainOverlays(terrain, nightMode),
       ..._viewshedOverlays(viewshed, nightMode),
@@ -2380,6 +2479,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             ),
           ),
 
+          // Lasso: seçilecek alanın çevresi çizilir.
+          if (_lassoMode)
+            Positioned.fill(
+              child: FreehandLayer(
+                color: nightMode ? Colors.redAccent : Colors.cyanAccent,
+                onDone: _finishLasso,
+              ),
+            ),
+
           // Serbest çizim: parmak izi yakalanır, harita kaymaz (araç
           // çubukları üstte kaldığı için dokunulabilir).
           if (tool.mode == ToolMode.freehand)
@@ -2531,6 +2639,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         ),
                       // Etiket süzgeci açık: yeni nesneler etiketsizse
                       // görünmez; kullanıcı bilsin.
+                      if (_lassoMode)
+                        _ModeHint(
+                          night: nightMode,
+                          icon: Icons.highlight_alt,
+                          text: 'Seçmek istediklerinin çevresini çiz',
+                          closeTooltip: 'Seçimi kapat',
+                          onClose: () => setState(() => _lassoMode = false),
+                        ),
                       if (visibility.tag != null)
                         _ModeHint(
                           night: nightMode,

@@ -40,7 +40,7 @@ void main() {
 
   Future<void> expectV10(AppDatabase db) async {
     final v = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(v.read<int>('user_version'), 14);
+    expect(v.read<int>('user_version'), 15);
     final repo = RangeLineRepository(db);
     await repo.add(
       name: 'R&B-1',

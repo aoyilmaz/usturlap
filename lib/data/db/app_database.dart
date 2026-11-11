@@ -61,6 +61,8 @@ class MapGraphics extends Table {
   BoolColumn get dashed => boolean().nullable()();
   // v14: 3B yükseklik (m); null = düz alan.
   RealColumn get height => real().nullable()();
+  // v15: geofence uyarısı (GeofenceTrigger.name); null = yok.
+  TextColumn get geofence => text().nullable()();
 }
 
 /// Uygulama içinden içe-aktarılmış harita paketleri (Documents'taki .pmtiles/
@@ -209,7 +211,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -289,6 +291,10 @@ class AppDatabase extends _$AppDatabase {
           // v14: kapalı çizimlerde 3B yükseklik.
           if (from < 14) {
             await _addColumnIfMissing(m, mapGraphics, mapGraphics.height);
+          }
+          // v15: kapalı çizimlerde geofence uyarısı.
+          if (from < 15) {
+            await _addColumnIfMissing(m, mapGraphics, mapGraphics.geofence);
           }
         },
         beforeOpen: (details) async {

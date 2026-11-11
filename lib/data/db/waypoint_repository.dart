@@ -97,6 +97,13 @@ class WaypointRepository {
   }
 
   /// Elle girilen yüksekliği (MSL, m) ayarlar; null = arazi verisine dön.
+  /// Yalnız notu değiştirir (toplu #etiket).
+  Future<void> setNote(int id, String? note) {
+    return (_db.update(_db.waypoints)..where((t) => t.id.equals(id))).write(
+      WaypointsCompanion(note: Value(note)),
+    );
+  }
+
   Future<void> setElevation(int id, double? meters) {
     return (_db.update(_db.waypoints)..where((t) => t.id.equals(id))).write(
       WaypointsCompanion(elevation: Value(meters)),
