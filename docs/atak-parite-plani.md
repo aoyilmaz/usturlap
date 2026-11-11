@@ -427,8 +427,8 @@ resim katmanı eklenecek.
 
 Adımlar: **G1** çizim araçları, **G2** 3B şekiller, **G6** iz arama (üçü cihazda ✓, 2026-11-10),
 **G4** lasso / çoklu seçim, **G3** geofence, **G5** hızlı fotoğraf / galeri (üçü cihazda ✓,
-commit `f4cb0ff`), **G7** içe/dışa aktarma + çizim düzenleme (kodda tamam, cihaz testi
-bekliyor), G8 veri paketi. `archive` 4.6.0 eklendi (onaylı, 2026-11-11).
+commit `f4cb0ff`), **G7** içe/dışa aktarma + çizim düzenleme (cihazda ✓, commit `6a92204`),
+G8 veri paketi (kalan). `archive` 4.6.0 eklendi (onaylı, 2026-11-11).
 
 > G1: **Çizim araçları** çubuğu (araç çubuğuna eklenebilir; ≡ → Veri): Çizgi (çoklu nokta; 2
 > noktada da çizim, R&B değil) · Alan · **Daire** (merkez + kenar) · **Dikdörtgen** (iki çapraz
