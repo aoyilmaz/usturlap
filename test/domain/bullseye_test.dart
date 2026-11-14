@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/core/bearing_format.dart';
-import 'package:kerteriz/domain/models/bullseye.dart';
-import 'package:kerteriz/domain/models/range_line.dart';
+import 'package:usturlap/core/bearing_format.dart';
+import 'package:usturlap/domain/models/bullseye.dart';
+import 'package:usturlap/domain/models/range_line.dart';
 import 'package:latlong2/latlong.dart';
 
 /// E3: Bullseye.

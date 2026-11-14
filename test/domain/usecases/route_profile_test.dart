@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/core/geo_math.dart';
-import 'package:kerteriz/domain/usecases/route_profile.dart';
+import 'package:usturlap/core/geo_math.dart';
+import 'package:usturlap/domain/usecases/route_profile.dart';
 import 'package:latlong2/latlong.dart';
 
 /// E8: rota boyunca yükseklik profili.

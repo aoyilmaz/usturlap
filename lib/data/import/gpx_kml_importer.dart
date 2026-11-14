@@ -17,7 +17,7 @@ class ImportedWaypoint {
   final LatLng position;
   final String? note;
 
-  /// Pusula'dan çıkmış dosyada kalıcı kimlik (aynısı varsa atlanır).
+  /// Usturlap'tan çıkmış dosyada kalıcı kimlik (aynısı varsa atlanır).
   final String? uid;
   final Affiliation affiliation;
   final Echelon echelon;
@@ -59,12 +59,12 @@ class ImportResult {
   final List<ImportedWaypoint> waypoints;
   final List<ImportedTrack> tracks;
 
-  /// Çizimler (KML / GeoJSON alanları; Pusula'dan çıkmışsa daire vb.).
+  /// Çizimler (KML / GeoJSON alanları; Usturlap'tan çıkmışsa daire vb.).
   final List<MapGraphic> graphics;
   final List<RangeLine> rangeLines;
   final List<RangeRing> rangeRings;
 
-  /// Rotalar (Pusula'dan çıkmış KML / GeoJSON, veri paketi CoT'u).
+  /// Rotalar (Usturlap'tan çıkmış KML / GeoJSON, veri paketi CoT'u).
   final List<RoutePlan> routes;
 
   const ImportResult(
@@ -91,7 +91,7 @@ class ImportResult {
 
 /// GPX ve KML metnini saf Dart ile ayrıştırır (Flutter'a bağımsız → test edilebilir).
 /// GPX `wpt`/`trk`/`rte`; KML `Placemark` (Point / LineString / Polygon /
-/// `gx:Track` / MultiGeometry), stiller (renk, kalınlık) ve Pusula'nın
+/// `gx:Track` / MultiGeometry), stiller (renk, kalınlık) ve Usturlap'ın
 /// "kerteriz" verisi (bkz. GeoExporter).
 class GpxKmlImporter {
   GpxKmlImporter._();
@@ -182,7 +182,7 @@ class GpxKmlImporter {
       final description = _childText(pm, 'description');
       final data = _kerterizData(pm);
 
-      // Pusula'dan çıkmış nesne: ayrıntısıyla geri kurulur.
+      // Usturlap'tan çıkmış nesne: ayrıntısıyla geri kurulur.
       switch (data?['kind']) {
         case 'graphic':
           final g = KerterizData.graphic(data!, name: name);

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/domain/models/route_plan.dart';
-import 'package:kerteriz/domain/usecases/route_navigator.dart';
-import 'package:kerteriz/features/routes/route_alerts.dart';
+import 'package:usturlap/domain/models/route_plan.dart';
+import 'package:usturlap/domain/usecases/route_navigator.dart';
+import 'package:usturlap/features/routes/route_alerts.dart';
 import 'package:latlong2/latlong.dart';
 
 /// E8: rota takibi uyarıları.

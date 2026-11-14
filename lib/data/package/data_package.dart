@@ -38,12 +38,12 @@ class DataPackage {
 
   static const manifestPath = 'MANIFEST/manifest.xml';
 
-  /// Pusula'ya özgü ayrıntı (daire, 3B, geofence, yükseklik, koni…):
+  /// Usturlap'a özgü ayrıntı (daire, 3B, geofence, yükseklik, koni…):
   /// CoT `<detail>` içinde JSON; ATAK tanımadığı öğeyi yok sayar.
   static const kerterizTag = '__kerteriz';
 
   /// R&B, halka ve izler CoT'ta yok: paket içinde KML olarak.
-  static const extrasPath = 'kerteriz/ekler.kml';
+  static const extrasPath = 'usturlap/ekler.kml';
 
   static const _images = {'.jpg', '.jpeg', '.png', '.heic', '.gif'};
   static const _geoFiles = {'.kml', '.kmz', '.gpx', '.geojson', '.json'};
@@ -396,7 +396,7 @@ class DataPackage {
     );
   }
 
-  /// CoT'taki Pusula ayrıntısı (yoksa / bozuksa null).
+  /// CoT'taki Usturlap ayrıntısı (yoksa / bozuksa null).
   static Map<String, dynamic>? _kerteriz(CotEvent e) {
     final el = e.detail.getElement(kerterizTag);
     if (el == null) return null;

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:kerteriz/data/position/device_position_source.dart';
+import 'package:usturlap/data/position/device_position_source.dart';
 
 void main() {
   group('DevicePositionSource.buildSelfContact', () {
@@ -8,7 +8,7 @@ void main() {
 
     test('geçerli değerleri Contact alanlarına çevirir', () {
       final c = DevicePositionSource.buildSelfContact(
-        callsign: 'KERTERIZ-1',
+        callsign: 'USTURLAP-1',
         latitude: 39.92,
         longitude: 32.86,
         timestamp: t,

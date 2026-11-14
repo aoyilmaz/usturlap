@@ -1,7 +1,7 @@
 import '../../domain/models/route_plan.dart';
 
 /// Rotaları GPX / KML metnine çeviren saf yardımcılar (paylaşım katmanı
-/// ayrı). Nokta adları Pusula'daki gibi (verilmemişse BAŞLANGIÇ, KN1…).
+/// ayrı). Nokta adları Usturlap'taki gibi (verilmemişse BAŞLANGIÇ, KN1…).
 class RouteExporter {
   RouteExporter._();
 
@@ -17,7 +17,7 @@ class RouteExporter {
     }
     return '''
 <?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="Pusula" xmlns="http://www.topografix.com/GPX/1/1">
+<gpx version="1.1" creator="Usturlap" xmlns="http://www.topografix.com/GPX/1/1">
   <rte>
     <name>${_xml(r.name)}</name>
 ${pts.toString().trimRight()}

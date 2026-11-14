@@ -301,7 +301,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             );
       }
     });
-    // "Kerteriz ile aç" (AirDrop / Dosyalar): gelen dosya önizletilir.
+    // "Usturlap ile aç" (AirDrop / Dosyalar): gelen dosya önizletilir.
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => IncomingFiles.listen(_openIncoming),
     );
@@ -2925,7 +2925,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                                   fontWeight: FontWeight.bold)),
                           const SizedBox(height: 6),
                           Text(
-                            '${_selected.fileName} dosyasını\nDosyalar (ya da Finder) ile\nKerteriz içine kopyalayın.',
+                            '${_selected.fileName} dosyasını\nDosyalar (ya da Finder) ile\nUsturlap içine kopyalayın.',
                             textAlign: TextAlign.center,
                             style: const TextStyle(fontSize: 13),
                           ),

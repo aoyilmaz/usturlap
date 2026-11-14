@@ -168,11 +168,11 @@ Future<void> _backup(BuildContext context, WidgetRef ref) async {
     final now = DateTime.now();
     String two(int v) => v.toString().padLeft(2, '0');
     final path =
-        '${Directory.systemTemp.path}/kerteriz_yedek_${now.year}'
+        '${Directory.systemTemp.path}/usturlap_yedek_${now.year}'
         '${two(now.month)}${two(now.day)}_${two(now.hour)}${two(now.minute)}.krz';
     await File(path).writeAsBytes(data, flush: true);
     await SharePlus.instance.share(
-      ShareParams(files: [XFile(path)], subject: 'Kerteriz yedeği'),
+      ShareParams(files: [XFile(path)], subject: 'Usturlap yedeği'),
     );
   } catch (e) {
     messenger.showSnackBar(SnackBar(content: Text('Yedeklenemedi: $e')));
@@ -193,7 +193,7 @@ Future<void> _pickAndRestore(BuildContext context, WidgetRef ref) async {
   }
 }
 
-/// Yedeği açar, özetini gösterip onay ister, geri yükler ("Kerteriz ile
+/// Yedeği açar, özetini gösterip onay ister, geri yükler ("Usturlap ile
 /// aç" ile gelen .krz de buradan geçer).
 Future<void> restoreBackupBytes(
   BuildContext context,
@@ -203,7 +203,7 @@ Future<void> restoreBackupBytes(
   final messenger = ScaffoldMessenger.of(context);
   if (!BackupCrypto.looksLike(bytes)) {
     messenger.showSnackBar(
-      const SnackBar(content: Text('Bu bir Kerteriz yedeği değil.')),
+      const SnackBar(content: Text('Bu bir Usturlap yedeği değil.')),
     );
     return;
   }

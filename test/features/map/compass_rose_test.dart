@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/core/geo_math.dart';
-import 'package:kerteriz/features/map/engine/map_types.dart';
-import 'package:kerteriz/features/map/widgets/compass_rose.dart';
+import 'package:usturlap/core/geo_math.dart';
+import 'package:usturlap/features/map/engine/map_types.dart';
+import 'package:usturlap/features/map/widgets/compass_rose.dart';
 import 'package:latlong2/latlong.dart';
 
 void main() {

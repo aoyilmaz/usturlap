@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/core/toolbar_tool.dart';
+import 'package:usturlap/core/toolbar_tool.dart';
 
 void main() {
   group('ToolbarTool kalıcı biçim', () {

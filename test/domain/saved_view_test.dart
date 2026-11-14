@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/domain/models/saved_view.dart';
+import 'package:usturlap/domain/models/saved_view.dart';
 import 'package:latlong2/latlong.dart';
 
 void main() {

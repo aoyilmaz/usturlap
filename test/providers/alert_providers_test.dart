@@ -3,15 +3,15 @@ import 'dart:async';
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/db/app_database.dart';
-import 'package:kerteriz/domain/models/map_graphic.dart';
-import 'package:kerteriz/domain/ports/alert_output.dart';
-import 'package:kerteriz/providers/alert_providers.dart';
-import 'package:kerteriz/providers/background_location_providers.dart';
-import 'package:kerteriz/providers/graphic_providers.dart';
-import 'package:kerteriz/providers/location_providers.dart';
-import 'package:kerteriz/providers/track_providers.dart';
-import 'package:kerteriz/providers/waypoint_providers.dart';
+import 'package:usturlap/data/db/app_database.dart';
+import 'package:usturlap/domain/models/map_graphic.dart';
+import 'package:usturlap/domain/ports/alert_output.dart';
+import 'package:usturlap/providers/alert_providers.dart';
+import 'package:usturlap/providers/background_location_providers.dart';
+import 'package:usturlap/providers/graphic_providers.dart';
+import 'package:usturlap/providers/location_providers.dart';
+import 'package:usturlap/providers/track_providers.dart';
+import 'package:usturlap/providers/waypoint_providers.dart';
 import 'package:latlong2/latlong.dart';
 
 class _FakeSpeaker implements Speaker {

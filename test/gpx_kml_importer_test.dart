@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/import/gpx_kml_importer.dart';
+import 'package:usturlap/data/import/gpx_kml_importer.dart';
 
 void main() {
   group('GpxKmlImporter — GPX', () {

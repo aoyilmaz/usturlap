@@ -3,13 +3,13 @@ import 'dart:async';
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/core/geo_math.dart';
-import 'package:kerteriz/data/db/app_database.dart';
-import 'package:kerteriz/domain/models/contact.dart';
-import 'package:kerteriz/domain/ports/position_source.dart';
-import 'package:kerteriz/providers/location_providers.dart';
-import 'package:kerteriz/providers/settings_providers.dart';
-import 'package:kerteriz/providers/waypoint_providers.dart';
+import 'package:usturlap/core/geo_math.dart';
+import 'package:usturlap/data/db/app_database.dart';
+import 'package:usturlap/domain/models/contact.dart';
+import 'package:usturlap/domain/ports/position_source.dart';
+import 'package:usturlap/providers/location_providers.dart';
+import 'package:usturlap/providers/settings_providers.dart';
+import 'package:usturlap/providers/waypoint_providers.dart';
 import 'package:latlong2/latlong.dart';
 
 class _FakeSource implements PositionSource {

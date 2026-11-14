@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/offline/mapbox_offline_store.dart';
-import 'package:kerteriz/domain/models/offline_region.dart';
-import 'package:kerteriz/features/map/base_layer.dart';
-import 'package:kerteriz/features/map/engine/map_types.dart';
-import 'package:kerteriz/features/map/missing_layer_dialog.dart';
-import 'package:kerteriz/features/offline/offline_frame_panel.dart';
-import 'package:kerteriz/providers/offline_providers.dart';
+import 'package:usturlap/data/offline/mapbox_offline_store.dart';
+import 'package:usturlap/domain/models/offline_region.dart';
+import 'package:usturlap/features/map/base_layer.dart';
+import 'package:usturlap/features/map/engine/map_types.dart';
+import 'package:usturlap/features/map/missing_layer_dialog.dart';
+import 'package:usturlap/features/offline/offline_frame_panel.dart';
+import 'package:usturlap/providers/offline_providers.dart';
 
 class _Store extends MapboxOfflineStore {
   final asked = <List<OfflineMapType>>[];

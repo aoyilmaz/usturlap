@@ -9,7 +9,7 @@ import '../../domain/models/waypoint.dart';
 import 'cot_event.dart';
 import 'cot_xml.dart';
 
-/// Pusula nesneleri ↔ CoT olayları.
+/// Usturlap nesneleri ↔ CoT olayları.
 ///
 /// Biçim ATAK-CIV'in `takcot/examples` örneklerine göre (yalnızca protokol
 /// bilgisi; kod alınmadı): işaretçi `b-m-p-s-m` / 2525 `a-…`, serbest çizim
@@ -26,15 +26,15 @@ class CotMapper {
   /// Paylaşılan kalıcı nesnelerin geçerlilik süresi (`<archive/>` ile birlikte).
   static const staleAfter = Duration(days: 365);
 
-  /// Sade işaretçi rengi (Pusula'daki kırmızı iğne).
+  /// Sade işaretçi rengi (Usturlap'taki kırmızı iğne).
   static const spotColor = 0xFFFF0000;
 
-  /// Görev noktası işaretçi rengi (Pusula'daki mor rozet, `missionColor`
+  /// Görev noktası işaretçi rengi (Usturlap'taki mor rozet, `missionColor`
   /// `features/symbols/nato_symbol.dart`).
   static const missionColor = 0xFFB04CFF;
 
-  /// Pusula'ya özgü ayrıntı: görev noktasının türü (`<__pusula kind=…/>`).
-  /// ATAK tanımadığı ayrıntıyı yok sayar; Pusula'dan Pusula'ya paylaşımda
+  /// Usturlap'a özgü ayrıntı (öğe adı eski adla kalır): görev noktasının türü (`<__pusula kind=…/>`).
+  /// ATAK tanımadığı ayrıntıyı yok sayar; Usturlap'tan Usturlap'a paylaşımda
   /// gözetleme / kontrol / toplanma / sensör türü kaybolmaz.
   static const pusulaTag = '__pusula';
 
@@ -95,7 +95,7 @@ class CotMapper {
         _el('link', {'point': '${p.latitude},${p.longitude}'}),
       _el('strokeColor', {'value': '${toSigned(g.colorValue)}'}),
       _el('strokeWeight', {'value': g.strokeWidth.toStringAsFixed(1)}),
-      // Alan yarı saydam dolgulu (Pusula çiziminde de öyle), çizgi dolgusuz.
+      // Alan yarı saydam dolgulu (Usturlap çiziminde de öyle), çizgi dolgusuz.
       _el('fillColor', {
         'value':
             '${toSigned(closed ? (g.colorValue & 0x00FFFFFF) | 0x60000000 : 0)}',
@@ -167,7 +167,7 @@ class CotMapper {
 
   // ------------------------------------------------------------- okuma
 
-  /// Gelen olay → Pusula nesnesi. Desteklenmeyen tipte (sohbet, konum
+  /// Gelen olay → Usturlap nesnesi. Desteklenmeyen tipte (sohbet, konum
   /// yayını, video…) null. Veritabanı id'si yoktur; [MapItem.uid] korunur.
   MapItem? toItem(CotEvent e) {
     final name = _callsign(e);
@@ -178,7 +178,7 @@ class CotMapper {
         if (l.getAttribute('relation') != 'c') continue;
         final p = _parsePoint(l);
         if (p == null) continue;
-        // Varsayılan adlar (SP / CPn) ad sayılmaz; Pusula kendi adını verir.
+        // Varsayılan adlar (SP / CPn) ad sayılmaz; Usturlap kendi adını verir.
         final cs = l.getAttribute('callsign')?.trim();
         final i = pts.length;
         final isDefault =
@@ -221,7 +221,7 @@ class CotMapper {
     }
     if (CotType.isAtom(e.type) || e.type.startsWith('b-m-p-')) {
       final sym = CotType.parse(e.type);
-      // Pusula'dan gelen görev noktası (sade işaretçi + tür ayrıntısı).
+      // Usturlap'tan gelen görev noktası (sade işaretçi + tür ayrıntısı).
       final kind = Affiliation.fromName(
         e.child(pusulaTag)?.getAttribute('kind'),
       );

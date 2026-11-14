@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/domain/models/track.dart';
-import 'package:kerteriz/domain/usecases/track_search.dart';
+import 'package:usturlap/domain/models/track.dart';
+import 'package:usturlap/domain/usecases/track_search.dart';
 
 /// G6: iz arama.
 void main() {

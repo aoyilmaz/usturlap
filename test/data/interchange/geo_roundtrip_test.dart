@@ -3,18 +3,18 @@ import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/export/geo_exporter.dart';
-import 'package:kerteriz/data/import/geo_import.dart';
-import 'package:kerteriz/domain/models/map_graphic.dart';
-import 'package:kerteriz/domain/models/range_line.dart';
-import 'package:kerteriz/domain/models/range_ring.dart';
-import 'package:kerteriz/domain/models/sensor_fov.dart';
-import 'package:kerteriz/domain/models/track.dart';
-import 'package:kerteriz/domain/models/waypoint.dart';
+import 'package:usturlap/data/export/geo_exporter.dart';
+import 'package:usturlap/data/import/geo_import.dart';
+import 'package:usturlap/domain/models/map_graphic.dart';
+import 'package:usturlap/domain/models/range_line.dart';
+import 'package:usturlap/domain/models/range_ring.dart';
+import 'package:usturlap/domain/models/sensor_fov.dart';
+import 'package:usturlap/domain/models/track.dart';
+import 'package:usturlap/domain/models/waypoint.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:xml/xml.dart';
 
-/// G7: Pusula → dosya → Pusula kayıpsız; GPX dışa aktarma.
+/// G7: Usturlap → dosya → Usturlap kayıpsız; GPX dışa aktarma.
 void main() {
   final t0 = DateTime.utc(2026, 11, 11, 8);
   final set = ExportSet(
@@ -125,7 +125,7 @@ void main() {
   }
 
   test('KML: kayıpsız gidip gelir; başka uygulama düz geometri görür', () {
-    final kml = GeoExporter.toKml(set, name: 'Pusula');
+    final kml = GeoExporter.toKml(set, name: 'Usturlap');
     final doc = XmlDocument.parse(kml);
     // Daire başka uygulamalarda çokgen.
     expect(doc.findAllElements('Polygon'), hasLength(2)); // daire + halka
@@ -137,7 +137,7 @@ void main() {
     final jpg = Uint8List.fromList([0xFF, 0xD8, 1, 2, 3]);
     final kmz = GeoExporter.toKmz(
       set,
-      name: 'Pusula',
+      name: 'Usturlap',
       photos: {
         'wp-1': [KmzPhoto('.JPG', jpg)],
       },
@@ -158,7 +158,7 @@ void main() {
   });
 
   test('GeoJSON: simplestyle + kayıpsız gidip gelir', () {
-    final text = GeoExporter.toGeoJson(set, name: 'Pusula');
+    final text = GeoExporter.toGeoJson(set, name: 'Usturlap');
     final j = jsonDecode(text) as Map<String, dynamic>;
     final features = j['features'] as List;
     expect(features, hasLength(6));
@@ -173,7 +173,7 @@ void main() {
   });
 
   test('GPX: noktalar ve izler (yükseklik, zaman)', () {
-    final gpx = GeoExporter.toGpx(set, name: 'Pusula');
+    final gpx = GeoExporter.toGpx(set, name: 'Usturlap');
     final doc = XmlDocument.parse(gpx);
     final wpt = doc.findAllElements('wpt').single;
     expect(wpt.getAttribute('lat'), '39.1');

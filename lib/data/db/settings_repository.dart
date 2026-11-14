@@ -29,7 +29,7 @@ extension DeviceUid on SettingsRepository {
     const key = 'device_uid';
     final saved = await get(key);
     if (saved != null && saved.isNotEmpty) return saved;
-    final uid = 'KERTERIZ-${newUuidV4()}';
+    final uid = 'USTURLAP-${newUuidV4()}';
     await set(key, uid);
     return uid;
   }

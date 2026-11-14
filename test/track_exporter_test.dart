@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 
-import 'package:kerteriz/data/export/track_exporter.dart';
-import 'package:kerteriz/domain/models/track.dart';
+import 'package:usturlap/data/export/track_exporter.dart';
+import 'package:usturlap/domain/models/track.dart';
 
 void main() {
   final track = Track(

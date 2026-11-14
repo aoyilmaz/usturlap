@@ -140,7 +140,7 @@ class DevicePositionSource implements PositionSource {
           distanceFilter: distanceFilterMeters,
           foregroundNotificationConfig: _backgroundEnabled
               ? const ForegroundNotificationConfig(
-                  notificationTitle: 'Kerteriz',
+                  notificationTitle: 'Usturlap',
                   notificationText: 'Konum izleniyor (iz kaydı / geofence)',
                   enableWakeLock: true,
                 )

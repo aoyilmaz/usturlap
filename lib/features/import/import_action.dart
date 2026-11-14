@@ -44,7 +44,7 @@ Future<void> runImport(BuildContext context, WidgetRef ref) async {
   await importFromPath(context, ref, path);
 }
 
-/// Diskteki bir dosyayı okur, önizletir, onaylanınca ekler. "Kerteriz ile
+/// Diskteki bir dosyayı okur, önizletir, onaylanınca ekler. "Usturlap ile
 /// aç" ile gelen dosyalar da buradan geçer ([deleteAfter]: geçici kopya
 /// işlem bitince silinir).
 Future<void> importFromPath(
@@ -64,7 +64,7 @@ Future<void> importFromPath(
       return;
     }
     final Uint8List bytes = await f.readAsBytes();
-    // Kerteriz yedeği (.krz): geri yükleme akışı.
+    // Usturlap yedeği (.krz): geri yükleme akışı.
     if (BackupCrypto.looksLike(bytes)) {
       if (context.mounted) await restoreBackupBytes(context, ref, bytes);
       return;

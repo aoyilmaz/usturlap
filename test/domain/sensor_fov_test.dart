@@ -1,9 +1,9 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/core/geo_math.dart';
-import 'package:kerteriz/data/db/app_database.dart';
-import 'package:kerteriz/data/db/waypoint_repository.dart';
-import 'package:kerteriz/domain/models/sensor_fov.dart';
+import 'package:usturlap/core/geo_math.dart';
+import 'package:usturlap/data/db/app_database.dart';
+import 'package:usturlap/data/db/waypoint_repository.dart';
+import 'package:usturlap/domain/models/sensor_fov.dart';
 import 'package:latlong2/latlong.dart';
 
 /// E9: görüş konisi.

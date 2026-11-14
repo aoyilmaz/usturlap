@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/db/app_database.dart';
+import 'package:usturlap/data/db/app_database.dart';
 
 /// v8'den eski sürümlerden yükseltme (2026-11-07 simülatörde bulundu):
 /// v7 adımı `route_plans`'ı GÜNCEL tanımla (uid dahil) kurduğu için v8 adımı

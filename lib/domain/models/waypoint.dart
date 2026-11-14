@@ -4,7 +4,7 @@ import 'cot_type.dart';
 import 'map_item.dart';
 import 'sensor_fov.dart';
 
-/// Noktanın türü: sade nokta, Pusula'ya özgü görev noktaları ve APP-6 /
+/// Noktanın türü: sade nokta, Usturlap'a özgü görev noktaları ve APP-6 /
 /// MIL-STD-2525 sadakatleri (çerçeve şekli + rengi).
 ///
 /// Sadakat: dost = mavi dikdörtgen, düşman = kırmızı eşkenar dörtgen,
@@ -39,7 +39,7 @@ enum Affiliation {
     _ => false,
   };
 
-  /// Pusula'ya özgü görev noktası mı.
+  /// Usturlap'a özgü görev noktası mı.
   bool get isMission => switch (this) {
     observationPost || checkpoint || rallyPoint || sensor => true,
     _ => false,
@@ -131,7 +131,7 @@ class Waypoint implements MapItem {
   /// APP-6 ana ikon (çerçeve içi); yalnızca NATO sembollerinde çizilir.
   final SymbolRole role;
 
-  /// Dışarıdan (ör. ATAK'tan) gelen ham CoT tipi. Pusula'nın sembol setinde
+  /// Dışarıdan (ör. ATAK'tan) gelen ham CoT tipi. Usturlap'ın sembol setinde
   /// karşılığı olmayan ayrıntıyı korur (ör. `a-h-G-U-C-A-W`). null ise tip
   /// sembolden türetilir.
   final String? typeCode;

@@ -1,12 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/core/geo_math.dart';
-import 'package:kerteriz/data/cot/cot_event.dart';
-import 'package:kerteriz/data/cot/cot_mapper.dart';
-import 'package:kerteriz/data/cot/cot_xml.dart';
-import 'package:kerteriz/domain/models/map_graphic.dart';
-import 'package:kerteriz/domain/models/map_item.dart';
-import 'package:kerteriz/domain/models/route_plan.dart';
-import 'package:kerteriz/domain/models/waypoint.dart';
+import 'package:usturlap/core/geo_math.dart';
+import 'package:usturlap/data/cot/cot_event.dart';
+import 'package:usturlap/data/cot/cot_mapper.dart';
+import 'package:usturlap/data/cot/cot_xml.dart';
+import 'package:usturlap/domain/models/map_graphic.dart';
+import 'package:usturlap/domain/models/map_item.dart';
+import 'package:usturlap/domain/models/route_plan.dart';
+import 'package:usturlap/domain/models/waypoint.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:xml/xml.dart';
 
@@ -100,7 +100,7 @@ void main() {
       expect(back.role, SymbolRole.armor);
     });
 
-    test('görev noktası: mor spot marker, Pusula\'ya türüyle döner', () {
+    test('görev noktası: mor spot marker, Usturlap\'a türüyle döner', () {
       for (final a in Affiliation.values.where((a) => a.isMission)) {
         final gn = Waypoint(
           uid: 'gn-${a.name}',
@@ -123,7 +123,7 @@ void main() {
         expect(back.typeCode, isNull);
         expect(back.name, 'GN-1');
       }
-      // Sade noktada Pusula ayrıntısı yok.
+      // Sade noktada Usturlap ayrıntısı yok.
       expect(mapper.fromWaypoint(spot).child('__pusula'), isNull);
     });
 

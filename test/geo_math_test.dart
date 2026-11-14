@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 
-import 'package:kerteriz/core/geo_math.dart';
+import 'package:usturlap/core/geo_math.dart';
 
 void main() {
   group('pathLength', () {

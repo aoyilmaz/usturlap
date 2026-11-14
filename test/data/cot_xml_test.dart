@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/cot/cot_event.dart';
-import 'package:kerteriz/data/cot/cot_xml.dart';
+import 'package:usturlap/data/cot/cot_event.dart';
+import 'package:usturlap/data/cot/cot_xml.dart';
 import 'package:xml/xml.dart';
 
 /// ATAK'ın yazdığı biçimde (tek tırnaklı, sekmeli) elle yazılmış örnek olay.

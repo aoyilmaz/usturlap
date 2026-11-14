@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/features/map/base_layer.dart';
-import 'package:kerteriz/features/map/base_layer_resolver.dart';
-import 'package:kerteriz/features/map/engine/map_types.dart';
+import 'package:usturlap/features/map/base_layer.dart';
+import 'package:usturlap/features/map/base_layer_resolver.dart';
+import 'package:usturlap/features/map/engine/map_types.dart';
 import 'package:latlong2/latlong.dart';
 
 void main() {

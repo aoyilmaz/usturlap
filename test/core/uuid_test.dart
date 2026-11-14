@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/core/uuid.dart';
+import 'package:usturlap/core/uuid.dart';
 
 void main() {
   final v4 = RegExp(

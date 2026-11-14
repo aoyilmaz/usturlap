@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/offline/mapbox_offline_store.dart';
-import 'package:kerteriz/domain/models/offline_region.dart';
-import 'package:kerteriz/features/map/base_layer.dart';
+import 'package:usturlap/data/offline/mapbox_offline_store.dart';
+import 'package:usturlap/domain/models/offline_region.dart';
+import 'package:usturlap/features/map/base_layer.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 /// Aşama H: çevrimdışı bölgede harita türleri.

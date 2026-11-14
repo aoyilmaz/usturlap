@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/core/sequential_name.dart';
+import 'package:usturlap/core/sequential_name.dart';
 
 void main() {
   test('ilk ad 1 ile başlar', () {

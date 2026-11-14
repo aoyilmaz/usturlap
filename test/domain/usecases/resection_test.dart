@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/core/geo_math.dart';
-import 'package:kerteriz/domain/usecases/resection.dart';
+import 'package:usturlap/core/geo_math.dart';
+import 'package:usturlap/domain/usecases/resection.dart';
 import 'package:latlong2/latlong.dart';
 
 /// E5: geriden kestirme (resection).

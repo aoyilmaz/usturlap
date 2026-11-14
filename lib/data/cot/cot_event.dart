@@ -3,7 +3,7 @@ import 'package:xml/xml.dart';
 /// CoT (Cursor on Target) olayı — ATAK'ın temel mesajı.
 ///
 /// `<event uid type how time start stale><point …/><detail>…</detail></event>`.
-/// [detail] ham XML olarak tutulur: Pusula'nın tanımadığı alt öğeler
+/// [detail] ham XML olarak tutulur: Usturlap'ın tanımadığı alt öğeler
 /// kaybolmaz (ATAK'tan gelip geri giden nesnede bilgi düşmesin).
 class CotEvent {
   CotEvent({

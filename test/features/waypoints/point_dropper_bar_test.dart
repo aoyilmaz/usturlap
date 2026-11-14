@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/core/sequential_name.dart';
-import 'package:kerteriz/domain/models/waypoint.dart';
-import 'package:kerteriz/features/waypoints/point_dropper_bar.dart';
+import 'package:usturlap/core/sequential_name.dart';
+import 'package:usturlap/domain/models/waypoint.dart';
+import 'package:usturlap/features/waypoints/point_dropper_bar.dart';
 
 /// D3d + D3h: ATAK Point Dropper paleti (Sadakat / Görev / Tehlike).
 void main() {

@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/elevation/dem_tile.dart';
-import 'package:kerteriz/data/elevation/elevation_store.dart';
-import 'package:kerteriz/data/elevation/hgt_parser.dart';
+import 'package:usturlap/data/elevation/dem_tile.dart';
+import 'package:usturlap/data/elevation/elevation_store.dart';
+import 'package:usturlap/data/elevation/hgt_parser.dart';
 
 import 'dem_test_data.dart';
 

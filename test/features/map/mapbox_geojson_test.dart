@@ -3,9 +3,9 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/features/map/engine/map_types.dart';
-import 'package:kerteriz/features/map/engine/mapbox_geojson.dart';
-import 'package:kerteriz/features/map/engine/widget_rasterizer.dart';
+import 'package:usturlap/features/map/engine/map_types.dart';
+import 'package:usturlap/features/map/engine/mapbox_geojson.dart';
+import 'package:usturlap/features/map/engine/widget_rasterizer.dart';
 import 'package:latlong2/latlong.dart';
 
 List<dynamic> _features(String fc) =>

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/export/route_exporter.dart';
-import 'package:kerteriz/domain/models/route_plan.dart';
+import 'package:usturlap/data/export/route_exporter.dart';
+import 'package:usturlap/domain/models/route_plan.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:xml/xml.dart';
 

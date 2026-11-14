@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/core/coord_format.dart';
-import 'package:kerteriz/core/coord_parse.dart';
+import 'package:usturlap/core/coord_format.dart';
+import 'package:usturlap/core/coord_parse.dart';
 import 'package:latlong2/latlong.dart';
 
 const _d = Distance();

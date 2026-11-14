@@ -11,7 +11,7 @@ import 'kerteriz_data.dart';
 
 /// GeoJSON (RFC 7946) okuyucu: Point → nokta, LineString → iz, Polygon →
 /// alan çizimi (dış halka); Multi* ve GeometryCollection açılır. Renk
-/// "simplestyle" (stroke, stroke-width, fill) özelliklerinden; Pusula'dan
+/// "simplestyle" (stroke, stroke-width, fill) özelliklerinden; Usturlap'tan
 /// çıkmışsa "kerteriz" özelliğiyle ayrıntısı geri kurulur. Saf Dart.
 class GeoJsonImporter {
   GeoJsonImporter._();

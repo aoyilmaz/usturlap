@@ -8,8 +8,8 @@ import 'features/shell/panel_host.dart';
 ///
 /// Gece modu teması Adım 8'de gelecek; şimdilik koyu bir tema kullanıyoruz
 /// (saha kullanımı için göz yormayan, taktik harita görünümüne yakın).
-class KerterizApp extends StatelessWidget {
-  const KerterizApp({super.key});
+class UsturlapApp extends StatelessWidget {
+  const UsturlapApp({super.key});
 
   @override
   Widget build(BuildContext context) {

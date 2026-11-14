@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/elevation/hgt_parser.dart';
+import 'package:usturlap/data/elevation/hgt_parser.dart';
 
 void main() {
   group('HgtParser Tests', () {

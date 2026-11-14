@@ -5,15 +5,15 @@ class AppConstants {
   AppConstants._();
 
   /// Uygulama adı (HUD/başlıkta kullanılabilir).
-  static const String appName = 'Kerteriz';
+  static const String appName = 'Usturlap';
 
   /// Kendi işaretçimizin varsayılan callsign'ı.
   /// (İleride ayarlardan düzenlenebilir hale gelecek.)
-  static const String defaultCallsign = 'KERTERIZ-1';
+  static const String defaultCallsign = 'USTURLAP-1';
 
   /// OSM kutucuk sunucusu istekleri için User-Agent paketi adı.
   /// OSM kullanım politikası gereği gerçek bir tanımlayıcı gönderilmeli.
-  static const String osmUserAgent = 'com.kerteriz.app';
+  static const String osmUserAgent = 'com.usturlap.app';
 
   /// Çevrimiçi OSM raster karo şablonu (Adım 1).
   /// Adım 2'de bunun yanına gömülü MBTiles katmanı eklenecek.

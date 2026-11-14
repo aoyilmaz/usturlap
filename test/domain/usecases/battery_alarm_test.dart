@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/domain/usecases/battery_alarm.dart';
+import 'package:usturlap/domain/usecases/battery_alarm.dart';
 
 /// Düşük pil eşikleri.
 void main() {

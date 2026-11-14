@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/domain/models/map_graphic.dart';
-import 'package:kerteriz/domain/models/overlay_visibility.dart';
-import 'package:kerteriz/domain/models/range_line.dart';
+import 'package:usturlap/domain/models/map_graphic.dart';
+import 'package:usturlap/domain/models/overlay_visibility.dart';
+import 'package:usturlap/domain/models/range_line.dart';
 import 'package:latlong2/latlong.dart';
 
 /// E1: kalıcı R&B çizgisi — uç bağları ve ölçüm.

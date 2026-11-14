@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/db/app_database.dart';
-import 'package:kerteriz/data/wipe/content_wiper.dart';
+import 'package:usturlap/data/db/app_database.dart';
+import 'package:usturlap/data/wipe/content_wiper.dart';
 
 void main() {
   group('AppDatabase.wipeAll', () {

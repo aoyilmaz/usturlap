@@ -22,8 +22,8 @@ import UserNotifications
   }
 }
 
-/// "Kerteriz ile aç" (AirDrop, Dosyalar, Mail eki — G8): gelen dosya geçici
-/// klasöre kopyalanır, yolu Flutter'a iletilir (kanal: kerteriz/incoming_files).
+/// "Usturlap ile aç" (AirDrop, Dosyalar, Mail eki — G8): gelen dosya geçici
+/// klasöre kopyalanır, yolu Flutter'a iletilir (kanal: usturlap/incoming_files).
 /// Flutter henüz hazır değilse (soğuk açılış) yol sırada bekler; Dart açılınca
 /// "takePending" ile alır. Dosya burada açılmaz/uygulanmaz: Dart tarafı
 /// önizletip onay ister.
@@ -35,7 +35,7 @@ final class IncomingFilesPlugin: NSObject, FlutterPlugin, FlutterSceneLifeCycleD
   static func register(with registrar: FlutterPluginRegistrar) {
     let instance = IncomingFilesPlugin()
     let channel = FlutterMethodChannel(
-      name: "kerteriz/incoming_files", binaryMessenger: registrar.messenger())
+      name: "usturlap/incoming_files", binaryMessenger: registrar.messenger())
     instance.channel = channel
     registrar.addMethodCallDelegate(instance, channel: channel)
     registrar.addSceneDelegate(instance)

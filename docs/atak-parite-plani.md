@@ -10,6 +10,9 @@
 > Bu plan [yol-haritasi.md](yol-haritasi.md) §4'teki C–F sırasının yerini alır.
 > Kerteriz'den alınacaklar (§2) aşağıdaki aşamalara dağıtıldı.
 >
+> **Ad (2026-11-14):** uygulamanın adı artık **Usturlap**; bu belgede geçen "Pusula" uygulama
+> adı için Usturlap okunmalı ("Kerteriz'den alınacaklar" eski Kerteriz projesini anlatır).
+>
 > **Efor:** S = küçük (bir oturum) · M = orta (birkaç oturum) · L = büyük (bir aşamanın ana işi)
 
 ---

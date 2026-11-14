@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/domain/usecases/lasso.dart';
+import 'package:usturlap/domain/usecases/lasso.dart';
 import 'package:latlong2/latlong.dart';
 
 /// G4: lasso seçimi.

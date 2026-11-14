@@ -14,5 +14,5 @@ void main() {
   }
   // RestartScope: acil veri silmeden sonra uygulamayı sıfırdan kurar.
   // ProviderScope: tüm riverpod provider'larının kök kapsayıcısı.
-  runApp(const RestartScope(child: ProviderScope(child: KerterizApp())));
+  runApp(const RestartScope(child: ProviderScope(child: UsturlapApp())));
 }

@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/db/app_database.dart';
-import 'package:kerteriz/data/db/map_graphic_repository.dart';
-import 'package:kerteriz/domain/models/map_graphic.dart';
+import 'package:usturlap/data/db/app_database.dart';
+import 'package:usturlap/data/db/map_graphic_repository.dart';
+import 'package:usturlap/domain/models/map_graphic.dart';
 import 'package:latlong2/latlong.dart';
 
 /// v13 → v14: çizimlerde 3B yükseklik.

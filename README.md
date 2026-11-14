@@ -1,49 +1,66 @@
-# Pusula
+<p align="center">
+  <img src="assets/icon/usturlap_logo.svg" width="112" alt="Usturlap logosu">
+</p>
 
-Çevrimdışı öncelikli (offline-first), tek elle kullanılabilen kişisel **taktik
-harita** uygulaması (Flutter, iOS öncelikli). İnternet/baz istasyonu olmadan
-çalışır; tüm veri cihazda kalır (hesap yok, telemetri yok).
+# Usturlap
 
-## Özellikler (Faz 1 — tamamlandı)
+İnternet ve baz istasyonu olmadan çalışan, tek elle (eldivenle de) kullanılan kişisel
+**taktik harita** uygulaması. Flutter ile yazıldı; önce iOS (iPhone), Android'e hazır.
+Hesap yok, reklam yok, telemetri yok: bütün veri cihazda kalır.
 
-- **Harita katmanları:** çevrimiçi OSM + gömülü çevrimdışı **MBTiles** (sokak/uydu/
-  topografik) + **vektör PMTiles** (Protomaps, her zoom'da keskin). Katman seçilince
-  kapsama alanına otomatik gider; büyük katmanlar tembel yüklenir.
-- **HUD:** callsign (düzenlenebilir), koordinat (**MGRS / UTM / WGS84** — çift dokunarak
-  geçiş), kerteriz, hız, yükseklik.
-- **Konum & pusula:** GPS + manyetik kerteriz, kuzey-yukarı / track-up, takip.
-- **Waypoint'ler:** uzun bas → ekle, SQLite (`drift`) ile kalıcı, MGRS, listele/sil.
-- **İz kaydı:** başlat/durdur, canlı polyline, KML/GeoJSON dışa aktarım; ekran kapalıyken
-  de kayıt (yalnızca kayıt sırasında arka plan konumu) + GPS doğruluk filtresi.
-- **Ölçüm/çizim araçları:** mesafe, alan (poligon), sektör.
-- **Gece modu**, haptik geri bildirim, sade tek-kolon buton düzeni.
+> Proje önce **Pusula**, sonra **Kerteriz** adını taşıdı. Eski dosyalar açılmaya devam
+> etsin diye bazı görünmez biçim kimlikleri eski adla kalır (KML/GeoJSON `kerteriz`
+> verisi, CoT `__kerteriz` / `__pusula` öğeleri, `.krz` yedek biçimi).
 
-> Faz 2 (Meshtastic mesh) için mimari hazır (`PositionSource` / `CommsChannel`
-> arayüzleri); bkz. [`docs/faz2-brief.md`](docs/faz2-brief.md).
+## Özellikler
+
+- **Harita:** Mapbox Uydu / Sokak / Topografik, OpenStreetMap, OpenTopoMap. Çevrimdışı
+  kullanım için bölge indirme (harita türü seçerek) ve kendi **MBTiles / PMTiles /
+  GeoPackage** katmanlarınız. Kaydedilmiş görünümler, gece modu, yatay ekran.
+- **Konum ve navigasyon:** MGRS / UTM / WGS84 / DM / DMS; coğrafi, manyetik (WMM2025)
+  ya da grid kuzeyi; derece ya da mil. "Git" (düz hatta kerteriz + mesafe), rotalar ve
+  rota takibi, taktik pusula, canlı takip, geriden kestirme, elle konum girme.
+- **Ölçüm ve arazi:** mesafe-kerteriz çizgisi, menzil halkaları, bullseye; yükseklik
+  verisiyle (HGT) yükseklik profili, görüş alanı, eş yükselti ve eğim.
+- **İşaretleme ve çizim:** askerî semboller (APP-6), görev noktaları, görüş konisi;
+  alan, çizgi, daire, dikdörtgen, serbest çizim, 3B kutu; şekil düzenleme, lasso seçimi,
+  geofence (sesli uyarı ve arka plan bildirimi), noktalara fotoğraf ve galeri.
+- **Veri ve paylaşım:** KML / KMZ / GPX / GeoJSON içe ve dışa aktarma, TAK uyumlu CoT
+  veri paketi, AirDrop ya da Dosyalar'dan "Usturlap ile aç".
+- **Saha:** iz kaydı (ekran kapalıyken de), raporlar (9 satır vb.), güneş ve ay,
+  hava durumu (Open-Meteo, isteğe bağlı), pil alarmı, ekranı açık tutma.
+- **Gizlilik ve güvenlik:** parolayla şifreli yedek (PBKDF2 + AES-GCM), içeriği hızlı
+  silme.
+
+## Yol haritası
+
+**Faz 2: Mesh (Meshtastic).** İnternetsiz ekip ağı: BLE ile Meshtastic düğümüne
+bağlanma, ekip konumlarını haritada görme, mesh üzerinden kısa mesaj ve nokta / veri
+paketi paylaşma. Mimari buna hazır (`PositionSource` / `CommsChannel` arayüzleri); bkz.
+[`docs/faz2-brief.md`](docs/faz2-brief.md).
 
 ## Mimari
 
-`presentation (features/) → domain (models, ports) → data (db, tiles, position)`,
-Riverpod ile. Domain saf Dart (test edilebilir).
-
-## Çevrimdışı karolar (önemli)
-
-`.mbtiles` / `.pmtiles` dosyaları **büyük olduğundan repoya dahil değildir**
-(`.gitignore`). Bunları ayrı **`pusula-tiler`** aracıyla (Sentinel-2 uydu, Copernicus
-DEM topo, WMS ortofoto, XYZ, Protomaps vektör) üretip, `lib/features/map/base_layer.dart`
-içindeki `assetPath` adlarıyla `assets/tiles/` altına koyun. Karolar olmadan yalnızca
-"çevrimiçi OSM" katmanı çalışır.
+`presentation (features/) → domain (models, ports, usecases) → data (db, tiles,
+position, …)`, Riverpod ile. Domain saf Dart; veritabanı `drift` (SQLite).
 
 ## Çalıştırma
 
 ```bash
 flutter pub get
-flutter run            # bağlı bir iOS/Android cihazda
+flutter run --dart-define-from-file=dart_defines.json   # bağlı iOS/Android cihaz
 ```
 
-iOS'ta cihaza kurmak için Xcode imzalaması gerekir (kendi Apple ID'niz; `ios/Runner.xcworkspace`).
-Geliştirme: `flutter analyze` · `flutter test`.
+`dart_defines.json` repoda yoktur; içine kendi Mapbox anahtarınızı koyun:
+`{"MAPBOX_ACCESS_TOKEN": "pk..."}`. iOS'ta cihaza kurmak için Xcode imzalaması gerekir
+(`ios/Runner.xcworkspace`). Geliştirme: `flutter analyze` · `flutter test`.
+
+Çevrimdışı karo dosyaları (`.mbtiles` / `.pmtiles`) büyük olduğu için repoda değildir;
+uygulama içinden içe aktarılır ya da `assets/tiles/` altına konur.
+
+Uygulama ikonu `assets/icon/usturlap_icon.svg` kaynağından üretilir:
+`python3 tool/render_icons.py` (Chrome + Pillow).
 
 ## Lisans
 
-Kişisel proje.
+Kişisel proje; şu an bir lisans verilmemiştir.

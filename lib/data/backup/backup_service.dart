@@ -75,7 +75,7 @@ class BackupCrypto {
   static Future<Uint8List> decrypt(Uint8List data, String password) async {
     const head = 8 + 1 + 4 + 16 + 12;
     if (!looksLike(data) || data.length < head + 16) {
-      throw const BackupException('Bu bir Kerteriz yedeği değil.');
+      throw const BackupException('Bu bir Usturlap yedeği değil.');
     }
     if (data[8] != version) {
       throw const BackupException('Yedek biçimi bu sürümde açılamıyor.');
@@ -123,6 +123,8 @@ class BackupContents {
 }
 
 /// Yedek zip'i: `kerteriz.sqlite`, `yedek.json`, `attachments/…`.
+/// "kerteriz" adları (dosya adı, `app` alanı, `.krz`, "KRTZYDK1") uygulamanın
+/// eski adından kalan biçim kimlikleridir; eski yedekler açılsın diye değişmez.
 class BackupArchive {
   BackupArchive._();
 
@@ -163,7 +165,7 @@ class BackupArchive {
       }
     }
     if (db == null || meta == null || meta['app'] != 'kerteriz') {
-      throw const BackupException('Bu bir Kerteriz yedeği değil.');
+      throw const BackupException('Bu bir Usturlap yedeği değil.');
     }
     return BackupContents(database: db, attachments: attachments, meta: meta);
   }
@@ -243,7 +245,7 @@ class BackupService {
     final contents = await _unseal(data, password);
     if (contents.schema > db.schemaVersion) {
       throw const BackupException(
-        'Yedek daha yeni bir Kerteriz sürümünden; önce uygulamayı güncelle.',
+        'Yedek daha yeni bir Usturlap sürümünden; önce uygulamayı güncelle.',
       );
     }
     return contents;

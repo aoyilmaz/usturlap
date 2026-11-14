@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/core/utils/kalman_filter.dart';
+import 'package:usturlap/core/utils/kalman_filter.dart';
 
 void main() {
   group('KalmanFilter Tests', () {

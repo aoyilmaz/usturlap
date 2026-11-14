@@ -2,9 +2,9 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/tiles/gpkg_grid.dart';
-import 'package:kerteriz/data/tiles/gpkg_reader.dart';
-import 'package:kerteriz/data/tiles/local_tile_server.dart';
+import 'package:usturlap/data/tiles/gpkg_grid.dart';
+import 'package:usturlap/data/tiles/gpkg_reader.dart';
+import 'package:usturlap/data/tiles/local_tile_server.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 const _h = webMercatorHalf;

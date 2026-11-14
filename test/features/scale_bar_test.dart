@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/features/map/widgets/scale_bar.dart';
+import 'package:usturlap/features/map/widgets/scale_bar.dart';
 
 void main() {
   group('ScaleBarMath', () {

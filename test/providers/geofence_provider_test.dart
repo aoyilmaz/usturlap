@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/domain/models/contact.dart';
-import 'package:kerteriz/domain/models/map_graphic.dart';
-import 'package:kerteriz/providers/geofence_providers.dart';
-import 'package:kerteriz/providers/graphic_providers.dart';
-import 'package:kerteriz/providers/location_providers.dart';
+import 'package:usturlap/domain/models/contact.dart';
+import 'package:usturlap/domain/models/map_graphic.dart';
+import 'package:usturlap/providers/geofence_providers.dart';
+import 'package:usturlap/providers/graphic_providers.dart';
+import 'package:usturlap/providers/location_providers.dart';
 import 'package:latlong2/latlong.dart';
 
 /// Testte konumu elle sürmek için.

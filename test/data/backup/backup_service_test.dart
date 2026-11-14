@@ -4,11 +4,11 @@ import 'dart:typed_data';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/backup/backup_service.dart';
-import 'package:kerteriz/data/db/app_database.dart';
-import 'package:kerteriz/data/db/attachment_repository.dart';
-import 'package:kerteriz/data/db/settings_repository.dart';
-import 'package:kerteriz/data/db/waypoint_repository.dart';
+import 'package:usturlap/data/backup/backup_service.dart';
+import 'package:usturlap/data/db/app_database.dart';
+import 'package:usturlap/data/db/attachment_repository.dart';
+import 'package:usturlap/data/db/settings_repository.dart';
+import 'package:usturlap/data/db/waypoint_repository.dart';
 import 'package:latlong2/latlong.dart';
 
 /// I2: şifreli yedek ve geri yükleme.
@@ -133,7 +133,7 @@ void main() {
     expect(names, isNot(contains('SİLİNECEK')));
   });
 
-  test('yedek zip okuyucu: Kerteriz olmayan zip reddedilir', () {
+  test('yedek zip okuyucu: Usturlap yedeği olmayan zip reddedilir', () {
     final zip = BackupArchive.build(
       BackupContents(
         database: Uint8List(4),

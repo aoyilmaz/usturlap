@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/weather/open_meteo.dart';
+import 'package:usturlap/data/weather/open_meteo.dart';
 import 'package:latlong2/latlong.dart';
 
 /// Open-Meteo yanıtı (2026-11-11'de alınan gerçek yanıtın kısaltması).

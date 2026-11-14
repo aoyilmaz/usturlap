@@ -2,17 +2,17 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/db/app_database.dart';
-import 'package:kerteriz/data/db/map_graphic_repository.dart';
-import 'package:kerteriz/data/db/waypoint_repository.dart';
-import 'package:kerteriz/domain/models/map_graphic.dart';
-import 'package:kerteriz/features/map/selection_panel.dart';
-import 'package:kerteriz/features/shell/adaptive_sheet.dart';
-import 'package:kerteriz/providers/location_providers.dart';
-import 'package:kerteriz/providers/map_cleaner.dart';
-import 'package:kerteriz/providers/overlay_providers.dart';
-import 'package:kerteriz/providers/selection_providers.dart';
-import 'package:kerteriz/providers/waypoint_providers.dart';
+import 'package:usturlap/data/db/app_database.dart';
+import 'package:usturlap/data/db/map_graphic_repository.dart';
+import 'package:usturlap/data/db/waypoint_repository.dart';
+import 'package:usturlap/domain/models/map_graphic.dart';
+import 'package:usturlap/features/map/selection_panel.dart';
+import 'package:usturlap/features/shell/adaptive_sheet.dart';
+import 'package:usturlap/providers/location_providers.dart';
+import 'package:usturlap/providers/map_cleaner.dart';
+import 'package:usturlap/providers/overlay_providers.dart';
+import 'package:usturlap/providers/selection_providers.dart';
+import 'package:usturlap/providers/waypoint_providers.dart';
 import 'package:latlong2/latlong.dart';
 
 /// G4: lasso seçimi ve seçim paneli.

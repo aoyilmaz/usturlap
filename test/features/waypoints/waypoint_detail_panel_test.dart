@@ -4,14 +4,14 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/db/app_database.dart';
-import 'package:kerteriz/data/db/attachment_repository.dart';
-import 'package:kerteriz/domain/models/waypoint.dart';
-import 'package:kerteriz/features/waypoints/edit_waypoint_dialog.dart';
-import 'package:kerteriz/providers/bullseye_providers.dart';
-import 'package:kerteriz/features/waypoints/waypoint_detail_panel.dart';
-import 'package:kerteriz/providers/elevation_providers.dart';
-import 'package:kerteriz/providers/waypoint_providers.dart';
+import 'package:usturlap/data/db/app_database.dart';
+import 'package:usturlap/data/db/attachment_repository.dart';
+import 'package:usturlap/domain/models/waypoint.dart';
+import 'package:usturlap/features/waypoints/edit_waypoint_dialog.dart';
+import 'package:usturlap/providers/bullseye_providers.dart';
+import 'package:usturlap/features/waypoints/waypoint_detail_panel.dart';
+import 'package:usturlap/providers/elevation_providers.dart';
+import 'package:usturlap/providers/waypoint_providers.dart';
 import 'package:latlong2/latlong.dart';
 
 /// D3e: nokta detayı — yükseklik ve fotoğraflar.

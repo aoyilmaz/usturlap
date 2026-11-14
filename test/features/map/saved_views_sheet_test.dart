@@ -2,11 +2,11 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/db/app_database.dart';
-import 'package:kerteriz/domain/models/saved_view.dart';
-import 'package:kerteriz/features/map/saved_views_sheet.dart';
-import 'package:kerteriz/providers/saved_view_providers.dart';
-import 'package:kerteriz/providers/waypoint_providers.dart';
+import 'package:usturlap/data/db/app_database.dart';
+import 'package:usturlap/domain/models/saved_view.dart';
+import 'package:usturlap/features/map/saved_views_sheet.dart';
+import 'package:usturlap/providers/saved_view_providers.dart';
+import 'package:usturlap/providers/waypoint_providers.dart';
 import 'package:latlong2/latlong.dart';
 
 /// D3g: kayıtlı görünümler.

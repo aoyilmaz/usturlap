@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/cot/cot_mapper.dart';
-import 'package:kerteriz/domain/models/waypoint.dart';
-import 'package:kerteriz/features/symbols/nato_symbol.dart';
+import 'package:usturlap/data/cot/cot_mapper.dart';
+import 'package:usturlap/domain/models/waypoint.dart';
+import 'package:usturlap/features/symbols/nato_symbol.dart';
 
 /// D3h: her tür tek widget'tan çizilir.
 void main() {
@@ -56,7 +56,7 @@ void main() {
     expect(icons, hasLength(4));
   });
 
-  test('ATAK\'a giden görev rengi Pusula\'daki rozetle aynı', () {
+  test('ATAK\'a giden görev rengi Usturlap\'taki rozetle aynı', () {
     expect(missionColor.toARGB32(), CotMapper.missionColor);
   });
 

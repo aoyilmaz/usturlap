@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/core/wmm.dart';
+import 'package:usturlap/core/wmm.dart';
 
 /// NOAA'nın resmi WMM2025 test değerleri (WMM2025_TestValues.txt).
 /// Sütunlar: yıl, yükseklik (km), enlem, boylam, D (°), I (°), H, Z, F (nT).

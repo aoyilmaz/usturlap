@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/db/settings_repository.dart';
-import 'package:kerteriz/data/position/stub_position_source.dart';
-import 'package:kerteriz/features/shell/settings_sheet.dart';
-import 'package:kerteriz/providers/location_providers.dart';
-import 'package:kerteriz/providers/repeater_providers.dart';
-import 'package:kerteriz/providers/settings_providers.dart';
+import 'package:usturlap/data/db/settings_repository.dart';
+import 'package:usturlap/data/position/stub_position_source.dart';
+import 'package:usturlap/features/shell/settings_sheet.dart';
+import 'package:usturlap/providers/location_providers.dart';
+import 'package:usturlap/providers/repeater_providers.dart';
+import 'package:usturlap/providers/settings_providers.dart';
 
 /// Veritabanısız ayar deposu (yalnızca test).
 class _MemSettings implements SettingsRepository {

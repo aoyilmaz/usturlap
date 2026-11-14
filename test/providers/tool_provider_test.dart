@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/domain/models/range_line.dart';
-import 'package:kerteriz/providers/tool_providers.dart';
+import 'package:usturlap/domain/models/range_line.dart';
+import 'package:usturlap/providers/tool_providers.dart';
 import 'package:latlong2/latlong.dart';
 
 /// E1: ölçüm noktaları dokunulan nesnenin bağını taşır.

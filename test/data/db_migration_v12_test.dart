@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/db/app_database.dart';
-import 'package:kerteriz/data/db/waypoint_repository.dart';
-import 'package:kerteriz/domain/models/sensor_fov.dart';
+import 'package:usturlap/data/db/app_database.dart';
+import 'package:usturlap/data/db/waypoint_repository.dart';
+import 'package:usturlap/domain/models/sensor_fov.dart';
 
 /// v11 → v12: noktalarda görüş konisi sütunları.
 void main() {

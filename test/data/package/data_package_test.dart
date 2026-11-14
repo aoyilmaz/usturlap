@@ -3,14 +3,14 @@ import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/export/geo_exporter.dart';
-import 'package:kerteriz/data/import/geo_import.dart';
-import 'package:kerteriz/data/package/data_package.dart';
-import 'package:kerteriz/domain/models/map_graphic.dart';
-import 'package:kerteriz/domain/models/range_line.dart';
-import 'package:kerteriz/domain/models/route_plan.dart';
-import 'package:kerteriz/domain/models/sensor_fov.dart';
-import 'package:kerteriz/domain/models/waypoint.dart';
+import 'package:usturlap/data/export/geo_exporter.dart';
+import 'package:usturlap/data/import/geo_import.dart';
+import 'package:usturlap/data/package/data_package.dart';
+import 'package:usturlap/domain/models/map_graphic.dart';
+import 'package:usturlap/domain/models/range_line.dart';
+import 'package:usturlap/domain/models/route_plan.dart';
+import 'package:usturlap/domain/models/sensor_fov.dart';
+import 'package:usturlap/domain/models/waypoint.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:xml/xml.dart';
 
@@ -91,7 +91,7 @@ void main() {
     final zip = DataPackage.build(
       set,
       name: 'Görev <1>',
-      creatorUid: 'KERTERIZ-test',
+      creatorUid: 'USTURLAP-test',
       creatorCallsign: 'KURT-1',
       photos: {
         'wp-1': [KmzPhoto('.jpg', jpg)],
@@ -135,15 +135,15 @@ void main() {
       a.files.firstWhere((f) => f.name == 'wp-1/wp-1.cot').readBytes()!,
     );
     expect(cot, contains('type="a-h-G"'));
-    expect(cot, contains('KERTERIZ-test'));
+    expect(cot, contains('USTURLAP-test'));
     expect(cot, contains('<${DataPackage.kerterizTag}>'));
   });
 
-  test('Pusula → paket → Pusula kayıpsız', () {
+  test('Usturlap → paket → Usturlap kayıpsız', () {
     final zip = DataPackage.build(
       set,
       name: 'Görev',
-      creatorUid: 'KERTERIZ-test',
+      creatorUid: 'USTURLAP-test',
       creatorCallsign: 'KURT-1',
       photos: {
         'wp-1': [KmzPhoto('.jpg', jpg)],

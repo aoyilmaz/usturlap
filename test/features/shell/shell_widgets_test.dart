@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/features/offline/offline_frame_panel.dart';
-import 'package:kerteriz/features/shell/adaptive_sheet.dart';
-import 'package:kerteriz/features/map/engine/map_types.dart';
-import 'package:kerteriz/features/shell/atak_toolbar.dart';
-import 'package:kerteriz/features/shell/map_controls.dart';
-import 'package:kerteriz/features/shell/tools_grid_sheet.dart';
-import 'package:kerteriz/features/shell/toolbar_tools.dart';
+import 'package:usturlap/features/offline/offline_frame_panel.dart';
+import 'package:usturlap/features/shell/adaptive_sheet.dart';
+import 'package:usturlap/features/map/engine/map_types.dart';
+import 'package:usturlap/features/shell/atak_toolbar.dart';
+import 'package:usturlap/features/shell/map_controls.dart';
+import 'package:usturlap/features/shell/tools_grid_sheet.dart';
+import 'package:usturlap/features/shell/toolbar_tools.dart';
 import 'package:latlong2/latlong.dart';
 
 Widget _wrap(Widget child) => MaterialApp(

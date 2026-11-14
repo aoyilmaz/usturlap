@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/elevation/elevation_store.dart';
-import 'package:kerteriz/data/elevation/hgt_parser.dart';
-import 'package:kerteriz/providers/elevation_providers.dart';
-import 'package:kerteriz/providers/terrain_analysis_providers.dart';
+import 'package:usturlap/data/elevation/elevation_store.dart';
+import 'package:usturlap/data/elevation/hgt_parser.dart';
+import 'package:usturlap/providers/elevation_providers.dart';
+import 'package:usturlap/providers/terrain_analysis_providers.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../data/elevation/dem_test_data.dart';

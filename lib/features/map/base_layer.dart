@@ -146,7 +146,7 @@ final List<BaseLayerDef> kBaseLayers = [
   ),
   // --- vektör (PMTiles / Protomaps) ---
   // Tüm Türkiye (~0.8 GB, z0-14): gömülemez → cihaz Documents'ından okunur.
-  // turkey.pmtiles'ı Dosyalar/Finder ile Kerteriz'e kopyalayın.
+  // turkey.pmtiles'ı Dosyalar/Finder ile Usturlap'a kopyalayın.
   BaseLayerDef(
     id: 'vec_turkiye',
     label: 'Vektör — Türkiye',

@@ -60,13 +60,13 @@ class KmzPhoto {
 
 /// Dışa aktarma biçimleri.
 enum ExportFormat {
-  kmz('KMZ', 'kmz', 'Fotoğraflarla; Google Earth, ATAK'),
+  kmz('KMZ', 'kmz', 'Fotoğraflarla; Google Earth, TAK uyumlu uygulamalar'),
   package(
     'Veri paketi',
     'zip',
-    'ATAK görev paketi (CoT + fotoğraflar); ATAK ve Kerteriz açar',
+    'TAK uyumlu görev paketi (CoT + fotoğraflar)',
   ),
-  kml('KML', 'kml', 'Google Earth, ATAK, çoğu harita'),
+  kml('KML', 'kml', 'Google Earth, TAK uyumlu ve çoğu harita uygulaması'),
   gpx('GPX', 'gpx', 'Yalnız noktalar, izler ve rotalar; GPS cihazları'),
   geojson('GeoJSON', 'geojson', 'CBS yazılımları (QGIS vb.)');
 
@@ -76,16 +76,16 @@ enum ExportFormat {
   final String hint;
 }
 
-/// Pusula nesnelerini KML / KMZ / GPX / GeoJSON'a çevirir (saf Dart).
+/// Usturlap nesnelerini KML / KMZ / GPX / GeoJSON'a çevirir (saf Dart).
 ///
-/// Başka uygulamalar standart geometrileri görür; Pusula'nın kendi
+/// Başka uygulamalar standart geometrileri görür; Usturlap'ın kendi
 /// ayrıntıları (daire, kalınlık, kesikli, 3B, geofence, sembol, kimlik)
 /// KML'de `ExtendedData` içinde "kerteriz" verisi, GeoJSON'da "kerteriz"
-/// özelliği olarak taşınır → Pusula'dan Pusula'ya kayıpsız gidip gelir.
+/// özelliği olarak taşınır → Usturlap'tan Usturlap'a kayıpsız gidip gelir.
 class GeoExporter {
   GeoExporter._();
 
-  /// Pusula verisinin anahtarı (KML Data adı / GeoJSON özelliği).
+  /// Usturlap verisinin anahtarı (eski adla "kerteriz"; eski dosyalar açılsın diye değişmez) (KML Data adı / GeoJSON özelliği).
   static const dataKey = 'kerteriz';
 
   // ------------------------------------------------------------------ KML
@@ -232,7 +232,7 @@ class GeoExporter {
     );
   }
 
-  // ---------------------------------------------------------- Pusula verisi
+  // ---------------------------------------------------------- Usturlap verisi
 
   static List<double> _ll(LatLng p) => [p.latitude, p.longitude];
 
@@ -342,7 +342,7 @@ class GeoExporter {
     final b = StringBuffer()
       ..writeln('<?xml version="1.0" encoding="UTF-8"?>')
       ..writeln(
-        '<gpx version="1.1" creator="Kerteriz" '
+        '<gpx version="1.1" creator="Usturlap" '
         'xmlns="http://www.topografix.com/GPX/1/1">',
       )
       ..writeln('  <metadata><name>${_xml(name)}</name></metadata>');

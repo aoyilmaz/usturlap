@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/core/bearing_format.dart';
-import 'package:kerteriz/domain/models/bloodhound.dart';
-import 'package:kerteriz/domain/models/range_line.dart';
-import 'package:kerteriz/features/nav/bloodhound_panel.dart';
+import 'package:usturlap/core/bearing_format.dart';
+import 'package:usturlap/domain/models/bloodhound.dart';
+import 'package:usturlap/domain/models/range_line.dart';
+import 'package:usturlap/features/nav/bloodhound_panel.dart';
 import 'package:latlong2/latlong.dart';
 
 /// E4: çoklu Bloodhound — ETA, eşikler, renk.

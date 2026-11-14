@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Usturlap logosu: yuvarlak köşeli (site, eski Android) -->
+  <rect width="1024" height="1024" rx="224" fill="#1e1c14"/>
+  <circle cx="512" cy="196" r="46" fill="none" stroke="#c9a64f" stroke-width="22"/>
+  <path d="M466 286 L558 286 L540 238 L484 238 Z" fill="#c9a64f"/>
+  <!-- Dereceli dış halka: 5° ince, 30° kalın çentik -->
+  <circle cx="512" cy="580" r="300" fill="none" stroke="#c9a64f" stroke-width="44"/>
+  <circle cx="512" cy="580" r="262" fill="none" stroke="#c9a64f" stroke-width="22" stroke-dasharray="3.5 19.36"/>
+  <circle cx="512" cy="580" r="262" fill="none" stroke="#c9a64f" stroke-width="40" stroke-dasharray="7 130.2"/>
+  <circle cx="512" cy="580" r="210" fill="none" stroke="#4e4832" stroke-width="8"/>
+  <!-- Ağ (rete): ekliptik halkası ve yıldız işaretleri -->
+  <circle cx="512" cy="540" r="150" fill="none" stroke="#9aa056" stroke-width="16"/>
+  <path d="M512 350 L494 392 L530 392 Z" fill="#9aa056"/>
+  <path d="M347 635 L391 631 L373 599 Z" fill="#9aa056"/>
+  <path d="M677 635 L633 631 L651 599 Z" fill="#9aa056"/>
+  <!-- Nişan kolu (alidade) ve göz delikleri -->
+  <g transform="rotate(-38 512 580)">
+    <rect x="232" y="563" width="560" height="34" rx="17" fill="#c9a64f"/>
+    <rect x="250" y="530" width="26" height="100" rx="6" fill="#c9a64f"/>
+    <rect x="748" y="530" width="26" height="100" rx="6" fill="#c9a64f"/>
+  </g>
+  <circle cx="512" cy="580" r="30" fill="#1e1c14" stroke="#c9a64f" stroke-width="14"/>
+</svg>

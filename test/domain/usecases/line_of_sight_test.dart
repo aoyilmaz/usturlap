@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:kerteriz/data/elevation/hgt_parser.dart';
-import 'package:kerteriz/domain/usecases/line_of_sight_calculator.dart';
+import 'package:usturlap/data/elevation/hgt_parser.dart';
+import 'package:usturlap/domain/usecases/line_of_sight_calculator.dart';
 
 /// Testler için sahte (Fake) bir DEM veri sağlayıcısı.
 /// 40.5, 30.5 koordinatını bir dağ zirvesi (500m) kabul eder, diğer yerler düzlük (100m).

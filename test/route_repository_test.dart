@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 
-import 'package:kerteriz/data/db/app_database.dart';
-import 'package:kerteriz/data/db/route_repository.dart';
-import 'package:kerteriz/providers/route_providers.dart';
-import 'package:kerteriz/providers/waypoint_providers.dart';
+import 'package:usturlap/data/db/app_database.dart';
+import 'package:usturlap/data/db/route_repository.dart';
+import 'package:usturlap/providers/route_providers.dart';
+import 'package:usturlap/providers/waypoint_providers.dart';
 
 void main() {
   late AppDatabase db;

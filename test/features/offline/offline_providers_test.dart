@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/offline/mapbox_offline_store.dart';
-import 'package:kerteriz/domain/models/offline_region.dart';
-import 'package:kerteriz/features/offline/offline_frame_panel.dart';
-import 'package:kerteriz/providers/offline_providers.dart';
+import 'package:usturlap/data/offline/mapbox_offline_store.dart';
+import 'package:usturlap/domain/models/offline_region.dart';
+import 'package:usturlap/features/offline/offline_frame_panel.dart';
+import 'package:usturlap/providers/offline_providers.dart';
 
 /// Gerçek Mapbox yerine kontrol edilebilir sahte servis.
 class _FakeStore extends MapboxOfflineStore {

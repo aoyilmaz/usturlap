@@ -9,7 +9,7 @@ import '../../domain/models/sensor_fov.dart';
 import '../../domain/models/waypoint.dart';
 import 'gpx_kml_importer.dart';
 
-/// Pusula'nın dışa aktardığı "kerteriz" verisinden (KML ExtendedData,
+/// Usturlap'ın dışa aktardığı "kerteriz" verisinden (anahtar uygulamanın eski adıdır; eski dosyalar açılsın diye değişmez) (KML ExtendedData,
 /// GeoJSON özelliği; bkz. GeoExporter) nesneleri geri kurar. Dışarıdan
 /// gelen veri: her alan tür ve aralık denetiminden geçer; bozuksa null
 /// (çağıran düz geometriye döner).

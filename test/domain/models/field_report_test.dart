@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/domain/models/field_report.dart';
+import 'package:usturlap/domain/models/field_report.dart';
 
 /// Saha raporları: DTG, 9 satır, SALUTE.
 void main() {

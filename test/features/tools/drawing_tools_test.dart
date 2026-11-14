@@ -2,14 +2,14 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/core/geo_math.dart';
-import 'package:kerteriz/data/db/app_database.dart';
-import 'package:kerteriz/data/db/map_graphic_repository.dart';
-import 'package:kerteriz/domain/models/map_graphic.dart';
-import 'package:kerteriz/features/tools/freehand_layer.dart';
-import 'package:kerteriz/features/tools/range_tools_bar.dart';
-import 'package:kerteriz/providers/tool_providers.dart';
-import 'package:kerteriz/providers/waypoint_providers.dart';
+import 'package:usturlap/core/geo_math.dart';
+import 'package:usturlap/data/db/app_database.dart';
+import 'package:usturlap/data/db/map_graphic_repository.dart';
+import 'package:usturlap/domain/models/map_graphic.dart';
+import 'package:usturlap/features/tools/freehand_layer.dart';
+import 'package:usturlap/features/tools/range_tools_bar.dart';
+import 'package:usturlap/providers/tool_providers.dart';
+import 'package:usturlap/providers/waypoint_providers.dart';
 import 'package:latlong2/latlong.dart';
 
 /// G1: çizim araçları çubuğu, kaydetme, serbest çizim katmanı.

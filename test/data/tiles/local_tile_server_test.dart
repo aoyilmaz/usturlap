@@ -4,8 +4,8 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/tiles/local_tile_server.dart';
-import 'package:kerteriz/features/map/engine/mapbox_local_style.dart';
+import 'package:usturlap/data/tiles/local_tile_server.dart';
+import 'package:usturlap/features/map/engine/mapbox_local_style.dart';
 import 'package:mbtiles/mbtiles.dart';
 
 /// 1x1 PNG (geçerli imza yeterli; içerik önemli değil).

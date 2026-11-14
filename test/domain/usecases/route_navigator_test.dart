@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/core/nav_math.dart';
-import 'package:kerteriz/domain/usecases/route_navigator.dart';
+import 'package:usturlap/core/nav_math.dart';
+import 'package:usturlap/domain/usecases/route_navigator.dart';
 import 'package:latlong2/latlong.dart';
 
 void main() {

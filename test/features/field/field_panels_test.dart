@@ -2,16 +2,16 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/db/app_database.dart';
-import 'package:kerteriz/data/db/waypoint_repository.dart';
-import 'package:kerteriz/domain/models/contact.dart';
-import 'package:kerteriz/domain/models/waypoint.dart';
-import 'package:kerteriz/features/field/reports_panel.dart';
-import 'package:kerteriz/features/field/sun_moon_panel.dart';
-import 'package:kerteriz/features/field/weather_panel.dart';
-import 'package:kerteriz/providers/location_providers.dart';
-import 'package:kerteriz/providers/waypoint_providers.dart';
-import 'package:kerteriz/providers/weather_providers.dart';
+import 'package:usturlap/data/db/app_database.dart';
+import 'package:usturlap/data/db/waypoint_repository.dart';
+import 'package:usturlap/domain/models/contact.dart';
+import 'package:usturlap/domain/models/waypoint.dart';
+import 'package:usturlap/features/field/reports_panel.dart';
+import 'package:usturlap/features/field/sun_moon_panel.dart';
+import 'package:usturlap/features/field/weather_panel.dart';
+import 'package:usturlap/providers/location_providers.dart';
+import 'package:usturlap/providers/waypoint_providers.dart';
+import 'package:usturlap/providers/weather_providers.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../data/weather/open_meteo_test.dart' show sample;
@@ -144,7 +144,7 @@ void main() {
     // Alım yeri konumum (MGRS).
     expect(find.textContaining('1) ALIM YERİ: 36S'), findsOneWidget);
     // Çağrı adı ayarlardan (varsayılan).
-    expect(find.textContaining('/ KERTERIZ-1'), findsOneWidget);
+    expect(find.textContaining('/ USTURLAP-1'), findsOneWidget);
     expect(find.textContaining('3) HASTA (ÖNCELİK): A 2'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('Haritaya ekle'),

@@ -37,7 +37,7 @@ class ImportReport {
   ].join(', ');
 }
 
-/// Okunan dosyayı veritabanına yazar. Pusula'dan çıkmış nesnelerin
+/// Okunan dosyayı veritabanına yazar. Usturlap'tan çıkmış nesnelerin
 /// kimliği korunur; aynı kimlik zaten varsa nesne atlanır (aynı dosyayı
 /// iki kez açınca kopya oluşmaz). KMZ fotoğrafları noktaya eklenir.
 class ImportWriter {

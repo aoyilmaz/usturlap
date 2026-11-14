@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/features/shell/adaptive_sheet.dart';
+import 'package:usturlap/features/shell/adaptive_sheet.dart';
 
 /// D2b: harita ekranındaki paneller modal değil (ATAK DropDown).
 void main() {

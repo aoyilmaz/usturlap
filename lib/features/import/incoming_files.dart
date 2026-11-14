@@ -1,14 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-/// "Kerteriz ile aç" (G8): AirDrop / Dosyalar / Mail'den gelen dosyaların
+/// "Usturlap ile aç" (G8): AirDrop / Dosyalar / Mail'den gelen dosyaların
 /// yolları. iOS tarafı dosyayı geçici klasöre kopyalar
 /// (`ios/Runner/AppDelegate.swift` IncomingFilesPlugin); burada yalnız yol
 /// alınır, dosya önizletilip onaylanmadan hiçbir şey eklenmez.
 class IncomingFiles {
   IncomingFiles._();
 
-  static const _channel = MethodChannel('kerteriz/incoming_files');
+  static const _channel = MethodChannel('usturlap/incoming_files');
 
   /// [onFile] her gelen dosya için sırayla çağrılır; uygulama kapalıyken
   /// gelenler (soğuk açılış) hemen işlenir.

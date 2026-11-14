@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/core/polyline_simplify.dart';
+import 'package:usturlap/core/polyline_simplify.dart';
 
 /// G1: serbest çizim sadeleştirme.
 void main() {

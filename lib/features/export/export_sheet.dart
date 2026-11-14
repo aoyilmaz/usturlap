@@ -215,7 +215,7 @@ class _ExportPanelState extends ConsumerState<ExportPanel> {
       final stamp =
           '${now.year}${two(now.month)}${two(now.day)}_'
           '${two(now.hour)}${two(now.minute)}';
-      const name = 'Kerteriz';
+      const name = 'Usturlap';
       final Uint8List bytes;
       switch (_format) {
         case ExportFormat.kmz:
@@ -240,15 +240,15 @@ class _ExportPanelState extends ConsumerState<ExportPanel> {
           bytes = utf8.encode(GeoExporter.toGeoJson(set, name: name));
       }
       final path =
-          '${Directory.systemTemp.path}/kerteriz_'
+          '${Directory.systemTemp.path}/usturlap_'
           '${_format == ExportFormat.package ? 'paket_' : ''}'
           '$stamp.${_format.extension}';
       await File(path).writeAsBytes(bytes, flush: true);
       await SharePlus.instance.share(
         ShareParams(
           files: [XFile(path)],
-          subject: 'Kerteriz verisi',
-          text: 'Kerteriz verisi (${set.count} nesne, ${_format.label})',
+          subject: 'Usturlap verisi',
+          text: 'Usturlap verisi (${set.count} nesne, ${_format.label})',
         ),
       );
     } catch (e) {

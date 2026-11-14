@@ -32,7 +32,7 @@ class RangeToolsBar extends ConsumerWidget {
       closeLabel = 'Çizim araçlarını kapat',
       hint = 'Bir çizim aracı seçin';
 
-  /// Ölçüm araçları (ATAK sırası: halka, R&B çizgisi; Pusula'nın diğerleri).
+  /// Ölçüm araçları (ATAK sırası: halka, R&B çizgisi; Usturlap'ın diğerleri).
   static const rangeTools = <(ToolMode, IconData, String)>[
     (ToolMode.rangeRings, Icons.radar, 'Menzil halkası'),
     (ToolMode.distance, Icons.straighten, 'Mesafe / R&B çizgisi'),

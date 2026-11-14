@@ -23,7 +23,7 @@ String deviationText(double dev) {
   return dev > 0 ? 'SAĞA $a°' : 'SOLA $a°';
 }
 
-/// Taktik pusula (Kerteriz / ATAK): büyük pusula gülü, kerteriz kilidi ve
+/// Taktik pusula (Usturlap / ATAK): büyük pusula gülü, kerteriz kilidi ve
 /// sapma göstergesi. Telefonu yatay tut, üst kenarı hedefe çevir.
 Future<void> showTacticalCompass(BuildContext context) {
   return Navigator.of(context).push(

@@ -2,12 +2,12 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/db/app_database.dart';
-import 'package:kerteriz/domain/models/contact.dart';
-import 'package:kerteriz/features/nav/tactical_compass_page.dart';
-import 'package:kerteriz/providers/location_providers.dart';
-import 'package:kerteriz/providers/nav_providers.dart';
-import 'package:kerteriz/providers/waypoint_providers.dart';
+import 'package:usturlap/data/db/app_database.dart';
+import 'package:usturlap/domain/models/contact.dart';
+import 'package:usturlap/features/nav/tactical_compass_page.dart';
+import 'package:usturlap/providers/location_providers.dart';
+import 'package:usturlap/providers/nav_providers.dart';
+import 'package:usturlap/providers/waypoint_providers.dart';
 import 'package:latlong2/latlong.dart';
 
 /// Testte yönü değiştirilebilen kendi konumum.

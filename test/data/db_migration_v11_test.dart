@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/db/app_database.dart';
-import 'package:kerteriz/data/db/range_line_repository.dart';
-import 'package:kerteriz/data/db/range_ring_repository.dart';
-import 'package:kerteriz/domain/models/range_line.dart';
+import 'package:usturlap/data/db/app_database.dart';
+import 'package:usturlap/data/db/range_line_repository.dart';
+import 'package:usturlap/data/db/range_ring_repository.dart';
+import 'package:usturlap/domain/models/range_line.dart';
 import 'package:latlong2/latlong.dart';
 
 /// v10 → v11: kalıcı menzil halkaları tablosu; R&B çizgileri korunur.

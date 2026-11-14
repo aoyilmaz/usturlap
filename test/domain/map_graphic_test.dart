@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/core/geo_math.dart';
-import 'package:kerteriz/domain/models/map_graphic.dart';
+import 'package:usturlap/core/geo_math.dart';
+import 'package:usturlap/domain/models/map_graphic.dart';
 import 'package:latlong2/latlong.dart';
 
 /// G1: çizim türleri.

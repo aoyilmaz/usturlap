@@ -1,9 +1,9 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:kerteriz/data/db/app_database.dart';
-import 'package:kerteriz/data/db/imported_layer_repository.dart';
-import 'package:kerteriz/domain/models/imported_layer.dart';
+import 'package:usturlap/data/db/app_database.dart';
+import 'package:usturlap/data/db/imported_layer_repository.dart';
+import 'package:usturlap/domain/models/imported_layer.dart';
 
 void main() {
   late AppDatabase db;

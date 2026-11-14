@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/features/map/engine/mapbox_night_style.dart';
+import 'package:usturlap/features/map/engine/mapbox_night_style.dart';
 
 void main() {
   Map<String, Object> props(List<StyleEdit> edits, String id) => {

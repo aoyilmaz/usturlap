@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/core/geo_math.dart';
-import 'package:kerteriz/core/recent_trail.dart';
+import 'package:usturlap/core/geo_math.dart';
+import 'package:usturlap/core/recent_trail.dart';
 import 'package:latlong2/latlong.dart';
 
 void main() {

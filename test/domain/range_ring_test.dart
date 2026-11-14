@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/domain/models/overlay_visibility.dart';
-import 'package:kerteriz/domain/models/range_line.dart';
-import 'package:kerteriz/domain/models/range_ring.dart';
+import 'package:usturlap/domain/models/overlay_visibility.dart';
+import 'package:usturlap/domain/models/range_line.dart';
+import 'package:usturlap/domain/models/range_ring.dart';
 import 'package:latlong2/latlong.dart';
 
 /// E2: kalıcı menzil / tehdit halkaları.

@@ -52,7 +52,7 @@ class CotType {
   // yapısıdır, kara mayını değil.
   static const _roleAliases = {SymbolRole.cbrn: 'I-R-N'};
 
-  /// Pusula sembolünden CoT tipi. Sade nokta ve görev noktaları →
+  /// Usturlap sembolünden CoT tipi. Sade nokta ve görev noktaları →
   /// [spotMarker]. Rolsüz NATO sembolü → genel kara nesnesi (ör. `a-h-G`).
   static String forSymbol(Affiliation affiliation, SymbolRole role) {
     final a = _affiliationCode[affiliation];
@@ -61,7 +61,7 @@ class CotType {
     return fn == null ? 'a-$a-G' : 'a-$a-G-$fn';
   }
 
-  /// CoT tipinden Pusula sembolü (en yakın karşılık). Bilinmeyen işlev
+  /// CoT tipinden Usturlap sembolü (en yakın karşılık). Bilinmeyen işlev
   /// kodlarında yalnızca sadakat çerçevesi kullanılır; ham tip ayrıca saklanır.
   static ({Affiliation affiliation, SymbolRole role}) parse(String type) {
     final parts = type.split('-');

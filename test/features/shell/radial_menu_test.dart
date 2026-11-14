@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/features/shell/radial_menu.dart';
+import 'package:usturlap/features/shell/radial_menu.dart';
 
 /// D3a: ATAK radyal menüsü (kılavuz s.11).
 void main() {

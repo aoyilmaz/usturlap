@@ -6,18 +6,18 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/db/app_database.dart';
-import 'package:kerteriz/data/db/attachment_repository.dart';
-import 'package:kerteriz/data/db/map_graphic_repository.dart';
-import 'package:kerteriz/data/db/waypoint_repository.dart';
-import 'package:kerteriz/data/export/geo_exporter.dart';
-import 'package:kerteriz/data/import/geo_import.dart';
-import 'package:kerteriz/data/package/data_package.dart';
-import 'package:kerteriz/domain/models/map_graphic.dart';
-import 'package:kerteriz/domain/models/waypoint.dart';
-import 'package:kerteriz/features/export/export_sheet.dart';
-import 'package:kerteriz/features/import/import_action.dart';
-import 'package:kerteriz/providers/waypoint_providers.dart';
+import 'package:usturlap/data/db/app_database.dart';
+import 'package:usturlap/data/db/attachment_repository.dart';
+import 'package:usturlap/data/db/map_graphic_repository.dart';
+import 'package:usturlap/data/db/waypoint_repository.dart';
+import 'package:usturlap/data/export/geo_exporter.dart';
+import 'package:usturlap/data/import/geo_import.dart';
+import 'package:usturlap/data/package/data_package.dart';
+import 'package:usturlap/domain/models/map_graphic.dart';
+import 'package:usturlap/domain/models/waypoint.dart';
+import 'package:usturlap/features/export/export_sheet.dart';
+import 'package:usturlap/features/import/import_action.dart';
+import 'package:usturlap/providers/waypoint_providers.dart';
 import 'package:latlong2/latlong.dart';
 
 /// G7: içe aktarma önizlemesi ve dışa aktar paneli.
@@ -164,7 +164,7 @@ void main() {
         ],
       ),
       name: 'Görev',
-      creatorUid: 'KERTERIZ-x',
+      creatorUid: 'USTURLAP-x',
       creatorCallsign: 'KURT',
     );
     final bundle = GeoImport.parse(zip);

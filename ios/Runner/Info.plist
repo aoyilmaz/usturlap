@@ -27,7 +27,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Kerteriz</string>
+	<string>Usturlap</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -35,7 +35,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>kerteriz</string>
+	<string>usturlap</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -54,11 +54,11 @@
 		<true/>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Kerteriz konumunuzu, hızınızı ve yönünüzü haritada göstermek için kullanır. Veriler yalnızca cihazda kalır.</string>
+	<string>Usturlap konumunuzu, hızınızı ve yönünüzü haritada göstermek için kullanır. Veriler yalnızca cihazda kalır.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Kerteriz, noktalara fotoğraf eklemek için kamerayı kullanır. Fotoğraflar yalnızca cihazda kalır.</string>
+	<string>Usturlap, noktalara fotoğraf eklemek için kamerayı kullanır. Fotoğraflar yalnızca cihazda kalır.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Kerteriz, noktalara fotoğraf arşivinden fotoğraf eklemek için kullanır. Fotoğraflar yalnızca cihazda kalır.</string>
+	<string>Usturlap, noktalara fotoğraf arşivinden fotoğraf eklemek için kullanır. Fotoğraflar yalnızca cihazda kalır.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -94,7 +94,7 @@
 			<key>UTTypeIdentifier</key>
 			<string>com.kerteriz.backup</string>
 			<key>UTTypeDescription</key>
-			<string>Kerteriz yedeği</string>
+			<string>Usturlap yedeği</string>
 			<key>UTTypeConformsTo</key>
 			<array>
 				<string>public.data</string>

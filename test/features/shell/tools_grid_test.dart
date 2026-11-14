@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/features/shell/adaptive_sheet.dart';
-import 'package:kerteriz/features/shell/tools_grid_sheet.dart';
+import 'package:usturlap/features/shell/adaptive_sheet.dart';
+import 'package:usturlap/features/shell/tools_grid_sheet.dart';
 
 /// D4a: ≡ ızgarasından açılan panel ızgaranın üstüne biner.
 void main() {

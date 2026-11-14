@@ -232,7 +232,7 @@ class Wmm {
         bp += ar * m * t2 * pnm[n][m];
       }
     }
-    // Coğrafi kutupta sin θ = 0: doğu bileşeni tanımsız (Pusula için önemsiz).
+    // Coğrafi kutupta sin θ = 0: doğu bileşeni tanımsız (Usturlap için önemsiz).
     if (st.abs() > 1e-10) bp /= st;
 
     final xs = -bt, ys = bp, zs = -br;

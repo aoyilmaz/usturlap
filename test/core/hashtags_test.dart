@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/core/hashtags.dart';
-import 'package:kerteriz/core/tr_text.dart';
+import 'package:usturlap/core/hashtags.dart';
+import 'package:usturlap/core/tr_text.dart';
 
 void main() {
   test('etiketler # olmadan, Türkçe küçük harfle', () {

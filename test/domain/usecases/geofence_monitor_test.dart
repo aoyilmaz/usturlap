@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/domain/models/map_graphic.dart';
-import 'package:kerteriz/domain/usecases/geofence_monitor.dart';
+import 'package:usturlap/domain/models/map_graphic.dart';
+import 'package:usturlap/domain/usecases/geofence_monitor.dart';
 import 'package:latlong2/latlong.dart';
 
 /// G3: geofence izleyicisi — giriş / çıkış geçişleri.

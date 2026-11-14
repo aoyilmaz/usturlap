@@ -4,22 +4,22 @@ import 'dart:typed_data';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/db/app_database.dart';
-import 'package:kerteriz/data/db/attachment_repository.dart';
-import 'package:kerteriz/data/db/map_graphic_repository.dart';
-import 'package:kerteriz/data/db/range_line_repository.dart';
-import 'package:kerteriz/data/db/range_ring_repository.dart';
-import 'package:kerteriz/data/db/route_repository.dart';
-import 'package:kerteriz/data/db/settings_repository.dart';
-import 'package:kerteriz/data/db/track_repository.dart';
-import 'package:kerteriz/data/db/waypoint_repository.dart';
-import 'package:kerteriz/data/export/geo_exporter.dart';
-import 'package:kerteriz/data/import/geo_import.dart';
-import 'package:kerteriz/data/import/import_writer.dart';
-import 'package:kerteriz/domain/models/map_graphic.dart';
-import 'package:kerteriz/domain/models/route_plan.dart';
-import 'package:kerteriz/domain/models/sensor_fov.dart';
-import 'package:kerteriz/domain/models/waypoint.dart';
+import 'package:usturlap/data/db/app_database.dart';
+import 'package:usturlap/data/db/attachment_repository.dart';
+import 'package:usturlap/data/db/map_graphic_repository.dart';
+import 'package:usturlap/data/db/range_line_repository.dart';
+import 'package:usturlap/data/db/range_ring_repository.dart';
+import 'package:usturlap/data/db/route_repository.dart';
+import 'package:usturlap/data/db/settings_repository.dart';
+import 'package:usturlap/data/db/track_repository.dart';
+import 'package:usturlap/data/db/waypoint_repository.dart';
+import 'package:usturlap/data/export/geo_exporter.dart';
+import 'package:usturlap/data/import/geo_import.dart';
+import 'package:usturlap/data/import/import_writer.dart';
+import 'package:usturlap/domain/models/map_graphic.dart';
+import 'package:usturlap/domain/models/route_plan.dart';
+import 'package:usturlap/domain/models/sensor_fov.dart';
+import 'package:usturlap/domain/models/waypoint.dart';
 import 'package:latlong2/latlong.dart';
 
 /// G7: içe aktarılanı veritabanına yazma.
@@ -151,7 +151,7 @@ void main() {
   test('cihaz kimliği bir kez üretilir, sonra aynı', () async {
     final s = SettingsRepository(db);
     final a = await s.deviceUid();
-    expect(a, startsWith('KERTERIZ-'));
+    expect(a, startsWith('USTURLAP-'));
     expect(await s.deviceUid(), a);
   });
 

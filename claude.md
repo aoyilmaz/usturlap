@@ -1,5 +1,16 @@
 # Pusula — Proje Brief'i & Claude Code Başlangıç Prompt'u
 
+> **Ad (2026-11-14): uygulamanın adı artık Usturlap** (önce Pusula, sonra Kerteriz).
+> Dart paketi `usturlap` (`package:usturlap/`), GitHub deposu `aoyilmaz/usturlap`,
+> tanıtım sitesi `website/` → aoyilmaz.github.io/usturlap.
+> **Değişmeyenler** (eski veri ve dosyalar açılsın diye): paket kimliği
+> `com.pusula.pusula.ao`, veritabanı dosyası `pusula`, KML/GeoJSON `kerteriz` verisi,
+> CoT `__kerteriz` / `__pusula` öğeleri, `.krz` yedek biçimi ve `KRTZYDK1` imzası,
+> UTI `com.kerteriz.backup`, Mac'teki proje klasörü `pusula`. Yön açısı anlamındaki
+> "kerteriz" sözcüğü uygulama adı değildir, değişmez. Aşağıdaki brief'te geçen
+> "Pusula" uygulama adı için Usturlap okunmalı.
+> **Sitede ATAK adı geçmez** (yalnız "TAK uyumlu CoT veri paketi" gibi olgusal ifade).
+
 > Bu dosyayı projenin kök dizinine `CLAUDE.md` olarak koy. VS Code'da Claude Code'u
 > başlatınca bu brief otomatik bağlam olur. İlk mesajın olarak da bu dosyaya
 > "Bu brief'i oku ve Faz 1 / Adım 1'den başla" diyebilirsin.

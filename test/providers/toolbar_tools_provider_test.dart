@@ -1,10 +1,10 @@
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/core/toolbar_tool.dart';
-import 'package:kerteriz/data/db/app_database.dart';
-import 'package:kerteriz/providers/settings_providers.dart';
-import 'package:kerteriz/providers/waypoint_providers.dart';
+import 'package:usturlap/core/toolbar_tool.dart';
+import 'package:usturlap/data/db/app_database.dart';
+import 'package:usturlap/providers/settings_providers.dart';
+import 'package:usturlap/providers/waypoint_providers.dart';
 
 Future<void> _settle() =>
     Future<void>.delayed(const Duration(milliseconds: 50));

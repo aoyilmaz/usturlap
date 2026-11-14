@@ -8,7 +8,7 @@ import 'range_line.dart';
 /// "kerteriz / mesafe" olarak bildirmek için ortak nokta. Haritada eş
 /// merkezli halkalar ve 30°'de bir kerteriz ışınları.
 ///
-/// Pusula'da tek bullseye var (görev başına bir referans); ayarlarda JSON.
+/// Usturlap'ta tek bullseye var (görev başına bir referans); ayarlarda JSON.
 /// Merkez R&B ucu gibi sabit ya da bir noktaya / kendi konumuma bağlı.
 /// ATAK'ta CoT tipi `u-r-b-bullseye`; paylaşımı sonraki aşamada.
 class Bullseye {

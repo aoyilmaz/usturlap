@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:kerteriz/core/track_filter.dart';
+import 'package:usturlap/core/track_filter.dart';
 
 void main() {
   group('TrackFilter.accuracyOk', () {

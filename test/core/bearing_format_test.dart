@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/core/bearing_format.dart';
-import 'package:kerteriz/core/wmm.dart';
+import 'package:usturlap/core/bearing_format.dart';
+import 'package:usturlap/core/wmm.dart';
 import 'package:latlong2/latlong.dart';
 
 void main() {

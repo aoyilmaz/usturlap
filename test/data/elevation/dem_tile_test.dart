@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/elevation/dem_tile.dart';
+import 'package:usturlap/data/elevation/dem_tile.dart';
 
 import 'dem_test_data.dart';
 

@@ -2,13 +2,13 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/db/app_database.dart';
-import 'package:kerteriz/data/db/waypoint_repository.dart';
-import 'package:kerteriz/domain/models/overlay_visibility.dart';
-import 'package:kerteriz/domain/models/waypoint.dart';
-import 'package:kerteriz/features/overlays/overlay_manager_sheet.dart';
-import 'package:kerteriz/providers/overlay_providers.dart';
-import 'package:kerteriz/providers/waypoint_providers.dart';
+import 'package:usturlap/data/db/app_database.dart';
+import 'package:usturlap/data/db/waypoint_repository.dart';
+import 'package:usturlap/domain/models/overlay_visibility.dart';
+import 'package:usturlap/domain/models/waypoint.dart';
+import 'package:usturlap/features/overlays/overlay_manager_sheet.dart';
+import 'package:usturlap/providers/overlay_providers.dart';
+import 'package:usturlap/providers/waypoint_providers.dart';
 import 'package:latlong2/latlong.dart';
 
 /// D3f: Overlay yöneticisi + #etiketler.

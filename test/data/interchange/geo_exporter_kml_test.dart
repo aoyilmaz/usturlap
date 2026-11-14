@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/export/geo_exporter.dart';
-import 'package:kerteriz/domain/models/map_graphic.dart';
-import 'package:kerteriz/domain/models/range_line.dart';
-import 'package:kerteriz/domain/models/waypoint.dart';
+import 'package:usturlap/data/export/geo_exporter.dart';
+import 'package:usturlap/domain/models/map_graphic.dart';
+import 'package:usturlap/domain/models/range_line.dart';
+import 'package:usturlap/domain/models/waypoint.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:xml/xml.dart';
 

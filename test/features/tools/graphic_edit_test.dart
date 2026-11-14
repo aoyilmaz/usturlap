@@ -2,13 +2,13 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/data/db/app_database.dart';
-import 'package:kerteriz/data/db/map_graphic_repository.dart';
-import 'package:kerteriz/domain/models/map_graphic.dart';
-import 'package:kerteriz/domain/usecases/shape_edit.dart';
-import 'package:kerteriz/features/tools/graphic_list_sheet.dart';
-import 'package:kerteriz/features/tools/shape_edit_layer.dart';
-import 'package:kerteriz/providers/waypoint_providers.dart';
+import 'package:usturlap/data/db/app_database.dart';
+import 'package:usturlap/data/db/map_graphic_repository.dart';
+import 'package:usturlap/domain/models/map_graphic.dart';
+import 'package:usturlap/domain/usecases/shape_edit.dart';
+import 'package:usturlap/features/tools/graphic_list_sheet.dart';
+import 'package:usturlap/features/tools/shape_edit_layer.dart';
+import 'package:usturlap/providers/waypoint_providers.dart';
 import 'package:latlong2/latlong.dart';
 
 /// Kayıtlı çizimi düzenleme: ayarlar penceresi ve şekil düzenleme çubuğu.

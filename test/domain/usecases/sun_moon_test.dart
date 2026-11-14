@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerteriz/domain/usecases/sun_moon.dart';
+import 'package:usturlap/domain/usecases/sun_moon.dart';
 
 /// Güneş ve ay: referans ABD Deniz Gözlemevi (USNO) API'si, Ankara
 /// (39.9334 K, 32.8597 D), UTC+3; ±2 dk.
