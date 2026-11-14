@@ -6,7 +6,8 @@
 
 İnternet ve baz istasyonu olmadan çalışan, tek elle (eldivenle de) kullanılan kişisel
 **taktik harita** uygulaması. Flutter ile yazıldı; önce iOS (iPhone), Android'e hazır.
-Hesap yok, reklam yok, telemetri yok: bütün veri cihazda kalır.
+Hesap yok, reklam yok; uygulama kendi adına veri toplamaz, bütün veri cihazda kalır
+(harita karoları Mapbox'tan gelir, bkz. [gizlilik](website/gizlilik.html)).
 
 > Proje önce **Pusula**, sonra **Kerteriz** adını taşıdı. Eski dosyalar açılmaya devam
 > etsin diye bazı görünmez biçim kimlikleri eski adla kalır (KML/GeoJSON `kerteriz`
@@ -38,6 +39,13 @@ Hesap yok, reklam yok, telemetri yok: bütün veri cihazda kalır.
 bağlanma, ekip konumlarını haritada görme, mesh üzerinden kısa mesaj ve nokta / veri
 paketi paylaşma. Mimari buna hazır (`PositionSource` / `CommsChannel` arayüzleri); bkz.
 [`docs/faz2-brief.md`](docs/faz2-brief.md).
+
+## Tanıtım sitesi
+
+`website/` (statik, derleme yok) → https://aoyilmaz.github.io/usturlap/ (GitHub Actions,
+`.github/workflows/pages.yml`). Ekran görüntüleri ve videolar simülatörde demo verisiyle
+üretilir: `python3 tool/capture_site_media.py` (`integration_test/showcase_test.dart`).
+Yerelde bakmak için: `python3 -m http.server -d website`.
 
 ## Mimari
 

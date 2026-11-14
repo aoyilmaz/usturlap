@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gizlilik · Usturlap</title>
+<meta name="description" content="Usturlap gizlilik politikası: hesap yok, reklam yok; veriler cihazda. Uygulamanın hangi durumda hangi sunucuya bağlandığı.">
+<meta name="theme-color" content="#12110c">
+<link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="assets/css/site.css">
+<script>try{var t=localStorage.getItem("usturlap-tema");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+<a class="skip" href="#icerik">İçeriğe geç</a>
+
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="./" aria-label="Usturlap ana sayfa">
+      <img src="assets/img/logo.svg" alt="" width="34" height="34">
+      Usturlap
+    </a>
+    <nav class="site-nav" aria-label="Ana menü">
+      <a href="./#ozellikler">Özellikler</a>
+      <a href="./#yol-haritasi">Yol haritası</a>
+      <a class="nav-gh" href="https://github.com/aoyilmaz/usturlap">GitHub</a>
+    </nav>
+    <button class="theme-btn" type="button" aria-label="Temayı değiştir">
+      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2.5M12 20v2.5M1.5 12H4M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="icerik" class="doc">
+  <div class="wrap">
+    <p class="eyebrow">Gizlilik</p>
+    <h1>Verileriniz sizde kalır.</h1>
+    <p class="meta">Son güncelleme: 14 Kasım 2026</p>
+
+    <h2>Kısaca</h2>
+    <ul>
+      <li>Usturlap'ta <strong>hesap, reklam ve analiz aracı yoktur.</strong> Kayıt olmazsınız; uygulama sizin hakkınızda kendi adına hiçbir sunucuya veri göndermez.</li>
+      <li>Oluşturduğunuz her şey (noktalar, çizimler, izler, rotalar, ölçümler, raporlar, fotoğraflar, ayarlar) <strong>telefonunuzda saklanır.</strong></li>
+      <li>Uygulama yalnızca harita karolarını indirmek ve isteğe bağlı hava durumunu almak için internete çıkar. Ayrıntısı aşağıdaki tabloda.</li>
+    </ul>
+
+    <h2>Cihazda saklananlar</h2>
+    <p>Noktalar, çizimler, izler, rotalar, ölçümler, raporlar, noktalara eklediğiniz fotoğraflar ve ayarlar uygulamanın telefondaki veritabanında durur. İndirdiğiniz harita bölgeleri ve içe aktardığınız harita ya da yükseklik dosyaları da telefonda saklanır. Bunlar Usturlap'ın herhangi bir sunucusuna gönderilmez; Usturlap'ın bir sunucusu yoktur.</p>
+    <p>iPhone'unuzun kendi yedeklemesi (iCloud ya da bilgisayar) açıksa, uygulama verisi de iOS'un cihaz yedeğine girebilir. Bu yedek Apple'ın ve sizin denetiminizdedir.</p>
+
+    <h2>Ağ bağlantıları</h2>
+    <p>Usturlap'ın internete çıktığı durumların tamamı:</p>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th scope="col">Ne zaman</th><th scope="col">Nereye</th><th scope="col">Ne gider</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Uydu, Sokak ya da Topografik altlık açıkken; çevrimdışı bölge indirirken</td>
+            <td>Mapbox</td>
+            <td>Ekrandaki ya da indirilen bölgenin harita karosu istekleri ve uygulamanın Mapbox erişim anahtarı. Haritayı çizen Mapbox yazılımı, harita yükleme sayısı gibi kullanım verilerini de Mapbox'a iletir.</td>
+          </tr>
+          <tr>
+            <td>OpenStreetMap ya da OpenTopoMap katmanı seçiliyken</td>
+            <td>OpenStreetMap, OpenTopoMap karo sunucuları</td>
+            <td>Ekrandaki harita karosu istekleri.</td>
+          </tr>
+          <tr>
+            <td>Hava durumu panelinde "Güncelle"ye bastığınızda</td>
+            <td>Open-Meteo</td>
+            <td>Konumunuz, 0,1 dereceye (yaklaşık 11 km) yuvarlanarak. Başka veri gönderilmez.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Karo istekleri, haritada hangi bölgeye baktığınızı ilgili sunucuya dolaylı olarak gösterir. Bunu istemediğiniz yerde haritayı önceden indirip uçak modunda kullanabilirsiniz; indirilen bölgeler internetsiz açılır.</p>
+    <p>Mapbox'ın isteğe bağlı telemetrisini haritanın sol altındaki <strong>(i)</strong> düğmesinden kapatabilirsiniz. Mapbox'ın, OpenStreetMap Vakfı'nın ve Open-Meteo'nun kendi gizlilik koşulları için: <a href="https://www.mapbox.com/legal/privacy">Mapbox</a>, <a href="https://osmfoundation.org/wiki/Privacy_Policy">OpenStreetMap</a>, <a href="https://open-meteo.com/en/terms">Open-Meteo</a>.</p>
+
+    <h2>İzinler</h2>
+    <ul>
+      <li><strong>Konum:</strong> konumunuzu haritada göstermek, koordinat, rota takibi ve ölçüm için. Arka planda yalnızca iz kaydı sürerken ya da arka planda izlenmesini seçtiğiniz bir geofence varken kullanılır. Konum hiçbir sunucuya gönderilmez (hava durumu için yuvarlanmış hâli hariç).</li>
+      <li><strong>Kamera ve Fotoğraflar:</strong> noktalara fotoğraf eklemek için. Fotoğraflar uygulamanın içinde saklanır.</li>
+      <li><strong>Bildirimler:</strong> uygulama arka plandayken geofence ve rota uyarılarını göstermek için. Bildirimler telefonda üretilir, bir sunucudan gelmez.</li>
+    </ul>
+
+    <h2>Paylaşım ve yedek</h2>
+    <p>Dışa aktardığınız dosyalar (KML, KMZ, GPX, GeoJSON, veri paketi) ve yedekler yalnızca sizin seçtiğiniz yere gider: AirDrop, Dosyalar, bir mesaj ya da e-posta. Yedekler sizin belirlediğiniz parolayla şifrelenir (PBKDF2 ile türetilen anahtar, AES-256-GCM). Parola hiçbir yerde saklanmaz; unutulursa yedek açılamaz.</p>
+
+    <h2>Silme</h2>
+    <p>Araçlar menüsündeki <strong>Acil veri silme</strong> bütün noktaları, çizimleri, izleri, fotoğrafları ve ayarları tek seferde siler; isterseniz indirilen haritaları da. iOS her dosyayı ayrı anahtarla şifrelediği için silinen dosyalar kurtarılamaz. Uygulamayı telefondan kaldırmak da bütün verisini siler.</p>
+
+    <h2>Değişiklikler</h2>
+    <p>Uygulama yeni bir ağ bağlantısı ya da izin eklerse bu sayfa güncellenir ve tarih değişir.</p>
+  </div>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <a class="brand" href="./">
+        <img src="assets/img/logo.svg" alt="" width="34" height="34">
+        Usturlap
+      </a>
+      <ul class="foot-links">
+        <li><a href="./">Ana sayfa</a></li>
+        <li><a href="https://github.com/aoyilmaz/usturlap">Kaynak kodu</a></li>
+      </ul>
+    </div>
+    <p class="foot-note">Usturlap kişisel bir projedir.</p>
+  </div>
+</footer>
+
+<script src="assets/js/site.js" defer></script>
+</body>
+</html>

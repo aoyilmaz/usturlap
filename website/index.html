@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Usturlap: internetsiz taktik harita</title>
+<meta name="description" content="Usturlap; uydu haritası, MGRS koordinat, rota, ölçüm ve arazi analizini şebeke olmadan, tek elle kullanmanız için yapılmış bir iPhone uygulaması. Hesap yok, veri cihazda.">
+<meta name="theme-color" content="#12110c">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="tr_TR">
+<meta property="og:title" content="Usturlap: internetsiz taktik harita">
+<meta property="og:description" content="Uydu haritası, MGRS, rota, ölçüm ve arazi analizi. Şebeke olmadan, tek elle. Hesap yok, veri cihazda.">
+<meta property="og:image" content="https://aoyilmaz.github.io/usturlap/assets/img/og.jpg">
+<meta property="og:url" content="https://aoyilmaz.github.io/usturlap/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="assets/css/site.css">
+<script>try{var t=localStorage.getItem("usturlap-tema");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+<a class="skip" href="#icerik">İçeriğe geç</a>
+
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="./" aria-label="Usturlap ana sayfa">
+      <img src="assets/img/logo.svg" alt="" width="34" height="34">
+      Usturlap
+    </a>
+    <nav class="site-nav" aria-label="Ana menü">
+      <a href="#ozellikler">Özellikler</a>
+      <a href="#guncellemeler">Güncellemeler</a>
+      <a href="#yol-haritasi">Yol haritası</a>
+      <a class="nav-gh" href="https://github.com/aoyilmaz/usturlap">GitHub</a>
+    </nav>
+    <button class="theme-btn" type="button" aria-label="Temayı değiştir">
+      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2.5M12 20v2.5M1.5 12H4M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="icerik">
+
+<section class="hero" aria-labelledby="baslik">
+  <svg class="contours" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+    <path d="M820 120c120-40 260 10 300 110s-40 200-170 220-250-30-280-120 30-170 150-210z"/>
+    <path d="M840 160c90-30 200 10 230 90s-30 150-130 165-190-25-215-95 25-130 115-160z"/>
+    <path d="M865 200c60-20 140 8 160 62s-22 105-92 115-130-18-148-66 18-90 80-111z"/>
+    <path d="M895 240c35-10 80 6 92 36s-12 60-52 66-75-10-85-38 10-52 45-64z"/>
+    <path d="M-40 520c160-60 300-20 420 40s260 120 420 70 260-60 440-10"/>
+    <path d="M-40 580c170-55 310-15 430 45s250 110 410 65 270-55 440-5"/>
+    <path d="M-40 640c180-50 320-10 440 50s240 100 400 60 280-50 440 0"/>
+    <path d="M120 80c80-30 170 0 190 60s-30 110-110 115-150-20-160-70 20-80 80-105z"/>
+    <path d="M150 120c45-15 100 2 112 36s-18 64-64 68-88-12-94-40 12-50 46-64z"/>
+  </svg>
+  <div class="wrap">
+    <div>
+      <p class="eyebrow"><span class="nocase" lang="en">iPhone</span> için · internetsiz taktik harita</p>
+      <h1 id="baslik">Şebeke olmasa da yönünü bil.</h1>
+      <p class="lead">Usturlap; uydu haritası, MGRS koordinat, rota, ölçüm ve arazi analizini bir araya getirir. Tek elle, eldivenle ve internet olmadan kullanılır. Hesap açmazsınız, verileriniz telefonunuzda kalır.</p>
+      <div class="cta">
+        <span class="btn btn-soon" aria-disabled="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10.5 18.5h3"/></svg>
+          <span><small>iPhone uygulaması</small>App Store'a yakında</span>
+        </span>
+        <a class="btn" href="https://github.com/aoyilmaz/usturlap">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.3-1.69-1.3-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.62 1.58.23 2.75.11 3.04.74.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg>
+          Kaynak kodu GitHub'da
+        </a>
+      </div>
+      <div class="status" aria-label="Durum">
+        <div class="status-row">
+          <span><i class="dot" aria-hidden="true"></i>ÇEVRİMDIŞI ÇALIŞIR</span>
+          <span>HESAP YOK</span>
+          <span>VERİ CİHAZDA</span>
+        </div>
+        <div class="status-coord">36S XH 59427 78331 · 1105 m MSL · 035°</div>
+      </div>
+    </div>
+    <div class="phone">
+      <video src="assets/video/tur.mp4" poster="assets/video/tur.webp" autoplay muted loop playsinline preload="metadata" data-auto aria-label="Kısa tur: harita Uçhisar'dan Göreme'ye yaklaşıyor, 3B arazi açılıyor ve kamera dönüyor."></video>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="guncellemeler" aria-labelledby="g-baslik">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Son güncellemeler</p>
+      <h2 id="g-baslik">Küçük adımlarla büyüyor.</h2>
+      <p>Usturlap küçük, çalışan adımlarla gelişiyor. Her adım önce gerçek bir iPhone'da denenir.</p>
+    </div>
+    <ol class="updates">
+      <li>
+        <time datetime="2026-11-14">14 Kasım 2026</time>
+        <div>
+          <h3>Harita türleri ve GeoPackage <span class="badge">YENİ</span></h3>
+          <p>Uydu, Sokak ve Topografik altlıklar; çevrimdışı bölge indirirken harita türü ve ayrıntı seçimi; kendi GeoPackage raster katmanlarınız.</p>
+        </div>
+      </li>
+      <li>
+        <time datetime="2026-11-14">14 Kasım 2026</time>
+        <div>
+          <h3>Saha araçları <span class="badge">YENİ</span></h3>
+          <p>CASEVAC 9 satır ve SPOTREP raporları, güneş ve ay saatleri, hava durumu, pil alarmı, ekranı açık tutma ve parolayla şifreli yedek.</p>
+        </div>
+      </li>
+      <li>
+        <time datetime="2026-11-11">11 Kasım 2026</time>
+        <div>
+          <h3>Sesli uyarılar ve veri paketi</h3>
+          <p>Rota ve geofence uyarıları sesli okunur, uygulama arka plandayken bildirim gelir. TAK uyumlu CoT veri paketi; AirDrop ya da Dosyalar'dan "Usturlap ile aç".</p>
+        </div>
+      </li>
+      <li>
+        <time datetime="2026-11-11">11 Kasım 2026</time>
+        <div>
+          <h3>Geofence, lasso ve fotoğraflar</h3>
+          <p>Alanlara giriş ve çıkış uyarısı, lasso ile toplu seçim, noktalara hızlı fotoğraf ve galeri; çizimleri düzenleme; KML, KMZ, GPX ve GeoJSON alışverişi.</p>
+        </div>
+      </li>
+      <li>
+        <time datetime="2026-11-10">10 Kasım 2026</time>
+        <div>
+          <h3>Arazi analizi ve 3B çizimler</h3>
+          <p>Eş yükselti eğrileri, eğim ve yükseklik renklendirmesi, 3B kutu çizimleri. Öncesinde ölçüm ve navigasyon tam seti, radyal menü ve sembol kütüphanesi geldi.</p>
+        </div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section class="section" id="ozellikler" aria-labelledby="o-baslik">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Özellikler</p>
+      <h2 id="o-baslik">Sahada ihtiyaç duyduğunuz her şey, tek ekranda.</h2>
+      <p>Araçlar sol üstteki çubukta, bütün liste ≡ düğmesinde. Düğmeler eldivenle basılacak kadar büyük; jestler stres altında hatırlanacak kadar az.</p>
+    </div>
+
+    <!-- 1. Harita -->
+    <article class="feature" aria-labelledby="f1">
+      <div class="feature-grid">
+        <div>
+          <p class="eyebrow">Harita</p>
+          <h2 id="f1">Şebeke bittiğinde harita bitmez.</h2>
+          <p class="one">Uydu görüntüsü, sokak ve topografik altlıklar. Gitmeden önce bölgeyi indirin, sahada uçak modunda kullanın.</p>
+          <p class="why">Dağda, vadide ya da kalabalık bir etkinlikte baz istasyonu ilk giden şeydir. Usturlap indirdiğiniz bölgeleri ve kendi MBTiles, PMTiles ya da GeoPackage paketlerinizi internetsiz açar. 3B arazi, gece modu ve yatay ekran hazır.</p>
+          <ul class="ticks">
+            <li>Uydu, Sokak, Topografik</li>
+            <li>Bölge indirme: tür ve ayrıntı seçimi</li>
+            <li>Kendi harita paketleriniz</li>
+            <li>3B arazi, gece modu</li>
+          </ul>
+        </div>
+        <div class="feature-media">
+          <div class="phone"><img src="assets/shots/3b-arazi.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Göreme üzerinde 3B arazi: eğik uydu görüntüsünde vadiler, çizimler ve konum kutusu."></div>
+        </div>
+      </div>
+      <div class="strip" role="region" aria-label="Harita ekran görüntüleri" tabindex="0">
+        <div class="strip-track">
+          <figure class="shot"><img src="assets/shots/ana-ekran.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Ana ekran: Kapadokya uydu haritasında semboller, menzil halkaları, ölçüm çizgisi ve sağ altta MGRS konum kutusu."><figcaption>Ana ekran: araç çubuğu, pusula, konum kutusu</figcaption></figure>
+          <figure class="shot"><img src="assets/shots/katmanlar.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Katmanlar paneli: Uydu, Sokak, Topografik ve OpenStreetMap seçenekleri."><figcaption>Katmanlar</figcaption></figure>
+          <figure class="shot"><img src="assets/shots/cevrimdisi.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Bölge indir paneli: haritada çerçeve, harita türü ve ayrıntı seçimi, tahmini boyut."><figcaption>Çevrimdışı bölge indirme</figcaption></figure>
+          <figure class="shot"><img src="assets/shots/topografik.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Topografik altlıkta Göreme: patikalar ve yerleşim."><figcaption>Topografik altlık</figcaption></figure>
+          <figure class="shot"><img src="assets/shots/gece.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Gece modu: harita ve arayüz kırmızı tonlarda."><figcaption>Gece modu (kırmızı ışık)</figcaption></figure>
+          <figure class="shot wide"><img src="assets/shots/yatay.webp" width="800" height="369" loading="lazy" decoding="async" alt="Yatay ekranda harita: araç çubuğu solda, konum kutusu sağda."><figcaption>Yatay ekran</figcaption></figure>
+        </div>
+      </div>
+    </article>
+
+    <!-- 2. Navigasyon -->
+    <article class="feature" aria-labelledby="f2">
+      <div class="feature-grid">
+        <div>
+          <p class="eyebrow">Yön bulma</p>
+          <h2 id="f2">Nerede olduğunu, nereye gittiğini bil.</h2>
+          <p class="one">MGRS, UTM ya da enlem-boylam. Coğrafi, manyetik ya da grid kuzeyi. Rotanı planla, adım adım takip et.</p>
+          <p class="why">Koordinat telsizde okunacak biçimde gösterilir; konum kutusuna çift dokununca biçim değişir. "Git" hedefe düz hatta kerteriz ve mesafe verir. Rota takibi sıradaki noktayı, kalan mesafeyi ve varış saatini gösterir, değişiklikleri sesli söyler.</p>
+          <ul class="ticks">
+            <li>Rota planlama ve takip</li>
+            <li>Taktik pusula, kerteriz kilidi</li>
+            <li>İki nesne arasında canlı takip</li>
+            <li>Geriden kestirme ile konum</li>
+          </ul>
+        </div>
+        <div class="feature-media">
+          <div class="phone"><video src="assets/video/rota.mp4" poster="assets/video/rota.webp" muted loop playsinline preload="none" data-auto aria-label="Rota takibi: konum devriye rotasında ilerliyor, alttaki şerit sıradaki noktayı ve kalan mesafeyi gösteriyor."></video></div>
+        </div>
+      </div>
+      <div class="strip" role="region" aria-label="Navigasyon ekran görüntüleri" tabindex="0">
+        <div class="strip-track">
+          <figure class="shot"><img src="assets/shots/rota.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Rota takibi şeridi: ayak 2/3, sıradaki noktaya mesafe ve kerteriz, kalan mesafe ve varış saati."><figcaption>Rota takibi</figcaption></figure>
+          <figure class="shot"><img src="assets/shots/geofence.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Geofence uyarısı: YASAK BÖLGE alanına girildi bildirimi."><figcaption>Geofence uyarısı</figcaption></figure>
+          <figure class="shot"><img src="assets/shots/taktik-pusula.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Taktik pusula: büyük pusula gülü, 035° ve ters kerteriz 215°."><figcaption>Taktik pusula</figcaption></figure>
+        </div>
+      </div>
+    </article>
+
+    <!-- 3. Ölçüm ve arazi -->
+    <article class="feature" aria-labelledby="f3">
+      <div class="feature-grid">
+        <div>
+          <p class="eyebrow">Ölçüm ve arazi</p>
+          <h2 id="f3">Haritaya bak, araziyi oku.</h2>
+          <p class="one">Mesafe-kerteriz, alan, menzil halkaları ve bullseye. Yükseklik verisiyle görüş alanı, eğim ve eş yükselti.</p>
+          <p class="why">Bir tepeden nereyi görebileceğinizi, hangi yamacın dik olduğunu yola çıkmadan görün. Yükseklik verisi (SRTM, DTED) cihazda tutulur, hesaplar internetsiz yapılır.</p>
+          <ul class="ticks">
+            <li>Noktalara bağlanan R&amp;B çizgisi</li>
+            <li>Alan, çevre ve sektör</li>
+            <li>Görüş alanı, görüş hattı, profil</li>
+            <li>Eğim ve eş yükselti eğrileri</li>
+          </ul>
+        </div>
+        <div class="feature-media">
+          <div class="phone"><video src="assets/video/cizim.mp4" poster="assets/video/cizim.webp" muted loop playsinline preload="none" data-auto aria-label="Alan ölçümü: haritaya dokundukça köşeler ekleniyor, alan ve çevre güncelleniyor."></video></div>
+        </div>
+      </div>
+      <div class="strip" role="region" aria-label="Ölçüm ekran görüntüleri" tabindex="0">
+        <div class="strip-track">
+          <figure class="shot"><img src="assets/shots/olcum.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Ölçüm çizgisi ayrıntısı: GN-1'den D-1'e 4,32 km, kerteriz 022°, yükseklik farkı ve eğim."><figcaption>Mesafe-kerteriz çizgisi</figcaption></figure>
+          <figure class="shot"><img src="assets/shots/gorus-alani.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Görüş alanı: Uçhisar'daki gözetleme noktasından görülen yerler yeşil, görülmeyenler kırmızı."><figcaption>Görüş alanı</figcaption></figure>
+          <figure class="shot"><img src="assets/shots/arazi.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Arazi analizi: eğim renklendirmesi ve eş yükselti eğrileri."><figcaption>Eğim ve eş yükselti</figcaption></figure>
+          <figure class="shot"><img src="assets/shots/olcum-alan.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Alan ölçümü: 78,23 hektar, çevre 3,43 km."><figcaption>Alan ölçümü</figcaption></figure>
+        </div>
+      </div>
+    </article>
+
+    <!-- 4. İşaretleme ve çizim -->
+    <article class="feature" aria-labelledby="f4">
+      <div class="feature-grid">
+        <div>
+          <p class="eyebrow">İşaretleme ve çizim</p>
+          <h2 id="f4">Tek dokunuşla işaretle.</h2>
+          <p class="one">Askerî semboller (APP-6), görev noktaları ve tehlikeler. Alan, çizgi, daire, dikdörtgen ve 3B kutu çizimleri.</p>
+          <p class="why">Nokta bırakma paletinden türü seçip haritaya dokunun; ad sırayla verilir. Her nesnenin radyal menüsünden git, takip et, ölç, taşı ve paylaş. Çizimlerin köşeleri sonradan düzenlenir; alanlara giriş ve çıkış uyarısı kurulur.</p>
+          <ul class="ticks">
+            <li>Nokta bırakma paleti</li>
+            <li>Radyal menü</li>
+            <li>Şekil düzenleme</li>
+            <li>Lasso seçimi, fotoğraflar</li>
+          </ul>
+        </div>
+        <div class="feature-media">
+          <div class="phone"><video src="assets/video/nokta.mp4" poster="assets/video/nokta.webp" muted loop playsinline preload="none" data-auto aria-label="Nokta bırakma: palet açılıyor, haritaya iki nokta bırakılıyor, birinin radyal menüsü açılıyor."></video></div>
+        </div>
+      </div>
+      <div class="strip" role="region" aria-label="İşaretleme ekran görüntüleri" tabindex="0">
+        <div class="strip-track">
+          <figure class="shot"><img src="assets/shots/radyal.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Radyal menü: Detay, Git, Takip, R&amp;B, Halka, Taşı, Paylaş, Sil düğmeleri."><figcaption>Radyal menü</figcaption></figure>
+          <figure class="shot"><img src="assets/shots/nokta-paleti.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Nokta bırakma paleti: Sadakat, Görev ve Tehlike sekmeleri, görev noktası sembolleri."><figcaption>Nokta bırakma paleti</figcaption></figure>
+          <figure class="shot"><img src="assets/shots/sekil-duzenleme.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Şekil düzenleme: HEDEF BÖLGE alanının köşe ve orta tutamakları."><figcaption>Şekil düzenleme</figcaption></figure>
+        </div>
+      </div>
+    </article>
+
+    <!-- 5. Veri ve paylaşım -->
+    <article class="feature" aria-labelledby="f5">
+      <div class="feature-grid">
+        <div>
+          <p class="eyebrow">Veri ve paylaşım</p>
+          <h2 id="f5">Verin seninle gelir.</h2>
+          <p class="one">KML, KMZ, GPX, GeoJSON ve TAK uyumlu CoT veri paketi. AirDrop ya da Dosyalar'dan "Usturlap ile aç".</p>
+          <p class="why">Google Earth'te hazırladığınız planı alın, sahadaki izlerinizi CBS yazılımına verin. Usturlap'tan Usturlap'a giden dosyalarda daire, halka ve rota gibi ayrıntılar kaybolmaz. İçe aktarmadan önce neyin alınacağını önizlersiniz.</p>
+          <div class="chips" aria-label="Desteklenen biçimler">
+            <span>KML</span><span>KMZ</span><span>GPX</span><span>GeoJSON</span><span>CoT veri paketi</span><span>MBTiles</span><span>PMTiles</span><span>GeoPackage</span><span>HGT / DTED</span>
+          </div>
+        </div>
+        <div class="feature-media">
+          <div class="phone"><img src="assets/shots/disa-aktar.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Dışa aktar paneli: KMZ, veri paketi, KML, GPX, GeoJSON; noktalar, çizimler, izler ve ölçümler seçili."></div>
+        </div>
+      </div>
+    </article>
+
+    <!-- 6. Saha -->
+    <article class="feature" aria-labelledby="f6">
+      <div class="feature-grid">
+        <div>
+          <p class="eyebrow">Saha</p>
+          <h2 id="f6">Sahada gereken küçük şeyler.</h2>
+          <p class="one">CASEVAC 9 satır ve SPOTREP raporları, güneş ve ay saatleri, hava durumu, iz kaydı ve pil alarmı.</p>
+          <p class="why">Rapor formları konumu MGRS olarak doldurur; metin kopyalanmaya ya da paylaşılmaya hazırdır. Gün doğumu, alacakaranlık ve ay saatleri internetsiz hesaplanır. Hava durumu isteğe bağlıdır ve konumu yuvarlayarak sorar.</p>
+          <ul class="ticks">
+            <li>9 satır ve SPOTREP</li>
+            <li>Güneş, alacakaranlık, ay</li>
+            <li>Ekran kapalıyken iz kaydı</li>
+            <li>Pil alarmı, ekranı açık tut</li>
+          </ul>
+        </div>
+        <div class="feature-media">
+          <div class="phone"><img src="assets/shots/rapor.webp" width="800" height="1739" loading="lazy" decoding="async" alt="SPOTREP (SALUTE) formu: konum MGRS, alanlar ve hazır rapor metni; Paylaş, Kopyala, Haritaya ekle."></div>
+        </div>
+      </div>
+      <div class="strip" role="region" aria-label="Saha ekran görüntüleri" tabindex="0">
+        <div class="strip-track">
+          <figure class="shot"><img src="assets/shots/gunes-ay.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Güneş ve ay paneli: alacakaranlık başlangıçları, gün doğumu, öğle, gün batımı, gün ışığı süresi."><figcaption>Güneş ve ay</figcaption></figure>
+          <figure class="shot"><img src="assets/shots/hava.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Hava durumu paneli: anlık durum ve sıcaklık; rüzgâr, görüş, bulut, nem, basınç ve 24 saatlik tahmin."><figcaption>Hava durumu</figcaption></figure>
+          <figure class="shot"><img src="assets/shots/yedek.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Yedekle / geri yükle paneli: parolayla şifrelenmiş yedek dosyası."><figcaption>Şifreli yedek</figcaption></figure>
+        </div>
+      </div>
+    </article>
+
+    <!-- 7. Gizlilik -->
+    <article class="feature" aria-labelledby="f7">
+      <p class="eyebrow">Gizlilik ve güvenlik</p>
+      <h2 id="f7">Hesap yok. Veri sende.</h2>
+      <p class="one" style="max-width: 46em">Kayıt olmazsınız, reklam yoktur. Uygulama kendi adına veri toplamaz; noktalarınız, izleriniz ve fotoğraflarınız telefonda kalır.</p>
+      <div class="cards">
+        <div class="card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/><path d="M3 3l18 18"/></svg>
+          <h3>Hesap yok</h3>
+          <p>E-posta, telefon numarası ya da giriş istemez. Uygulamayı açarsınız, kullanırsınız.</p>
+        </div>
+        <div class="card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          <h3>Şifreli yedek</h3>
+          <p>Yedekler sizin parolanızla şifrelenir (AES-256). Dosyayı nereye koyacağınıza siz karar verirsiniz.</p>
+        </div>
+        <div class="card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/><path d="M10 11v6M14 11v6"/></svg>
+          <h3>Acil silme</h3>
+          <p>Tek düğmeyle bütün noktalar, çizimler, izler ve fotoğraflar silinir; isterseniz indirilen haritalar da.</p>
+        </div>
+      </div>
+      <p class="why" style="margin-top: 24px">Haritanın kendisi Mapbox'tan gelir; uygulamanın hangi durumda hangi sunucuya bağlandığı <a href="gizlilik.html">gizlilik sayfasında</a> tek tek yazılı.</p>
+    </article>
+
+    <p class="credit" style="margin-top: 48px">Ekran görüntüleri iOS simülatöründe, Kapadokya'da uydurma bir tatbikat verisiyle alındı. Harita: © Mapbox © OpenStreetMap © Maxar.</p>
+  </div>
+</section>
+
+<section class="section" id="yol-haritasi" aria-labelledby="y-baslik">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Yol haritası</p>
+      <h2 id="y-baslik">Sırada: internetsiz ekip ağı.</h2>
+      <p>Şu ana kadarki her şey tek kişilik. Sonraki büyük adım, şebeke olmadan bir ekibin birbirini haritada görmesi.</p>
+    </div>
+    <div class="road">
+      <div class="road-main">
+        <span class="tag">Faz 2 · planlandı</span>
+        <h3>Mesh: Meshtastic ile ekip</h3>
+        <p>Meshtastic, ucuz LoRa telsizleriyle kilometrelerce menzilli, şebekesiz bir ağ kurar. Usturlap baştan buna göre tasarlandı: konum ve mesaj kanalları değiştirilebilir, harita hangi kaynaktan beslendiğini bilmez.</p>
+        <svg class="mesh" viewBox="0 0 560 150" fill="none" stroke="currentColor" stroke-width="2" role="img" aria-label="Üç telefon, LoRa düğümleri üzerinden birbirine bağlı.">
+          <g stroke-dasharray="6 6" opacity="0.7">
+            <path d="M92 75H210M350 75H468M280 40V20"/>
+            <path d="M228 60l-40-30M332 60l40-30"/>
+          </g>
+          <g stroke-width="2.4">
+            <rect x="40" y="38" width="44" height="76" rx="10"/>
+            <rect x="476" y="38" width="44" height="76" rx="10"/>
+            <rect x="258" y="88" width="44" height="56" rx="9" opacity="0"/>
+            <circle cx="280" cy="75" r="30"/>
+            <circle cx="280" cy="75" r="8" fill="currentColor"/>
+            <circle cx="170" cy="22" r="10"/>
+            <circle cx="390" cy="22" r="10"/>
+          </g>
+          <path d="M280 45c-14-14-14-30 0-44M280 45c14-14 14-30 0-44" opacity="0" />
+          <g font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor" stroke="none">
+            <text x="62" y="134" text-anchor="middle">USTURLAP-1</text>
+            <text x="498" y="134" text-anchor="middle">USTURLAP-2</text>
+            <text x="280" y="130" text-anchor="middle">LoRa düğümü</text>
+          </g>
+        </svg>
+        <ul class="road-list">
+          <li>Meshtastic düğümüne Bluetooth ile bağlanma (EU 868 MHz)</li>
+          <li>Ekip arkadaşlarının konumları haritada, çağrı adlarıyla</li>
+          <li>Mesh üzerinden kısa mesajlaşma</li>
+          <li>Nokta, çizim ve veri paketini mesh'ten paylaşma</li>
+        </ul>
+      </div>
+      <div class="road-side">
+        <div>
+          <span class="tag">Sonra</span>
+          <h3>Yerel ağda paylaşım</h3>
+          <p>Aynı Wi-Fi ağındaki cihazlar arasında konum ve veri alışverişi.</p>
+        </div>
+        <div>
+          <span class="tag">Değerlendiriliyor</span>
+          <h3>Daha fazla harita kaynağı</h3>
+          <ul>
+            <li>KMZ görüntü katmanları ve pafta oturtma</li>
+            <li>GeoTIFF</li>
+            <li>Kendi WMS / XYZ kaynaklarınız</li>
+            <li>Android sürümü</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <a class="brand" href="./">
+        <img src="assets/img/logo.svg" alt="" width="34" height="34">
+        Usturlap
+      </a>
+      <ul class="foot-links">
+        <li><a href="gizlilik.html">Gizlilik</a></li>
+        <li><a href="https://github.com/aoyilmaz/usturlap">Kaynak kodu</a></li>
+        <li><a href="#baslik">Yukarı dön ↑</a></li>
+      </ul>
+    </div>
+    <p class="foot-note">Usturlap kişisel bir projedir. Son güncelleme: 14 Kasım 2026.<br>Harita görüntüleri: © Mapbox © OpenStreetMap © Maxar.</p>
+  </div>
+</footer>
+
+<script src="assets/js/site.js" defer></script>
+</body>
+</html>
