@@ -539,6 +539,31 @@ commit `f4cb0ff`), **G7** içe/dışa aktarma + çizim düzenleme (cihazda ✓, 
 
 ### Aşama H: Harita kaynakları
 
+Durum (2026-11-14, kodda tamam, cihaz testi bekliyor). Kullanıcı kararları: çevrimdışı sokak /
+arazi = Mapbox; "Vektör — Türkiye" kalır ama yol gösterir; ek olarak yalnız GeoPackage.
+**Ertelendi:** KMZ resim katmanı (GroundOverlay), pafta oturtma (Rubber Sheet), özel WMS / XYZ,
+GeoTIFF.
+
+> H1: Katmanlar'da Mapbox **Uydu** / **Sokak** / **Topografik** (Outdoors: eş yükselti eğrileri,
+> patikalar) — `BaseLayerSourceType.mapboxStyle` + `OfflineMapType` (stil adresinin tek kaynağı;
+> haritadaki stil = indirilen stil, testle korunur). Uydu'nun id'si `online_satellite` kaldı
+> (kayıtlı görünümler). OSM ve OpenTopoMap "yalnız çevrimiçi" (toplu indirme yasak).
+>
+> H2: Çevrimdışı haritalar → Yeni bölge: **Harita türü** (Uydu / Sokak / Topografik; çoklu, en az
+> biri; varsayılan seçili katmanın türü). Her tür için stil paketi + karo tanımı, DEM bir kez;
+> metadata `styles`, eski bölgeler Uydu. Bölge listesinde türler. İnternetsizken o türün katmanı
+> indirilen bölgede çizilir.
+>
+> H3: Dosyası olmayan katman (ör. "Vektör — Türkiye" → turkey.pmtiles) seçilmez; pencere: **İçe
+> aktar** ya da **Sokak'ta bölge indir**. Listede "dosya yok · dokun: nasıl eklenir". Yerleşik
+> katmanın dosya adıyla içe aktarılan dosya ayrı kayıt oluşturmaz, o katmanı etkinleştirir.
+>
+> H4: **GeoPackage raster** (.gpkg) "Harita paketi içe aktar" ile: yalnız EPSG:3857, küresel
+> ızgaraya hizalı (gdal `TILING_SCHEME=GoogleMapsCompatible`); `data/tiles/gpkg_grid.dart` (saf
+> eşleme) + `gpkg_reader.dart` (sqlite3 salt-okunur) → yerel karo sunucusu; içerik türü karo
+> başına imzadan (karışık PNG / JPEG). `sqlite3` doğrudan bağımlılık oldu (2.9.4, yeni indirme yok).
+> Acil silmede "haritaları koru" .gpkg'yi de korur.
+
 | Özellik (ATAK s.) | Ne yapılacak | Efor |
 |---|---|---|
 | GeoPackage raster (51) | SQLite karo tablosu; mevcut yerel karo sunucusu üzerinden gösterilir | M |
@@ -548,6 +573,37 @@ commit `f4cb0ff`), **G7** içe/dışa aktarma + çizim düzenleme (cihazda ✓, 
 | Rubber Sheet (52) | Kâğıt pafta fotoğrafını 4 köşesinden haritaya oturtma | L |
 
 ### Aşama I: Güvenlik, saha konforu, raporlar
+
+Durum (2026-11-11, kodda tamam, cihaz testi bekliyor): **I3** saha konforu, **I4** raporlar,
+**I5** hava durumu, **I2** şifreli yedek. **I1** şifreli veritabanı (SQLCipher) kullanıcı kararıyla
+şimdilik yok. Paketler (onaylı): `wakelock_plus` 1.5.2 (`share_plus` 12 ile `win32` uyumu için
+1.8 değil), `battery_plus` 7.1.2, `http` 1.6.0 (dolaylıdan doğrudana), `cryptography` 2.9.0.
+
+> I3: Ayarlar → **Ekranı açık tut** (Kapalı / Görevde = iz kaydı, rota takibi ya da Git hedefi
+> varken / Her zaman; varsayılan Görevde), **İz kaydı kendiliğinden dursun** (Kapalı / 1 / 2 / 4 sa;
+> kayıt başlarken şerit, süre dolunca titreşim + şerit + sesli / bildirim; zamanlayıcı + her
+> konumda denetim), **Düşük pil uyarısı** (%20, %10, %5; şarjda ya da %25 üstünde sıfırlanır).
+> **Güneş ve ay** (≡ → Saha): bugün / yarın BMNT, BMCT, doğum, öğle, batım, EECT, EENT, gün ışığı,
+> ay doğuşu / batışı, evre ve aydınlık %; şu anki ışık durumu. Cihazda hesap
+> (`domain/usecases/sun_moon.dart`; güneş: gün doğumu denklemi, ay: Astronomical Almanac düşük
+> duyarlıklı formülleri); USNO API değerleriyle ±1 dk doğrulandı (Ankara, 15 Kasım ve 21 Haziran 2026).
+>
+> I4: **Raporlar** (≡ → Saha): CASEVAC 9 satır (öncelik / tür / uyruk sayaçları, teçhizat,
+> güvenlik, işaretleme, KBRN + arazi) ve SPOTREP (SALUTE); konum MGRS (Konumum / Harita ortası /
+> elle), DTG "111530Z KAS 26". Paylaş, Kopyala, **Haritaya ekle** (CASEVAC-n toplanma noktası /
+> SPOT-n düşman, not = rapor). Ağdan gönderme Faz 2.
+>
+> I5: **Hava durumu** (≡ → Saha): Open-Meteo (anahtarsız), yalnız Güncelle'ye basınca; konum 0,1°
+> (~11 km) yuvarlanır. Şimdi: durum, sıcaklık / hissedilen, rüzgâr (estiği yön, hız, hamle), görüş,
+> bulut, nem, basınç; 24 saatlik tahmin. Son yanıt ayarlarda önbellekli (internetsiz de görünür).
+>
+> I2: **Yedekle / geri yükle** (≡ → Sistem): `.krz` = "KRTZYDK1" + PBKDF2-HMAC-SHA256 (300 bin tur)
+> + AES-256-GCM şifreli zip (`kerteriz.sqlite` = `VACUUM INTO` kopyası, `attachments/`,
+> `yedek.json`). Harita dosyaları ve yükseklik verisi girmez. Geri yükleme bağlantıyı kapatmaz:
+> yedek ayrı açılıp güncel şemaya yükseltilir, `ATTACH` + tek işlemde sütun adlarıyla kopyalanır
+> (eski veritabanlarında sütun sırası farklı); içe aktarılmış harita katmanları korunur; fotoğraf
+> klasörü kenara alınıp değiştirilir (hata olursa geri konur). "Kerteriz ile aç" `.krz`'yi de açar
+> (`UTExportedTypeDeclarations` com.kerteriz.backup). Ayarlar uygulama yeniden açılınca geçerli.
 
 | Özellik | Ne yapılacak | Efor |
 |---|---|---|

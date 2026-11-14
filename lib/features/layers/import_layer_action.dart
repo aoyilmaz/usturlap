@@ -7,15 +7,27 @@ import 'package:mbtiles/mbtiles.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pmtiles/pmtiles.dart';
 
+import '../../data/tiles/gpkg_reader.dart';
 import '../../domain/models/imported_layer.dart';
+import '../map/base_layer.dart';
 import '../../providers/layer_providers.dart';
 
 const _defaultVectorStyle = 'assets/style/protomaps_light.json';
 
-/// Dosyalar'dan bir .pmtiles/.mbtiles seçtirir, Documents'a kopyalar, metadata'sını
-/// okur ve katman olarak kaydeder. Başarılıysa oluşturulan [ImportedLayer]'ı döndürür
-/// (çağıran onu seçip haritada gösterebilir). İptal/hata → null.
-Future<ImportedLayer?> pickAndImportLayer(
+/// İçe aktarmanın sonucu: yeni katman ya da dosyası gelen yerleşik katman
+/// (ör. turkey.pmtiles → "Vektör — Türkiye"; ayrı kayıt oluşmaz).
+class LayerImportResult {
+  const LayerImportResult.imported(ImportedLayer this.imported)
+    : builtInId = null;
+  const LayerImportResult.builtIn(String this.builtInId) : imported = null;
+
+  final ImportedLayer? imported;
+  final String? builtInId;
+}
+
+/// Dosyalar'dan bir .pmtiles / .mbtiles / .gpkg seçtirir, Documents'a
+/// kopyalar, metadata'sını okur ve katman olarak kaydeder. İptal/hata → null.
+Future<LayerImportResult?> pickAndImportLayer(
   BuildContext context,
   WidgetRef ref,
 ) async {
@@ -40,9 +52,10 @@ Future<ImportedLayer?> pickAndImportLayer(
     final name = picked.name; // ör. turkey.pmtiles
     final ext = name.split('.').last.toLowerCase();
     final isPmtiles = ext == 'pmtiles';
-    if (ext != 'pmtiles' && ext != 'mbtiles') {
-      messenger.showSnackBar(
-          const SnackBar(content: Text('Yalnızca .pmtiles / .mbtiles.')));
+    final isGpkg = ext == 'gpkg';
+    if (ext != 'pmtiles' && ext != 'mbtiles' && !isGpkg) {
+      messenger.showSnackBar(const SnackBar(
+          content: Text('Yalnızca .pmtiles / .mbtiles / .gpkg.')));
       return null;
     }
 
@@ -53,10 +66,37 @@ Future<ImportedLayer?> pickAndImportLayer(
       await File(srcPath).copy(destPath);
     }
 
+    // Yerleşik katmanın dosyası (ör. turkey.pmtiles): o katman etkinleşir.
+    for (final b in kBaseLayers) {
+      if (b.fileName == name) {
+        messenger.showSnackBar(
+            SnackBar(content: Text('${b.label} etkinleşti.')));
+        return LayerImportResult.builtIn(b.id);
+      }
+    }
+
     // Metadata oku (zoom + merkez).
     int? minZoom, maxZoom;
     double? centerLat, centerLon;
-    if (isPmtiles) {
+    if (isGpkg) {
+      // Yalnız Web Mercator raster; uymazsa kopya silinir, Türkçe hata.
+      try {
+        final r = GpkgReader.open(destPath);
+        try {
+          minZoom = r.grid.minZoom;
+          maxZoom = r.grid.maxZoom;
+          final b = r.grid.boundsWgs84;
+          centerLat = (b[1] + b[3]) / 2;
+          centerLon = (b[0] + b[2]) / 2;
+        } finally {
+          r.close();
+        }
+      } on FormatException catch (e) {
+        if (srcPath != destPath) await File(destPath).delete();
+        messenger.showSnackBar(SnackBar(content: Text(e.message)));
+        return null;
+      }
+    } else if (isPmtiles) {
       // Arşiv dosyadan aralık okur → büyük dosya belleğe yüklenmez.
       final a = await PmTilesArchive.from(destPath);
       try {
@@ -89,9 +129,9 @@ Future<ImportedLayer?> pickAndImportLayer(
 
     final layer = ImportedLayer(
       id: name, // dosya adı benzersiz kabul edilir (aynı ad → üzerine yaz)
-      label: name.replaceAll(RegExp(r'\.(pmtiles|mbtiles)$'), ''),
+      label: name.replaceAll(RegExp(r'\.(pmtiles|mbtiles|gpkg)$'), ''),
       fileName: name,
-      sourceType: isPmtiles ? 'pmtiles' : 'mbtiles',
+      sourceType: isGpkg ? 'gpkg' : isPmtiles ? 'pmtiles' : 'mbtiles',
       stylePath: isPmtiles ? _defaultVectorStyle : null,
       minZoom: minZoom,
       maxZoom: maxZoom,
@@ -102,7 +142,7 @@ Future<ImportedLayer?> pickAndImportLayer(
 
     messenger.showSnackBar(
         SnackBar(content: Text('Harita paketi eklendi: ${layer.label}')));
-    return layer;
+    return LayerImportResult.imported(layer);
   } catch (e) {
     messenger.showSnackBar(SnackBar(content: Text('İçe aktarma hatası: $e')));
     return null;

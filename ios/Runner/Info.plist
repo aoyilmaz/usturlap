@@ -20,6 +20,7 @@
 				<string>com.google.earth.kml</string>
 				<string>com.topografix.gpx</string>
 				<string>org.geojson.geojson</string>
+				<string>com.kerteriz.backup</string>
 			</array>
 		</dict>
 	</array>
@@ -87,6 +88,26 @@
 	</array>
 	<key>UIFileSharingEnabled</key>
 	<true/>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>com.kerteriz.backup</string>
+			<key>UTTypeDescription</key>
+			<string>Kerteriz yedeği</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>krz</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
 	<key>UTImportedTypeDeclarations</key>
 	<array>
 		<dict>

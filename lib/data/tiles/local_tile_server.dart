@@ -4,7 +4,9 @@ import 'dart:typed_data';
 import 'package:mbtiles/mbtiles.dart';
 import 'package:pmtiles/pmtiles.dart';
 
-/// Kullanıcının kendi .mbtiles / .pmtiles dosyalarını Mapbox motoruna sunan
+import 'gpkg_reader.dart';
+
+/// Kullanıcının kendi .mbtiles / .pmtiles / .gpkg dosyalarını Mapbox motoruna sunan
 /// küçük yerel HTTP sunucusu.
 ///
 /// Mapbox SDK bu dosyaları doğrudan okuyamaz; karoları URL'den ister. Sunucu
@@ -58,6 +60,20 @@ class LocalTileServer {
     return src.info(_template(port, id));
   }
 
+  /// GeoPackage raster dosyasını kaydeder (yalnız EPSG:3857; uymayan dosya
+  /// [FormatException] verir).
+  Future<LocalTileSourceInfo> registerGpkg(String id, String path) async {
+    final port = await _ensureStarted();
+    final existing = _sources[id];
+    if (existing is _GpkgSource && existing.path == path) {
+      return existing.info(_template(port, id));
+    }
+    await unregister(id);
+    final src = _GpkgSource(path, GpkgReader.open(path));
+    _sources[id] = src;
+    return src.info(_template(port, id));
+  }
+
   Future<void> unregister(String id) async {
     await _sources.remove(id)?.close();
   }
@@ -86,7 +102,7 @@ class LocalTileServer {
         return;
       }
       res.headers
-        ..contentType = src.contentType
+        ..contentType = src.contentTypeFor(bytes)
         // Dosya zaten cihazda — Mapbox önbelleğine ikinci kopya yazılmasın.
         ..set(HttpHeaders.cacheControlHeader, 'no-store');
       // gzip'li karo (vektör MBTiles'ta yaygın): imzadan anla, istemci açsın.
@@ -129,6 +145,9 @@ class LocalTileSourceInfo {
 abstract class _TileSource {
   String get path;
   ContentType get contentType;
+
+  /// Karonun içerik türü (karışık biçimli kaynaklarda imzadan).
+  ContentType contentTypeFor(Uint8List bytes) => contentType;
   Future<Uint8List?> tile(int z, int x, int y);
   LocalTileSourceInfo info(String urlTemplate);
   Future<void> close();
@@ -225,4 +244,52 @@ class _PmtilesSource extends _TileSource {
 
   @override
   Future<void> close() => _archive.close();
+}
+
+/// Resim imzasından içerik türü (PNG / JPEG / WebP).
+ContentType imageContentType(Uint8List b) {
+  if (b.length > 3 && b[0] == 0xFF && b[1] == 0xD8) {
+    return ContentType('image', 'jpeg');
+  }
+  if (b.length > 12 &&
+      b[0] == 0x52 &&
+      b[1] == 0x49 &&
+      b[2] == 0x46 &&
+      b[3] == 0x46 &&
+      b[8] == 0x57 &&
+      b[9] == 0x45 &&
+      b[10] == 0x42 &&
+      b[11] == 0x50) {
+    return ContentType('image', 'webp');
+  }
+  return ContentType('image', 'png');
+}
+
+class _GpkgSource extends _TileSource {
+  _GpkgSource(this.path, this._reader);
+
+  @override
+  final String path;
+  final GpkgReader _reader;
+
+  @override
+  ContentType get contentType => ContentType('image', 'png');
+
+  @override
+  ContentType contentTypeFor(Uint8List bytes) => imageContentType(bytes);
+
+  @override
+  Future<Uint8List?> tile(int z, int x, int y) async => _reader.tile(z, x, y);
+
+  @override
+  LocalTileSourceInfo info(String urlTemplate) => LocalTileSourceInfo(
+    urlTemplate: urlTemplate,
+    isVector: false,
+    minZoom: _reader.grid.minZoom,
+    maxZoom: _reader.grid.maxZoom,
+    bounds: _reader.grid.boundsWgs84,
+  );
+
+  @override
+  Future<void> close() async => _reader.close();
 }

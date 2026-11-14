@@ -9,8 +9,11 @@ import 'package:kerteriz/features/map/engine/mapbox_local_style.dart';
 import 'package:mbtiles/mbtiles.dart';
 
 /// 1x1 PNG (geçerli imza yeterli; içerik önemli değil).
-final _png = Uint8List.fromList(base64Decode(
-    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='));
+final _png = Uint8List.fromList(
+  base64Decode(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+  ),
+);
 
 Future<(int, String?, List<int>)> _get(String url) async {
   final c = HttpClient();
@@ -50,23 +53,26 @@ void main() {
     dir.deleteSync(recursive: true);
   });
 
-  test('MBTiles karosu XYZ adresiyle (TMS çevrimi) PNG olarak sunulur', () async {
-    final info = await LocalTileServer.instance.registerMbtiles('mb', mbPath);
-    expect(info.isVector, isFalse);
-    expect(info.minZoom, 10);
-    expect(info.maxZoom, 12);
-    expect(info.bounds, [32.7, 39.8, 33.0, 40.0]);
-    expect(info.urlTemplate, startsWith('http://127.0.0.1:'));
+  test(
+    'MBTiles karosu XYZ adresiyle (TMS çevrimi) PNG olarak sunulur',
+    () async {
+      final info = await LocalTileServer.instance.registerMbtiles('mb', mbPath);
+      expect(info.isVector, isFalse);
+      expect(info.minZoom, 10);
+      expect(info.maxZoom, 12);
+      expect(info.bounds, [32.7, 39.8, 33.0, 40.0]);
+      expect(info.urlTemplate, startsWith('http://127.0.0.1:'));
 
-    final url = info.urlTemplate
-        .replaceAll('{z}', '10')
-        .replaceAll('{x}', '605')
-        .replaceAll('{y}', '388');
-    final (status, mime, body) = await _get(url);
-    expect(status, 200);
-    expect(mime, 'image/png');
-    expect(body, _png);
-  });
+      final url = info.urlTemplate
+          .replaceAll('{z}', '10')
+          .replaceAll('{x}', '605')
+          .replaceAll('{y}', '388');
+      final (status, mime, body) = await _get(url);
+      expect(status, 200);
+      expect(mime, 'image/png');
+      expect(body, _png);
+    },
+  );
 
   test('olmayan karo → 204 (boş), bilinmeyen kaynak → 404', () async {
     final info = await LocalTileServer.instance.registerMbtiles('mb', mbPath);
@@ -97,27 +103,34 @@ void main() {
 
   // Gerçek PMTiles dosyasıyla duman testi (dosya git dışı; yoksa atlanır).
   const realPm = 'tiles_external/gaziantep.pmtiles';
-  test('gerçek PMTiles: vektör karo sunulur', () async {
-    final info = await LocalTileServer.instance.registerPmtiles('pm', realPm);
-    expect(info.isVector, isTrue);
-    expect(info.maxZoom, greaterThan(0));
-    // Gaziantep merkezi (37.066N, 37.383E) — en yüksek zoom'da karo.
-    final z = info.maxZoom!;
-    final n = 1 << z;
-    final x = ((37.383 + 180) / 360 * n).floor();
-    final lat = 37.066 * 3.141592653589793 / 180;
-    final y = ((1 - (log(tan(lat) + 1 / cos(lat)) / 3.141592653589793)) / 2 * n)
-        .floor();
-    final (status, mime, body) = await _get(info.urlTemplate
-        .replaceAll('{z}', '$z')
-        .replaceAll('{x}', '$x')
-        .replaceAll('{y}', '$y'));
-    expect(status, 200);
-    expect(mime, 'application/x-protobuf');
-    expect(body, isNotEmpty);
-    expect(isGzip(body), isFalse); // sunucu açılmış MVT verir
-    await LocalTileServer.instance.unregister('pm');
-  }, skip: File(realPm).existsSync() ? false : 'gerçek PMTiles dosyası yok');
+  test(
+    'gerçek PMTiles: vektör karo sunulur',
+    () async {
+      final info = await LocalTileServer.instance.registerPmtiles('pm', realPm);
+      expect(info.isVector, isTrue);
+      expect(info.maxZoom, greaterThan(0));
+      // Gaziantep merkezi (37.066N, 37.383E) — en yüksek zoom'da karo.
+      final z = info.maxZoom!;
+      final n = 1 << z;
+      final x = ((37.383 + 180) / 360 * n).floor();
+      final lat = 37.066 * 3.141592653589793 / 180;
+      final y =
+          ((1 - (log(tan(lat) + 1 / cos(lat)) / 3.141592653589793)) / 2 * n)
+              .floor();
+      final (status, mime, body) = await _get(
+        info.urlTemplate
+            .replaceAll('{z}', '$z')
+            .replaceAll('{x}', '$x')
+            .replaceAll('{y}', '$y'),
+      );
+      expect(status, 200);
+      expect(mime, 'application/x-protobuf');
+      expect(body, isNotEmpty);
+      expect(isGzip(body), isFalse); // sunucu açılmış MVT verir
+      await LocalTileServer.instance.unregister('pm');
+    },
+    skip: File(realPm).existsSync() ? false : 'gerçek PMTiles dosyası yok',
+  );
 
   group('Mapbox yerel stil', () {
     const info = LocalTileSourceInfo(
@@ -128,17 +141,28 @@ void main() {
     );
 
     test('raster stil: tek raster kaynak + zemin', () {
-      final s = jsonDecode(localRasterStyle(
-              const LocalTileSourceInfo(
-                  urlTemplate: 'u', isVector: false, maxZoom: 16),
-              attribution: '© X')) as Map<String, dynamic>;
+      final s =
+          jsonDecode(
+                localRasterStyle(
+                  const LocalTileSourceInfo(
+                    urlTemplate: 'u',
+                    isVector: false,
+                    maxZoom: 16,
+                  ),
+                  attribution: '© X',
+                ),
+              )
+              as Map<String, dynamic>;
       final src = s['sources']['pz-base'] as Map<String, dynamic>;
       expect(src['type'], 'raster');
       expect(src['tiles'], ['u']);
       expect(src['maxzoom'], 16);
       expect(src.containsKey('minzoom'), isFalse);
       expect(src['attribution'], '© X');
-      expect((s['layers'] as List).map((l) => l['type']), ['background', 'raster']);
+      expect((s['layers'] as List).map((l) => l['type']), [
+        'background',
+        'raster',
+      ]);
     });
 
     test('vektör stil: kaynaklar yerele yönlenir, glyph + font tamamlanır', () {
@@ -152,17 +176,23 @@ void main() {
             'id': 'places',
             'type': 'symbol',
             'source': 'protomaps',
-            'layout': {'text-field': ['get', 'name']},
+            'layout': {
+              'text-field': ['get', 'name'],
+            },
           },
           {
             'id': 'custom-font',
             'type': 'symbol',
             'source': 'protomaps',
-            'layout': {'text-field': 'x', 'text-font': ['Noto Sans']},
+            'layout': {
+              'text-field': 'x',
+              'text-font': ['Noto Sans'],
+            },
           },
         ],
       };
-      final s = jsonDecode(localVectorStyle(style, info)) as Map<String, dynamic>;
+      final s =
+          jsonDecode(localVectorStyle(style, info)) as Map<String, dynamic>;
       final src = s['sources']['protomaps'] as Map<String, dynamic>;
       expect(src['tiles'], [info.urlTemplate]);
       expect(src.containsKey('url'), isFalse);

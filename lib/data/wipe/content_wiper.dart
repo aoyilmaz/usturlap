@@ -14,7 +14,7 @@ import '../offline/mapbox_offline_store.dart';
 /// - Geçici klasör: paylaşılan dışa aktarımlar (KML/GeoJSON) ve kopyalar.
 /// - Mapbox: indirilen bölgeler, stil paketi, önbellek.
 ///
-/// [includeMaps] false ise harita dosyaları (.pmtiles/.mbtiles, yükseklik
+/// [includeMaps] false ise harita dosyaları (.pmtiles/.mbtiles/.gpkg, yükseklik
 /// verisi, indirilen bölgeler) korunur; geri kalan her şey silinir.
 ///
 /// iOS her dosyayı ayrı anahtarla şifreler; dosya silinince anahtarı da
@@ -76,6 +76,7 @@ class ContentWiper {
     final n = name.toLowerCase();
     return n.endsWith('.pmtiles') ||
         n.endsWith('.mbtiles') ||
+        n.endsWith('.gpkg') ||
         n == elevationDir;
   }
 

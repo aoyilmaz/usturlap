@@ -5,6 +5,7 @@ import '../../core/bearing_format.dart';
 import '../../core/coord_format.dart';
 import '../../core/wmm.dart';
 import '../../providers/alert_providers.dart';
+import '../../providers/field_providers.dart';
 import '../../providers/location_providers.dart';
 import '../../providers/repeater_providers.dart';
 import '../../providers/settings_providers.dart';
@@ -31,6 +32,9 @@ class _SettingsSheet extends ConsumerWidget {
     final callsign = ref.watch(callsignProvider);
     final accFilter = ref.watch(accuracyFilterProvider);
     final voice = ref.watch(voiceAlertsProvider);
+    final keepOn = ref.watch(keepScreenOnProvider);
+    final autoStop = ref.watch(trackAutoStopProvider);
+    final lowBattery = ref.watch(lowBatteryAlertProvider);
     final repeatersOn = ref.watch(showRepeatersProvider);
     final repeaterCount = ref.watch(repeatersProvider).value?.length ?? 0;
     final band = ref.watch(repeaterBandProvider);
@@ -138,6 +142,62 @@ class _SettingsSheet extends ConsumerWidget {
                   ),
                 ),
               ),
+            // Saha konforu.
+            ListTile(
+              leading: const Icon(Icons.light_mode_outlined),
+              title: const Text('Ekranı açık tut'),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        for (final k in KeepScreenOn.values)
+                          ChoiceChip(
+                            label: Text(k.label),
+                            selected: keepOn == k,
+                            onSelected: (_) =>
+                                ref.read(keepScreenOnProvider.notifier).set(k),
+                          ),
+                      ],
+                    ),
+                    const Text(
+                      'Görevde: iz kaydı, rota takibi ya da Git hedefi varken.',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.timer_outlined),
+              title: const Text('İz kaydı kendiliğinden dursun'),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Wrap(
+                  spacing: 8,
+                  children: [
+                    for (final m in TrackAutoStopNotifier.choices)
+                      ChoiceChip(
+                        label: Text(m == 0 ? 'Kapalı' : '${m ~/ 60} sa'),
+                        selected: autoStop == m,
+                        onSelected: (_) =>
+                            ref.read(trackAutoStopProvider.notifier).set(m),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            SwitchListTile(
+              secondary: const Icon(Icons.battery_alert_outlined),
+              title: const Text('Düşük pil uyarısı'),
+              subtitle: const Text('%20, %10 ve %5\'te titreşim ve uyarı'),
+              value: lowBattery,
+              onChanged: (v) =>
+                  ref.read(lowBatteryAlertProvider.notifier).set(v),
+            ),
             SwitchListTile(
               secondary: const Icon(Icons.gps_fixed),
               title: const Text('İz doğruluk filtresi'),

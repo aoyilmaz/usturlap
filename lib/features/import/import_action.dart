@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/backup/backup_service.dart';
 import '../../data/import/geo_import.dart';
 import '../../data/import/import_writer.dart';
 import '../../providers/graphic_providers.dart';
@@ -13,6 +14,7 @@ import '../../providers/range_line_providers.dart';
 import '../../providers/route_providers.dart';
 import '../../providers/track_providers.dart';
 import '../../providers/waypoint_providers.dart';
+import '../backup/backup_panel.dart';
 
 /// Dosyalar'dan bir veri paketi / KMZ / KML / GPX / GeoJSON seçtirir, okur, önizletir
 /// ve onaylanınca ekler (G7). İçe aktarma düğmelerinin ortak eylemi.
@@ -62,6 +64,11 @@ Future<void> importFromPath(
       return;
     }
     final Uint8List bytes = await f.readAsBytes();
+    // Kerteriz yedeği (.krz): geri yükleme akışı.
+    if (BackupCrypto.looksLike(bytes)) {
+      if (context.mounted) await restoreBackupBytes(context, ref, bytes);
+      return;
+    }
     // Büyük dosya arayüzü dondurmasın: ayrıştırma ayrı iş parçacığında.
     final bundle = await Isolate.run(() => GeoImport.parse(bytes));
     if (!context.mounted) return;

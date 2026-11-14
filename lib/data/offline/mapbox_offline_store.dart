@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 import '../../domain/models/offline_region.dart';
@@ -9,13 +10,14 @@ typedef OfflineProgress = void Function(double fraction, int bytes);
 /// üzerinden bölge indirme. Mapbox lisansı gereği karolar YALNIZCA bu yolla
 /// indirilir (kendi indiricimizle değil) — bkz. CLAUDE.md §2.
 ///
-/// İndirilen: Mapbox uydu + yol/yer adları stili (z0..maxZoom) ve 3B arazi
-/// için yükseklik verisi (DEM). Ağ yokken harita bu verilerle otomatik çizilir.
+/// İndirilen: seçilen harita türlerinin stilleri (Uydu / Sokak / Topografik,
+/// z0..maxZoom) ve 3B arazi için yükseklik verisi (DEM). Ağ yokken aynı stil
+/// adresli katman bu verilerle otomatik çizilir (Aşama H).
 class MapboxOfflineStore {
   MapboxOfflineStore();
 
-  /// İndirilen stil — ana ekrandaki uydu katmanıyla aynı olmalı.
-  static const styleUri = MapboxStyles.SATELLITE_STREETS;
+  /// Eski (tek stilli) sürümün indirdiği stil.
+  static const legacyStyleUri = MapboxStyles.SATELLITE_STREETS;
   static const _demTileset = 'mapbox://mapbox.mapbox-terrain-dem-v1';
   static const _idPrefix = 'pz-';
 
@@ -34,7 +36,13 @@ class MapboxOfflineStore {
   Future<OfflineManager> _offlineManager() async =>
       _manager ??= await OfflineManager.create();
 
-  TileRegionLoadOptions _options(OfflineRegionSpec s, {DateTime? createdAt}) {
+  /// Bölge indirme seçenekleri: tür başına bir stil tanımı, DEM bir kez.
+  @visibleForTesting
+  static TileRegionLoadOptions loadOptions(
+    OfflineRegionSpec s, {
+    DateTime? createdAt,
+  }) {
+    final types = s.types.isEmpty ? const [OfflineMapType.satellite] : s.types;
     final ring = [
       Position(s.west, s.south),
       Position(s.east, s.south),
@@ -45,12 +53,14 @@ class MapboxOfflineStore {
     return TileRegionLoadOptions(
       geometry: Polygon(coordinates: [ring]).toJson(),
       descriptorsOptions: [
-        TilesetDescriptorOptions(
-          styleURI: styleUri,
-          minZoom: 0,
-          maxZoom: s.maxZoom,
-          tilesets: const [_demTileset],
-        ),
+        for (var i = 0; i < types.length; i++)
+          TilesetDescriptorOptions(
+            styleURI: types[i].styleUri,
+            minZoom: 0,
+            maxZoom: s.maxZoom,
+            // 3B arazi verisi bir kez yeter.
+            tilesets: i == 0 ? const [_demTileset] : null,
+          ),
       ],
       metadata: {
         'name': s.name,
@@ -60,7 +70,7 @@ class MapboxOfflineStore {
         'east': s.east,
         'maxZoom': s.maxZoom,
         'createdAt': (createdAt ?? DateTime.now()).toIso8601String(),
-        'style': styleUri,
+        'styles': [for (final t in types) t.name],
       },
       acceptExpired: true,
       networkRestriction: NetworkRestriction.NONE,
@@ -96,39 +106,61 @@ class MapboxOfflineStore {
         sizeBytes: r.completedResourceSize,
         completedResources: r.completedResourceCount,
         requiredResources: r.requiredResourceCount,
+        types: typesFromMetadata(m),
       ));
     }
     out.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return out;
   }
 
+  /// Bölge bilgisindeki türler; eski bölgeler ("style" tek değer ya da hiç)
+  /// uydu sayılır.
+  @visibleForTesting
+  static List<OfflineMapType> typesFromMetadata(Map<String, Object?> m) {
+    final raw = m['styles'];
+    if (raw is List) {
+      final out = [
+        for (final n in raw) ?OfflineMapType.fromName('$n'),
+      ];
+      if (out.isNotEmpty) return out;
+    }
+    return [
+      OfflineMapType.fromStyleUri(m['style'] as String?) ??
+          OfflineMapType.satellite,
+    ];
+  }
+
   /// İndirmeden önce diskte kaplayacağı tahmini boyut (bayt).
   Future<int> estimateBytes(OfflineRegionSpec spec) async {
     final store = await _tileStore();
     final r = await store.estimateTileRegion(
-        '${_idPrefix}estimate', _options(spec), null, null);
+        '${_idPrefix}estimate', loadOptions(spec), null, null);
     return r.storageSize;
   }
 
-  /// Bölgeyi indirir. Önce stil paketi (stil, yazı tipleri, ikonlar), sonra
-  /// karolar. Hata olursa istisna fırlatır (ör. 750 paket sınırı, ağ yok).
+  /// Bölgeyi indirir. Önce her türün stil paketi (stil, yazı tipleri,
+  /// ikonlar), sonra karolar. Hata olursa istisna fırlatır (ör. 750 paket
+  /// sınırı, ağ yok).
   Future<OfflineRegion> download(OfflineRegionSpec spec,
       {OfflineProgress? onProgress}) async {
     final manager = await _offlineManager();
-    await manager.loadStylePack(
-      styleUri,
-      StylePackLoadOptions(
-        glyphsRasterizationMode:
-            GlyphsRasterizationMode.IDEOGRAPHS_RASTERIZED_LOCALLY,
-        acceptExpired: false,
-      ),
-      (_) {},
-    );
+    for (final t in spec.types) {
+      await manager.loadStylePack(
+        t.styleUri,
+        StylePackLoadOptions(
+          glyphsRasterizationMode:
+              GlyphsRasterizationMode.IDEOGRAPHS_RASTERIZED_LOCALLY,
+          acceptExpired: false,
+        ),
+        (_) {},
+      );
+    }
 
     final store = await _tileStore();
     final id = '$_idPrefix${DateTime.now().millisecondsSinceEpoch}';
     final created = DateTime.now();
-    final r = await store.loadTileRegion(id, _options(spec, createdAt: created),
+    final r = await store.loadTileRegion(
+        id, loadOptions(spec, createdAt: created),
         (p) {
       final f = p.requiredResourceCount == 0
           ? 0.0
@@ -147,6 +179,7 @@ class MapboxOfflineStore {
       sizeBytes: r.completedResourceSize,
       completedResources: r.completedResourceCount,
       requiredResources: r.requiredResourceCount,
+      types: spec.types,
     );
   }
 
@@ -167,9 +200,11 @@ class MapboxOfflineStore {
         } catch (_) {}
       }
     } catch (_) {}
-    try {
-      await (await _offlineManager()).removeStylePack(styleUri);
-    } catch (_) {}
+    for (final t in OfflineMapType.values) {
+      try {
+        await (await _offlineManager()).removeStylePack(t.styleUri);
+      } catch (_) {}
+    }
     try {
       await MapboxMapsOptions.clearData();
     } catch (_) {}

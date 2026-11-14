@@ -1,3 +1,25 @@
+/// Mapbox'ın çevrimdışı indirilebilen harita türleri (Aşama H). Katman
+/// listesi ve bölge indirici aynı stil adresini kullanır: haritada gösterilen
+/// stil ile indirilen stil aynı olmalı ki internetsizken karolar bulunsun.
+enum OfflineMapType {
+  satellite('Uydu', 'mapbox://styles/mapbox/satellite-streets-v12'),
+  streets('Sokak', 'mapbox://styles/mapbox/streets-v12'),
+  outdoors('Topografik', 'mapbox://styles/mapbox/outdoors-v12');
+
+  const OfflineMapType(this.label, this.styleUri);
+  final String label;
+  final String styleUri;
+
+  static OfflineMapType? fromStyleUri(String? uri) {
+    for (final t in values) {
+      if (t.styleUri == uri) return t;
+    }
+    return null;
+  }
+
+  static OfflineMapType? fromName(String? name) => values.asNameMap()[name];
+}
+
 /// Cihaza indirilmiş (çevrimdışı) bir harita bölgesi. Saf Dart.
 class OfflineRegion {
   const OfflineRegion({
@@ -12,6 +34,7 @@ class OfflineRegion {
     required this.sizeBytes,
     required this.completedResources,
     required this.requiredResources,
+    this.types = const [OfflineMapType.satellite],
   });
 
   final String id;
@@ -28,6 +51,9 @@ class OfflineRegion {
   final int sizeBytes;
   final int completedResources;
   final int requiredResources;
+
+  /// İndirilen harita türleri (eski bölgeler: yalnız uydu).
+  final List<OfflineMapType> types;
 
   /// Sınırı biliniyor mu (eski deneme kayıtlarında yok → haritada gösterilemez).
   bool get hasBounds => north > south && east > west;
@@ -46,11 +72,15 @@ class OfflineRegionSpec {
     required this.north,
     required this.east,
     required this.maxZoom,
+    this.types = const [OfflineMapType.satellite],
   });
 
   final String name;
   final double south, west, north, east;
   final int maxZoom;
+
+  /// İndirilecek harita türleri (en az biri).
+  final List<OfflineMapType> types;
 }
 
 /// İndirilebilir detay seviyeleri (kullanıcıya gösterilen seçenekler).

@@ -82,7 +82,11 @@ class OfflineFramePanel extends ConsumerStatefulWidget {
     required this.cameraTick,
     required this.onClose,
     this.sideways = false,
+    this.initialTypes = const [OfflineMapType.satellite],
   });
+
+  /// Başlangıçta seçili harita türleri (seçili katmanın türü).
+  final List<OfflineMapType> initialTypes;
 
   /// true → yatay ekranda sağ yan panel (tam yükseklik, kaydırılabilir).
   final bool sideways;
@@ -106,6 +110,11 @@ class _OfflineFramePanelState extends ConsumerState<OfflineFramePanel> {
     text: widget.defaultName,
   );
   OfflineDetail _detail = OfflineDetail.terrain;
+  late final Set<OfflineMapType> _types = {
+    ...(widget.initialTypes.isEmpty
+        ? const [OfflineMapType.satellite]
+        : widget.initialTypes),
+  };
   GeoBounds? _bounds;
   int? _estimate;
   bool _estimating = false;
@@ -144,6 +153,11 @@ class _OfflineFramePanelState extends ConsumerState<OfflineFramePanel> {
       north: b.north,
       east: b.east,
       maxZoom: _detail.maxZoom,
+      // Sabit sırayla (Uydu, Sokak, Topografik).
+      types: [
+        for (final t in OfflineMapType.values)
+          if (_types.contains(t)) t,
+      ],
     );
   }
 
@@ -249,6 +263,31 @@ class _OfflineFramePanelState extends ConsumerState<OfflineFramePanel> {
                   onChanged: (_) {}, // ad tahmini etkilemez
                 ),
                 const SizedBox(height: 10),
+                const Text(
+                  'Harita türü',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    for (final t in OfflineMapType.values)
+                      FilterChip(
+                        label: Text(t.label),
+                        selected: _types.contains(t),
+                        // En az bir tür seçili kalır.
+                        onSelected: (on) {
+                          if (!on && _types.length == 1) return;
+                          setState(() => on ? _types.add(t) : _types.remove(t));
+                          _scheduleEstimate();
+                        },
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Detay',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
                 Wrap(
                   spacing: 8,
                   children: [

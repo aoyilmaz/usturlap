@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -6,6 +8,7 @@ import '../data/db/track_repository.dart';
 import '../domain/models/contact.dart';
 import '../domain/models/track.dart';
 import 'location_providers.dart';
+import 'field_providers.dart';
 import 'settings_providers.dart';
 import 'waypoint_providers.dart';
 
@@ -22,7 +25,19 @@ final tracksProvider = StreamProvider<List<Track>>((ref) {
 class RecordingState {
   final bool isRecording;
   final int? trackId;
-  const RecordingState({this.isRecording = false, this.trackId});
+
+  /// Otomatik durma anı (ayarlarda süre seçiliyse).
+  final DateTime? stopAt;
+
+  /// Son kayıt süre dolduğu için mi durdu.
+  final bool autoStopped;
+
+  const RecordingState({
+    this.isRecording = false,
+    this.trackId,
+    this.stopAt,
+    this.autoStopped = false,
+  });
 }
 
 /// Aktif iz kaydı. Kayıttayken konum akışını dinler ve noktaları drift'e ekler
@@ -32,9 +47,11 @@ class RecordingNotifier extends Notifier<RecordingState> {
   static const double _minMeters = 4.0; // bu kadar hareket olmadan nokta ekleme
 
   LatLng? _lastPoint;
+  Timer? _autoStop;
 
   @override
   RecordingState build() {
+    ref.onDispose(() => _autoStop?.cancel());
     // Konum geldikçe, kayıttaysak noktayı ekle.
     // Ham GPS: elle verilen konum ize girmez.
     ref.listen<Contact?>(gpsSelfContactProvider, (prev, next) {
@@ -46,6 +63,8 @@ class RecordingNotifier extends Notifier<RecordingState> {
   void _onPosition(Contact? c) {
     final s = state;
     if (!s.isRecording || s.trackId == null || c == null) return;
+    // Arka planda zamanlayıcı gecikebilir: konum gelince de denetle.
+    if (checkAutoStop(DateTime.now())) return;
     // Doğruluk filtresi: gürültülü (düşük doğruluk) noktaları ele.
     if (!TrackFilter.accuracyOk(
         c.accuracyMeters, ref.read(accuracyFilterProvider))) {
@@ -73,16 +92,38 @@ class RecordingNotifier extends Notifier<RecordingState> {
     final n = await repo.trackCount() + 1;
     final id = await repo.startTrack('${ref.read(callsignProvider)} İZ-$n');
     _lastPoint = null;
+    final minutes = ref.read(trackAutoStopProvider);
+    final stopAt = minutes > 0
+        ? DateTime.now().add(Duration(minutes: minutes))
+        : null;
+    _autoStop?.cancel();
+    if (stopAt != null) {
+      _autoStop = Timer(
+        Duration(minutes: minutes),
+        () => checkAutoStop(DateTime.now()),
+      );
+    }
     // Ekran kapalıyken de iz sürsün: arka plan konumunu harita ekranı
     // açar (backgroundLocationNeededProvider; geofence de kullanır).
-    state = RecordingState(isRecording: true, trackId: id);
+    state = RecordingState(isRecording: true, trackId: id, stopAt: stopAt);
     // İlk noktayı hemen ekle (varsa).
     _onPosition(ref.read(gpsSelfContactProvider));
   }
 
-  Future<void> stop() async {
+  /// Süre dolduysa kaydı durdurur (true döner).
+  bool checkAutoStop(DateTime now) {
+    final at = state.stopAt;
+    if (!state.isRecording || at == null || now.isBefore(at)) return false;
+    stop(auto: true);
+    return true;
+  }
+
+  /// [auto]: süre dolduğu için (harita ekranı uyarır).
+  Future<void> stop({bool auto = false}) async {
     final id = state.trackId;
-    state = const RecordingState();
+    _autoStop?.cancel();
+    _autoStop = null;
+    state = RecordingState(autoStopped: auto);
     _lastPoint = null;
     // Arka plan konumu: backgroundLocationNeededProvider (geofence yoksa
     // kapanır, batarya tasarrufu).

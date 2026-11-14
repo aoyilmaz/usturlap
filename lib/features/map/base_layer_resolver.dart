@@ -39,19 +39,12 @@ class BaseLayerResolver {
   /// ya da kullanılamayan katman için null döner → [resolveFile] kullanın.
   ResolvedBaseLayer? resolveOnline(BaseLayerDef def) {
     switch (def.type) {
-      case BaseLayerSourceType.onlineSatellite:
-        if (AppConstants.mapboxAccessToken.isEmpty) return null;
-        // 512px @2x karolar: zoomOffset -1 ile ekrandaki ölçek 256px karolarla
-        // aynı kalır ama piksel yoğunluğu 4 kat → retina ekranda keskin.
-        return RasterUrlBaseLayer(
+      case BaseLayerSourceType.mapboxStyle:
+        final type = def.mapType;
+        if (AppConstants.mapboxAccessToken.isEmpty || type == null) return null;
+        return MapboxStyleBaseLayer(
           id: def.id,
-          urlTemplate: AppConstants.mapboxSatelliteStreetsUrl,
-          additionalOptions: const {
-            'accessToken': AppConstants.mapboxAccessToken,
-          },
-          tileDimension: 512,
-          zoomOffset: -1,
-          maxNativeZoom: def.maxNativeZoom ?? 22,
+          styleUri: type.styleUri,
           attribution: '© Mapbox © OpenStreetMap',
         );
       case BaseLayerSourceType.onlineOsm:
@@ -70,6 +63,7 @@ class BaseLayerResolver {
         );
       case BaseLayerSourceType.offlineMbtiles:
       case BaseLayerSourceType.vectorPmtiles:
+      case BaseLayerSourceType.offlineGpkg:
       case BaseLayerSourceType.missing:
         return null;
     }
@@ -80,17 +74,24 @@ class BaseLayerResolver {
   Future<BaseLayerResolution> resolveFile(BaseLayerDef def) async {
     final isMbtiles = def.type == BaseLayerSourceType.offlineMbtiles;
     final isVector = def.type == BaseLayerSourceType.vectorPmtiles;
-    if (!isMbtiles && !isVector) {
+    final isGpkg = def.type == BaseLayerSourceType.offlineGpkg;
+    if (!isMbtiles && !isVector && !isGpkg) {
       throw ArgumentError.value(def.type, 'def.type', 'dosya tabanlı değil');
     }
 
     final String path;
-    if (def.fileName != null && (isVector || def.assetPath == null)) {
+    if (def.fileName != null &&
+        (isVector || isGpkg || def.assetPath == null)) {
       final dir = await getApplicationDocumentsDirectory();
       path = '${dir.path}/${def.fileName}';
       if (!await File(path).exists()) return BaseLayerFileMissing(def.fileName!);
     } else {
       path = await MbtilesAssetLoader.ensureLocalCopy(def.assetPath!);
+    }
+
+    if (isGpkg) {
+      // Kapsam: içe aktarılırken kaydedilen merkez (def.center) kullanılır.
+      return BaseLayerReady(GpkgBaseLayer(id: def.id, path: path));
     }
 
     if (isVector) {

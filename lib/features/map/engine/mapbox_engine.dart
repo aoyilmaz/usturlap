@@ -210,11 +210,10 @@ const _bgLayer = {
 };
 
 _StyleSpec _styleFor(ResolvedBaseLayer base) {
+  // Mapbox'ın kendi stili: vektör yol / yer adları keskin; çevrimdışı
+  // bölgeler aynı adresle indirildiği için internetsiz de çizilir.
+  if (base is MapboxStyleBaseLayer) return _StyleSpec.uri(base.styleUri);
   if (base is RasterUrlBaseLayer) {
-    if (base.id == 'online_satellite') {
-      // Raster static-tiles yerine native stil: vektör yol/yer adları keskin.
-      return const _StyleSpec.uri(MapboxStyles.SATELLITE_STREETS);
-    }
     var url = base.urlTemplate;
     base.additionalOptions.forEach((k, v) => url = url.replaceAll('{$k}', v));
     return _StyleSpec.json(jsonEncode({
@@ -240,7 +239,9 @@ _StyleSpec _styleFor(ResolvedBaseLayer base) {
 
 /// Taban katmanın kimliği (değişti mi?) — dosya yolu dahil.
 String _baseKeyOf(ResolvedBaseLayer b) => switch (b) {
+      MapboxStyleBaseLayer s => 'style:${s.id}:${s.styleUri}',
       RasterUrlBaseLayer r => 'url:${r.id}:${r.urlTemplate}',
+      GpkgBaseLayer g => 'gpkg:${g.id}:${g.path}',
       MbtilesBaseLayer m => 'mb:${m.id}:${m.path}',
       PmtilesBaseLayer p => 'pm:${p.id}:${p.path}:${p.stylePath}',
       NoBaseLayer() => 'none',
@@ -274,6 +275,15 @@ Future<_StyleSpec> _resolveStyle(ResolvedBaseLayer base) async {
       return _StyleSpec.json(localVectorStyle(
           await _loadStyleAsset(base.stylePath), info,
           attribution: base.attribution));
+    case GpkgBaseLayer():
+      final info = await LocalTileServer.instance.registerGpkg(
+        base.id,
+        base.path,
+      );
+      return _StyleSpec.json(
+        localRasterStyle(info, attribution: base.attribution),
+      );
+    case MapboxStyleBaseLayer():
     case RasterUrlBaseLayer():
     case NoBaseLayer():
       return _styleFor(base);

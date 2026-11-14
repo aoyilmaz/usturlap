@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -34,6 +35,7 @@ import '../../providers/bullseye_providers.dart';
 import '../../providers/elevation_providers.dart';
 import '../../providers/alert_providers.dart';
 import '../../providers/background_location_providers.dart';
+import '../../providers/field_providers.dart';
 import '../../providers/geofence_providers.dart';
 import '../../providers/graphic_providers.dart';
 import '../../providers/range_line_providers.dart';
@@ -79,7 +81,11 @@ import '../layers/import_layer_action.dart';
 import '../nav/nav_banner.dart';
 import '../symbols/nato_symbol.dart';
 import '../elevation/elevation_data_panel.dart';
+import '../backup/backup_panel.dart';
 import '../export/export_sheet.dart';
+import '../field/reports_panel.dart';
+import '../field/sun_moon_panel.dart';
+import '../field/weather_panel.dart';
 import '../elevation/elevation_profile_panel.dart';
 import '../elevation/terrain_analysis_panel.dart';
 import '../elevation/viewshed_panel.dart';
@@ -107,6 +113,7 @@ import '../waypoints/waypoint_detail_panel.dart';
 import '../waypoints/waypoint_list_sheet.dart';
 import 'base_layer.dart';
 import 'base_layer_resolver.dart';
+import 'missing_layer_dialog.dart';
 import 'engine/map_engine.dart';
 import 'saved_views_sheet.dart';
 import 'widgets/compass_rose.dart';
@@ -224,6 +231,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
     // Açılışta yalnızca varsayılan katmanı yükle (büyük topo'yu değil).
     _ready = _ensureResolved(_selected);
+    getApplicationDocumentsDirectory()
+        .then((d) => _docsPath = d.path)
+        .catchError((_) => '');
     // Arka plan konumu tek yerden: iz kaydı ya da arka planda izlenen
     // geofence varken açık.
     ref.listenManual<bool>(
@@ -242,6 +252,55 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       },
       fireImmediately: true,
     );
+    // Ekranı açık tut (Ayarlar → Saha): görevdeyken ya da her zaman.
+    ref.listenManual<bool>(wakeWantedProvider, (_, on) {
+      WakelockPlus.toggle(enable: on).catchError((_) {});
+    }, fireImmediately: true);
+    // Düşük pil: titreşim + şerit + sesli / bildirim.
+    ref.listenManual<({int level, int seq})?>(lowBatteryProvider, (_, next) {
+      if (next == null || !mounted) return;
+      HapticFeedback.heavyImpact();
+      final rec = ref.read(recordingProvider).isRecording;
+      final text =
+          'Pil %${next.level}${rec ? ' · iz kaydı sürüyor' : ''}';
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(
+          backgroundColor: Colors.red.shade900,
+          content: Text('Düşük pil: $text'),
+        ));
+      ref.read(alertDispatcherProvider).alert(
+            title: 'Düşük pil',
+            body: text,
+            speech: 'Düşük pil. Yüzde ${next.level}.',
+          );
+    });
+    // İz kaydı: başlarken otomatik durma süresi; süre dolunca uyarı.
+    ref.listenManual<RecordingState>(recordingProvider, (prev, next) {
+      if (!mounted || prev == null) return;
+      final messenger = ScaffoldMessenger.of(context);
+      if (!prev.isRecording && next.isRecording && next.stopAt != null) {
+        final m = next.stopAt!.difference(DateTime.now()).inMinutes + 1;
+        messenger
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(
+            content: Text(
+                'İz kaydı başladı · ${(m / 60).round()} sa sonra kendiliğinden durur'),
+          ));
+      }
+      if (prev.isRecording && !next.isRecording && next.autoStopped) {
+        HapticFeedback.heavyImpact();
+        messenger
+          ..hideCurrentSnackBar()
+          ..showSnackBar(const SnackBar(
+              content: Text('İz kaydı süresi doldu, kendiliğinden durdu.')));
+        ref.read(alertDispatcherProvider).alert(
+              title: 'İz kaydı durdu',
+              body: 'Süre doldu; iz kaydedildi.',
+              speech: 'İz kaydı süresi doldu, kayıt durdu.',
+            );
+      }
+    });
     // "Kerteriz ile aç" (AirDrop / Dosyalar): gelen dosya önizletilir.
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => IncomingFiles.listen(_openIncoming),
@@ -266,7 +325,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       return;
     }
     if (layer.type != BaseLayerSourceType.offlineMbtiles &&
-        layer.type != BaseLayerSourceType.vectorPmtiles) {
+        layer.type != BaseLayerSourceType.vectorPmtiles &&
+        layer.type != BaseLayerSourceType.offlineGpkg) {
       return; // kullanılamayan katman (ör. token yok)
     }
 
@@ -1420,10 +1480,29 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
   }
 
-  void _onLayerTapped(BaseLayerDef layer) {
+  Future<void> _onLayerTapped(BaseLayerDef layer) async {
     Navigator.of(context).pop();
+    // Dosyası cihazda yoksa katman değiştirilmez; yol gösterilir.
+    if (layer.needsFile && !await _layerFileExists(layer)) {
+      if (!mounted) return;
+      final choice = await showMissingLayerDialog(context, layer);
+      if (!mounted) return;
+      switch (choice) {
+        case MissingLayerChoice.importFile:
+          await _importLayer();
+        case MissingLayerChoice.downloadStreets:
+          final streets =
+              kBaseLayers.firstWhere((l) => l.id == 'mapbox_streets');
+          _selectLayer(streets);
+          _startFraming();
+        case null:
+          break;
+      }
+      return;
+    }
+    if (!mounted) return;
     if (!layer.isAvailable) {
-      final msg = layer.type == BaseLayerSourceType.onlineSatellite
+      final msg = layer.type == BaseLayerSourceType.mapboxStyle
           ? '“${layer.label}” için Mapbox anahtarı yok. Uygulamayı '
               '--dart-define=MAPBOX_ACCESS_TOKEN=pk.... ile çalıştırın.'
           : '“${layer.label}” için henüz MBTiles yok. '
@@ -1433,12 +1512,37 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       );
       return;
     }
-    setState(() => _selected = layer);
+    _selectLayer(layer);
+  }
+
+  void _selectLayer(BaseLayerDef layer) {
+    setState(() {
+      _selected = layer;
+      _missingFiles.remove(layer.id);
+    });
     // Katmanı (gerekirse) tembel yükle — büyük topo yalnızca seçilince kopyalanır.
     // (Yükleme bitince _ensureResolved zaten kapsama alanına götürür.)
     _ensureResolved(layer);
     // Zaten yüklüyse hemen kapsama alanına git (tekrar girememe sorunu).
     _recenterToLayer(layer);
+  }
+
+  /// Belgeler klasörü (katman dosyası var mı denetimi için; açılışta okunur).
+  String? _docsPath;
+
+  Future<bool> _layerFileExists(BaseLayerDef layer) async {
+    final name = layer.fileName;
+    if (name == null) return true;
+    final docs = _docsPath ??= (await getApplicationDocumentsDirectory()).path;
+    return File('$docs/$name').exists();
+  }
+
+  /// Listede dosyası olmadığı bilinen katman (açılışta bakılır).
+  bool _knownMissing(BaseLayerDef layer) {
+    final name = layer.fileName;
+    final docs = _docsPath;
+    if (!layer.needsFile || name == null || docs == null) return false;
+    return !File('$docs/$name').existsSync();
   }
 
   // ----------------------------------------- kayıtlı görünümler (ATAK s.22)
@@ -1662,9 +1766,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       id: l.id,
       label: l.label,
       icon: l.isVector ? Icons.public : Icons.map_outlined,
-      type: l.isVector
-          ? BaseLayerSourceType.vectorPmtiles
-          : BaseLayerSourceType.offlineMbtiles,
+      type: l.sourceType == 'gpkg'
+          ? BaseLayerSourceType.offlineGpkg
+          : l.isVector
+              ? BaseLayerSourceType.vectorPmtiles
+              : BaseLayerSourceType.offlineMbtiles,
       fileName: l.fileName,
       stylePath: l.stylePath,
       maxNativeZoom: l.maxZoom,
@@ -1676,12 +1782,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   /// Dosyalar'dan harita paketi içe aktar → kaydet → seç → göster.
   Future<void> _importLayer() async {
-    final l = await pickAndImportLayer(context, ref);
-    if (l == null || !mounted) return;
-    final def = _importedToDef(l);
-    setState(() => _selected = def);
-    await _ensureResolved(def);
-    _recenterToLayer(def);
+    final r = await pickAndImportLayer(context, ref);
+    if (r == null || !mounted) return;
+    final imported = r.imported;
+    final def = imported != null
+        ? _importedToDef(imported)
+        : kBaseLayers.firstWhere((l) => l.id == r.builtInId);
+    _selectLayer(def);
   }
 
   /// İçe-aktarılmış katmanı sil (drift kaydı + Documents dosyası + bellek).
@@ -1756,9 +1863,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                             : FontWeight.normal,
                       ),
                     ),
-                    subtitle: layer.isAvailable
-                        ? null
-                        : const Text('henüz eklenmedi'),
+                    subtitle: !layer.isAvailable
+                        ? Text(layer.type == BaseLayerSourceType.mapboxStyle
+                            ? 'Mapbox anahtarı yok'
+                            : 'henüz eklenmedi')
+                        : _knownMissing(layer)
+                            ? const Text('dosya yok · dokun: nasıl eklenir',
+                                style: TextStyle(color: Colors.orangeAccent))
+                            : layer.hint == null
+                                ? null
+                                : Text(layer.hint!),
                     trailing: layer.id == _selected.id
                         ? const Icon(Icons.check,
                             color: Colors.lightGreenAccent)
@@ -1779,8 +1893,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                             : FontWeight.normal,
                       ),
                     ),
-                    subtitle: Text(
-                        l.isVector ? 'içe aktarılan vektör' : 'içe aktarılan raster'),
+                    subtitle: Text(l.sourceType == 'gpkg'
+                        ? 'içe aktarılan raster (GeoPackage)'
+                        : l.isVector
+                            ? 'içe aktarılan vektör'
+                            : 'içe aktarılan raster'),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -1943,6 +2060,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             label: 'Dışa aktar',
             onTap: () => showExportSheet(context)),
       ]),
+      ToolGridSection('Saha', [
+        catalog(ToolbarTool.reports),
+        catalog(ToolbarTool.weather),
+        catalog(ToolbarTool.sunMoon),
+      ]),
       ToolGridSection('Harita', [
         catalog(ToolbarTool.maps),
         catalog(ToolbarTool.overlays),
@@ -1961,6 +2083,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             icon: Icons.view_week_outlined,
             label: 'Araç çubuğu',
             onTap: () => showToolbarManagerSheet(context)),
+        ToolGridItem(
+            icon: Icons.backup_outlined,
+            label: 'Yedekle / geri yükle',
+            onTap: () => showBackupPanel(context)),
         ToolGridItem(
           icon: Icons.delete_forever,
           label: 'Acil veri silme',
@@ -2012,6 +2138,33 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           icon: t.icon,
           label: t.label,
           onTap: () => showGalleryPanel(context, onCenter: _centerOn),
+        );
+      case ToolbarTool.reports:
+        return ToolbarItem(
+          icon: t.icon,
+          label: t.label,
+          onTap: () => showReportsPanel(
+            context,
+            fallback: () => _map.camera.center,
+          ),
+        );
+      case ToolbarTool.weather:
+        return ToolbarItem(
+          icon: t.icon,
+          label: t.label,
+          onTap: () => showWeatherPanel(
+            context,
+            fallback: () => _map.camera.center,
+          ),
+        );
+      case ToolbarTool.sunMoon:
+        return ToolbarItem(
+          icon: t.icon,
+          label: t.label,
+          onTap: () => showSunMoonPanel(
+            context,
+            fallback: () => _map.camera.center,
+          ),
         );
       case ToolbarTool.geofence:
         return ToolbarItem(
@@ -2391,7 +2544,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     // Seçili çevrimdışı katman henüz çözülmediyse (tembel) göstergede uyar.
     final layerLoading = !layerMissing &&
         (_selected.type == BaseLayerSourceType.offlineMbtiles ||
-            _selected.type == BaseLayerSourceType.vectorPmtiles) &&
+            _selected.type == BaseLayerSourceType.vectorPmtiles ||
+            _selected.type == BaseLayerSourceType.offlineGpkg) &&
         !_resolved.containsKey(_selected.id);
 
     // Yerleşim: dikeyde alt çubuk; yatayda (ATAK gibi) sol dikey şerit,
@@ -3009,6 +3163,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               width: landscape ? sidePanelWidth(context) : null,
               child: OfflineFramePanel(
                 sideways: landscape,
+                initialTypes: [
+                  _selected.mapType ?? OfflineMapType.satellite,
+                ],
                 defaultName: 'Bölge ${(ref.read(offlineRegionsProvider).value?.length ?? 0) + 1}',
                 frameBounds: () => _map.boundsOfScreenRect(_frameRect(context)),
                 cameraTick: _cameraTick,
@@ -3213,16 +3370,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         rightPanel: isLandscape(context) ? sidePanelWidth(context) : 0,
       );
 
-  /// Çerçeveleme modunu aç. İndirilen görüntü Mapbox uydu olduğundan,
-  /// kendi paket katmanı seçiliyse uydu katmanına geçilir.
+  /// Çerçeveleme modunu aç. Seçili katman Mapbox türüyse (Uydu / Sokak /
+  /// Topografik) o tür önerilir; değilse uydu katmanına geçilir.
   void _startFraming() {
     if (AppConstants.mapboxAccessToken.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Bölge indirmek için Mapbox anahtarı gerekli.')));
       return;
     }
-    final sat = kBaseLayers.firstWhere((l) => l.id == 'online_satellite');
-    if (_selected.id != sat.id) {
+    if (_selected.mapType == null) {
+      final sat = kBaseLayers.firstWhere((l) => l.id == 'online_satellite');
       setState(() => _selected = sat);
       _ensureResolved(sat);
     }

@@ -142,6 +142,7 @@ class _RegionTile extends ConsumerWidget {
           color: r.isComplete ? null : Colors.orangeAccent),
       title: Text(r.name),
       subtitle: Text(
+        '${r.types.map((t) => t.label).join(' + ')} · '
         '${fmtBytes(r.sizeBytes)} · z0–z${r.maxZoom} · ${_fmtDate(r.createdAt)}'
         '${r.isComplete ? '' : ' · yarım kaldı'}',
       ),

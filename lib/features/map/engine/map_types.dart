@@ -234,6 +234,18 @@ class NoBaseLayer extends ResolvedBaseLayer {
   const NoBaseLayer() : super(id: '');
 }
 
+/// Mapbox'ın kendi stili (uydu, sokak, topografik). Çevrimdışı bölgeler bu
+/// stil adresiyle indirildiği için SDK internetsizken onları kullanır.
+class MapboxStyleBaseLayer extends ResolvedBaseLayer {
+  const MapboxStyleBaseLayer({
+    required super.id,
+    required this.styleUri,
+    super.attribution,
+  });
+
+  final String styleUri;
+}
+
 /// İnternetten {z}/{x}/{y} adresiyle gelen raster karolar.
 class RasterUrlBaseLayer extends ResolvedBaseLayer {
   const RasterUrlBaseLayer({
@@ -268,6 +280,17 @@ class MbtilesBaseLayer extends ResolvedBaseLayer {
 
   final String path;
   final int maxNativeZoom;
+}
+
+/// Cihazdaki GeoPackage (.gpkg) raster karoları (EPSG:3857).
+class GpkgBaseLayer extends ResolvedBaseLayer {
+  const GpkgBaseLayer({
+    required super.id,
+    required this.path,
+    super.attribution,
+  });
+
+  final String path;
 }
 
 /// Cihazdaki .pmtiles dosyası (vektör) + MapLibre stil JSON asset'i.
