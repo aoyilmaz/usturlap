@@ -30,6 +30,7 @@ import 'package:usturlap/data/db/app_database.dart';
 import 'package:usturlap/domain/models/bullseye.dart';
 import 'package:usturlap/domain/models/contact.dart';
 import 'package:usturlap/domain/models/map_graphic.dart';
+import 'package:usturlap/domain/models/overlay_visibility.dart';
 import 'package:usturlap/domain/models/range_line.dart';
 import 'package:usturlap/domain/models/route_plan.dart';
 import 'package:usturlap/domain/models/sensor_fov.dart';
@@ -43,6 +44,7 @@ import 'package:usturlap/providers/bullseye_providers.dart';
 import 'package:usturlap/providers/elevation_providers.dart';
 import 'package:usturlap/providers/graphic_providers.dart';
 import 'package:usturlap/providers/location_providers.dart';
+import 'package:usturlap/providers/overlay_providers.dart';
 import 'package:usturlap/providers/range_line_providers.dart';
 import 'package:usturlap/providers/route_providers.dart';
 import 'package:usturlap/providers/settings_providers.dart';
@@ -594,6 +596,49 @@ void main() {
     await _step(t, 'taktik-pusula', () async {
       await _openTool(t, 'Taktik pusula');
       await _shot(t, 'taktik-pusula', settle: 2);
+    });
+
+    // Telsiz röleleri: Kapadokya çevresi (Nevşehir, Kayseri, Niğde), seçili
+    // rölenin kaba kapsama halkası, ayrıntı paneli ve bant süzgeci. Katman
+    // sonda kapatılır (halka sonraki görüntülere girmesin).
+    await _step(t, 'roleler', () async {
+      try {
+        if (!_c.read(showRepeatersProvider)) {
+          _c.read(showRepeatersProvider.notifier).toggle();
+        }
+        // Demo çizimleri rölelerin üstüne binmesin: geçici olarak gizli.
+        _c.read(overlayVisibilityProvider.notifier).update((v) => v.setGroups([
+              for (final a in Affiliation.values)
+                OverlayVisibility.waypointGroup(a),
+              OverlayVisibility.graphicsGroup,
+              OverlayVisibility.rangeLinesGroup,
+              OverlayVisibility.rangeRingsGroup,
+            ], hidden: true));
+        // Nevşehir üçlüsü, Kayseri ve Niğde aynı çerçevede.
+        _ctrl(t).moveTo(const LatLng(38.60, 35.05), zoom: 7.8);
+        await _wait(t, 3);
+        _markerTap(t, 'rep:nevsehir-vhf-145600');
+        await _wait(t, 1.2);
+        await _tapText(t, 'Detay');
+        await _shot(t, 'role-detay', settle: 1.5);
+        await _closeAll(t);
+        await _shot(t, 'roleler', settle: 2);
+        await _openTool(t, 'Ayarlar');
+        final list = find
+            .descendant(
+                of: find.byType(ListView).last,
+                matching: find.byType(Scrollable))
+            .first;
+        // Bant seçimi "Acil veri silme" satırının hemen üstünde.
+        await t.scrollUntilVisible(find.text('Acil veri silme'), 120,
+            scrollable: list);
+        await _shot(t, 'role-ayar', settle: 1.2);
+      } finally {
+        if (_c.read(showRepeatersProvider)) {
+          _c.read(showRepeatersProvider.notifier).toggle();
+        }
+        _c.read(overlayVisibilityProvider.notifier).reset();
+      }
     });
 
     if (hasDem) {

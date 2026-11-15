@@ -1,0 +1,33 @@
+<!doctype html>
+<!-- Sitenin paylaşım görseli (website/assets/img/og.jpg) kaynağı, 1200×630.
+     Üretmek için:
+       "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless \
+         --hide-scrollbars --force-device-scale-factor=1 --window-size=1200,630 \
+         --virtual-time-budget=8000 --allow-file-access-from-files \
+         --screenshot=/tmp/og.png "file://$PWD/tool/site_og.html"
+     sonra PNG → JPEG (kalite ~86) olarak website/assets/img/og.jpg. -->
+<html lang="tr"><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400&display=block">
+<style>
+html,body{margin:0;width:1200px;height:630px;overflow:hidden;background:#12110c;color:#ece6d3;font-family:'IBM Plex Sans',sans-serif}
+.c{position:absolute;inset:0;color:rgba(201,166,79,.13)}
+.l{position:absolute;left:72px;top:84px;width:600px}
+.b{display:flex;align-items:center;gap:20px}
+.b img{width:96px;height:96px}
+.b span{font:600 72px/1 'Chakra Petch',sans-serif;letter-spacing:.01em}
+h1{margin:40px 0 0;font:600 54px/1.08 'Chakra Petch',sans-serif}
+p{margin:20px 0 0;font-size:24px;line-height:1.45;color:#a7a088}
+.m{position:absolute;left:72px;bottom:52px;font:500 18px/1 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#a9b062}
+.ph{position:absolute;top:58px;width:250px;padding:8px;border-radius:40px;background:#0b0a07;box-shadow:0 30px 60px -20px #000}
+.ph img{display:block;width:100%;border-radius:33px}
+.p1{left:690px;transform:rotate(-5deg)}
+.p2{left:915px;top:96px;transform:rotate(5deg)}
+</style></head><body>
+<svg class="c" viewBox="0 0 1200 630" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M-40 470c160-60 300-20 420 40s260 120 420 70 260-60 440-10"/><path d="M-40 530c170-55 310-15 430 45s250 110 410 65 270-55 440-5"/><path d="M-40 590c180-50 320-10 440 50s240 100 400 60 280-50 440 0"/><path d="M80 40c80-30 170 0 190 60s-30 110-110 115-150-20-160-70 20-80 80-105z"/></svg>
+<div class="l"><div class="b"><img src="../website/assets/img/logo.svg" alt=""><span>Usturlap</span></div>
+<h1>Şebeke olmasa da<br>yönünü bil.</h1>
+<p>Çevrimdışı taktik harita: uydu, MGRS, rota,<br>ölçüm, arazi analizi ve telsiz röleleri.<br>Hesap yok, veri cihazda.</p></div>
+<div class="m">● ÇEVRİMDIŞI ÇALIŞIR · iPhone</div>
+<div class="ph p1"><img src="../website/assets/shots/ana-ekran.webp" alt=""></div>
+<div class="ph p2"><img src="../website/assets/shots/3b-arazi.webp" alt=""></div>
+</body></html>

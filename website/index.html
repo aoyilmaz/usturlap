@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Usturlap: internetsiz taktik harita</title>
-<meta name="description" content="Usturlap; uydu haritası, MGRS koordinat, rota, ölçüm ve arazi analizini şebeke olmadan, tek elle kullanmanız için yapılmış bir iPhone uygulaması. Hesap yok, veri cihazda.">
+<title>Usturlap: çevrimdışı taktik harita</title>
+<meta name="description" content="Usturlap; uydu haritası, MGRS koordinat, rota, ölçüm, arazi analizi ve telsiz rölelerini çevrimdışı, tek elle kullanmanız için yapılmış bir iPhone uygulaması. Hesap yok, veri cihazda.">
 <meta name="theme-color" content="#12110c">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="tr_TR">
-<meta property="og:title" content="Usturlap: internetsiz taktik harita">
-<meta property="og:description" content="Uydu haritası, MGRS, rota, ölçüm ve arazi analizi. Şebeke olmadan, tek elle. Hesap yok, veri cihazda.">
+<meta property="og:title" content="Usturlap: çevrimdışı taktik harita">
+<meta property="og:description" content="Uydu haritası, MGRS, rota, ölçüm, arazi analizi ve telsiz röleleri. Çevrimdışı, tek elle. Hesap yok, veri cihazda.">
 <meta property="og:image" content="https://aoyilmaz.github.io/usturlap/assets/img/og.jpg">
 <meta property="og:url" content="https://aoyilmaz.github.io/usturlap/">
 <meta name="twitter:card" content="summary_large_image">
@@ -59,9 +59,9 @@
   </svg>
   <div class="wrap">
     <div>
-      <p class="eyebrow"><span class="nocase" lang="en">iPhone</span> için · internetsiz taktik harita</p>
+      <p class="eyebrow"><span class="nocase" lang="en">iPhone</span> için · çevrimdışı taktik harita</p>
       <h1 id="baslik">Şebeke olmasa da yönünü bil.</h1>
-      <p class="lead">Usturlap; uydu haritası, MGRS koordinat, rota, ölçüm ve arazi analizini bir araya getirir. Tek elle, eldivenle ve internet olmadan kullanılır. Hesap açmazsınız, verileriniz telefonunuzda kalır.</p>
+      <p class="lead">Usturlap; uydu haritası, MGRS koordinat, rota, ölçüm, arazi analizi ve telsiz rölelerini bir araya getirir. Tek elle, eldivenle ve çevrimdışı kullanılır. Hesap açmazsınız, verileriniz telefonunuzda kalır.</p>
       <div class="cta">
         <span class="btn btn-soon" aria-disabled="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10.5 18.5h3"/></svg>
@@ -149,7 +149,7 @@
           <p class="eyebrow">Harita</p>
           <h2 id="f1">Şebeke bittiğinde harita bitmez.</h2>
           <p class="one">Uydu görüntüsü, sokak ve topografik altlıklar. Gitmeden önce bölgeyi indirin, sahada uçak modunda kullanın.</p>
-          <p class="why">Dağda, vadide ya da kalabalık bir etkinlikte baz istasyonu ilk giden şeydir. Usturlap indirdiğiniz bölgeleri ve kendi MBTiles, PMTiles ya da GeoPackage paketlerinizi internetsiz açar. 3B arazi, gece modu ve yatay ekran hazır.</p>
+          <p class="why">Dağda, vadide ya da kalabalık bir etkinlikte baz istasyonu ilk giden şeydir. Usturlap indirdiğiniz bölgeleri ve kendi MBTiles, PMTiles ya da GeoPackage paketlerinizi çevrimdışı açar. 3B arazi, gece modu ve yatay ekran hazır.</p>
           <ul class="ticks">
             <li>Uydu, Sokak, Topografik</li>
             <li>Bölge indirme: tür ve ayrıntı seçimi</li>
@@ -201,6 +201,46 @@
       </div>
     </article>
 
+    <!-- 3. Telsiz röleleri -->
+    <article class="feature" aria-labelledby="f-role">
+      <div class="feature-grid">
+        <div>
+          <p class="eyebrow">Telsiz röleleri</p>
+          <h2 id="f-role">En yakın röle, frekansıyla birlikte.</h2>
+          <p class="one">Türkiye'deki 157 amatör telsiz rölesi haritada: dinleme ve gönderme frekansı, shift, ton ve operatör bilgisiyle. Liste uygulamayla gelir, çevrimdışı çalışır.</p>
+          <p class="why">Şebeke yokken haberleşme çoğu zaman telsize kalır. Röleye dokununca telsizinize gireceğiniz frekanslar çıkar; "Git" röleye kerteriz ve mesafe verir, R&amp;B ile hattı ölçersiniz. Seçili rölenin çevresinde yaklaşık 30 km'lik kaba bir kapsama halkası görünür; gerçek kapsama araziye göre değişir.</p>
+          <div class="table-scroll">
+            <table class="bands">
+              <caption>Röle bantları</caption>
+              <thead>
+                <tr><th scope="col">Bant</th><th scope="col">Röle</th><th scope="col">Tipik çıkış (dinle)</th><th scope="col">Tipik shift</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">VHF · 2 m</th><td>67</td><td>145,600–145,775 MHz</td><td>−0,6 MHz</td></tr>
+                <tr><th scope="row">UHF · 70 cm</th><td>90</td><td>439,150–439,425 MHz</td><td>−7,6 MHz</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <ul class="ticks">
+            <li>VHF / UHF bant süzgeci</li>
+            <li>RX, TX, shift ve CTCSS tonu</li>
+            <li>5 dijital röle: DMR, C4FM, NXDN</li>
+            <li>Dokuz çağrı bölgesi (TR1–TR9)</li>
+          </ul>
+          <p class="credit" style="margin-top: 20px">Röle verisi: TRAC (Türkiye Radyo Amatörleri Cemiyeti) ve saha verileri, Mayıs 2026. Rölelerde yayın yapmak için amatör telsiz ehliyeti gerekir.</p>
+        </div>
+        <div class="feature-media">
+          <div class="phone"><img src="assets/shots/roleler.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Kapadokya çevresinde telsiz röleleri: anten simgeleri ve seçili Nevşehir rölesinin çevresinde yaklaşık 30 km'lik kapsama halkası."></div>
+        </div>
+      </div>
+      <div class="strip" role="region" aria-label="Telsiz rölesi ekran görüntüleri" tabindex="0">
+        <div class="strip-track">
+          <figure class="shot"><img src="assets/shots/role-detay.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Röle ayrıntısı: Nevşehir Kahveci Dağı; RX 145,600 MHz, TX 145,000 MHz, shift −0,6 MHz, VHF analog, operatör, bölge ve koordinat; Ortala ve Git düğmeleri."><figcaption>Röle ayrıntısı</figcaption></figure>
+          <figure class="shot"><img src="assets/shots/role-ayar.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Ayarlar: Telsiz röleleri anahtarı ve Tümü, VHF, UHF bant seçimi."><figcaption>Bant süzgeci</figcaption></figure>
+        </div>
+      </div>
+    </article>
+
     <!-- 3. Ölçüm ve arazi -->
     <article class="feature" aria-labelledby="f3">
       <div class="feature-grid">
@@ -208,7 +248,7 @@
           <p class="eyebrow">Ölçüm ve arazi</p>
           <h2 id="f3">Haritaya bak, araziyi oku.</h2>
           <p class="one">Mesafe-kerteriz, alan, menzil halkaları ve bullseye. Yükseklik verisiyle görüş alanı, eğim ve eş yükselti.</p>
-          <p class="why">Bir tepeden nereyi görebileceğinizi, hangi yamacın dik olduğunu yola çıkmadan görün. Yükseklik verisi (SRTM, DTED) cihazda tutulur, hesaplar internetsiz yapılır.</p>
+          <p class="why">Bir tepeden nereyi görebileceğinizi, hangi yamacın dik olduğunu yola çıkmadan görün. Yükseklik verisi (SRTM, DTED) cihazda tutulur, hesaplar çevrimdışı yapılır.</p>
           <ul class="ticks">
             <li>Noktalara bağlanan R&amp;B çizgisi</li>
             <li>Alan, çevre ve sektör</li>
@@ -283,7 +323,7 @@
           <p class="eyebrow">Saha</p>
           <h2 id="f6">Sahada gereken küçük şeyler.</h2>
           <p class="one">CASEVAC 9 satır ve SPOTREP raporları, güneş ve ay saatleri, hava durumu, iz kaydı ve pil alarmı.</p>
-          <p class="why">Rapor formları konumu MGRS olarak doldurur; metin kopyalanmaya ya da paylaşılmaya hazırdır. Gün doğumu, alacakaranlık ve ay saatleri internetsiz hesaplanır. Hava durumu isteğe bağlıdır ve konumu yuvarlayarak sorar.</p>
+          <p class="why">Rapor formları konumu MGRS olarak doldurur; metin kopyalanmaya ya da paylaşılmaya hazırdır. Gün doğumu, alacakaranlık ve ay saatleri çevrimdışı hesaplanır. Hava durumu isteğe bağlıdır ve konumu yuvarlayarak sorar.</p>
           <ul class="ticks">
             <li>9 satır ve SPOTREP</li>
             <li>Güneş, alacakaranlık, ay</li>
@@ -337,7 +377,7 @@
   <div class="wrap">
     <div class="section-head">
       <p class="eyebrow">Yol haritası</p>
-      <h2 id="y-baslik">Sırada: internetsiz ekip ağı.</h2>
+      <h2 id="y-baslik">Sırada: çevrimdışı ekip ağı.</h2>
       <p>Şu ana kadarki her şey tek kişilik. Sonraki büyük adım, şebeke olmadan bir ekibin birbirini haritada görmesi.</p>
     </div>
     <div class="road">

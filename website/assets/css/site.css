@@ -692,6 +692,46 @@ p {
   }
 }
 
+/* Röle bant tablosu */
+.bands {
+  width: 100%;
+  margin-top: 24px;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.bands caption {
+  text-align: left;
+  padding-bottom: 8px;
+  font: 500 12px/1.3 var(--f-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--soft);
+}
+
+.bands th,
+.bands td {
+  text-align: left;
+  padding: 10px 12px 10px 0;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.bands thead th {
+  font: 500 12px/1.3 var(--f-mono);
+  color: var(--muted);
+}
+
+.bands tbody th {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.bands td {
+  font-family: var(--f-mono);
+  color: var(--ink);
+}
+
 /* Biçim çipleri (paylaşım) */
 .chips {
   display: flex;
@@ -1023,6 +1063,21 @@ p {
 
   .shot {
     width: 160px;
+  }
+
+  /* Bant tablosu dar ekranda sığsın: başlık ve bant adı satır kırar. */
+  .bands {
+    font-size: 13px;
+  }
+
+  .bands th,
+  .bands td {
+    white-space: normal;
+    padding-right: 8px;
+  }
+
+  .bands td:nth-child(3) {
+    white-space: nowrap;
   }
 
   .shot.wide {

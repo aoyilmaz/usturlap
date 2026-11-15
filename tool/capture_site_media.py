@@ -127,8 +127,10 @@ def main() -> None:
             name = mark[5:]
             png = raw / f"{name}.png"
             sh("xcrun", "simctl", "io", udid, "screenshot", "--type=png", str(png))
+            # Hata anı görüntüleri siteye değil ham klasöre (inceleme için).
+            dest = raw if name.startswith("hata-") else out / "shots"
             sh("cwebp", "-quiet", "-q", "82", "-resize", str(args.width), "0",
-               str(png), "-o", str(out / "shots" / f"{name}.webp"))
+               str(png), "-o", str(dest / f"{name}.webp"))
             shots.append(name)
             print(f"  ▣ {name}")
         elif mark.startswith("VIDEO:start:"):
