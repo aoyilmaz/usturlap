@@ -5,7 +5,7 @@
 # Usturlap
 
 İnternet ve baz istasyonu olmadan çalışan, tek elle (eldivenle de) kullanılan kişisel
-**taktik harita** uygulaması. Flutter ile yazıldı; önce iOS (iPhone), Android'e hazır.
+**taktik harita** uygulaması. Flutter ile yazıldı; Android ve iPhone.
 Hesap yok, reklam yok; uygulama kendi adına veri toplamaz, bütün veri cihazda kalır.
 Harita karoları Mapbox'tan gelir; Mapbox'ın isteğe bağlı telemetrisi kapalı başlar
 (bkz. [gizlilik](website/gizlilik.html)).
@@ -13,6 +13,13 @@ Harita karoları Mapbox'tan gelir; Mapbox'ın isteğe bağlı telemetrisi kapal�
 > Proje önce **Pusula**, sonra **Kerteriz** adını taşıdı. Eski dosyalar açılmaya devam
 > etsin diye bazı görünmez biçim kimlikleri eski adla kalır (KML/GeoJSON `kerteriz`
 > verisi, CoT `__kerteriz` / `__pusula` öğeleri, `.krz` yedek biçimi).
+
+## Kurulum
+
+- **Android:** [son sürümün APK'sı](https://github.com/aoyilmaz/usturlap/releases/latest/download/usturlap.apk)
+  ([bütün sürümler](https://github.com/aoyilmaz/usturlap/releases)). Telefonda indirip açın;
+  adım adım anlatım: https://aoyilmaz.github.io/usturlap/#kurulum
+- **iPhone:** App Store'a yakında. Şimdilik yalnız kaynak koddan, kendi Apple hesabınızla.
 
 ## Özellikler
 
@@ -53,16 +60,32 @@ Yerelde bakmak için: `python3 -m http.server -d website`.
 `presentation (features/) → domain (models, ports, usecases) → data (db, tiles,
 position, …)`, Riverpod ile. Domain saf Dart; veritabanı `drift` (SQLite).
 
-## Çalıştırma
+## Kaynak koddan derleme
+
+Geliştiriciler için; uygulamayı kullanmak için gerekmez.
 
 ```bash
 flutter pub get
 flutter run --dart-define-from-file=dart_defines.json   # bağlı iOS/Android cihaz
 ```
 
-`dart_defines.json` repoda yoktur; içine kendi Mapbox anahtarınızı koyun:
-`{"MAPBOX_ACCESS_TOKEN": "pk..."}`. iOS'ta cihaza kurmak için Xcode imzalaması gerekir
-(`ios/Runner.xcworkspace`). Geliştirme: `flutter analyze` · `flutter test`.
+- `dart_defines.json` repoda yoktur; içine kendi Mapbox **genel** anahtarınızı koyun:
+  `{"MAPBOX_ACCESS_TOKEN": "pk..."}` (Mapbox hesabı → Tokens).
+- **iOS:** Xcode imzalaması gerekir (`ios/Runner.xcworkspace`, paket kimliği `com.aoyilmaz.usturlap`).
+- **Android:** JDK 17 ve Android SDK. Sürüm derlemesi `android/key.properties` varsa onunla,
+  yoksa debug anahtarıyla imzalanır: `flutter build apk --release --dart-define-from-file=dart_defines.json`.
+- Geliştirme: `flutter analyze` · `flutter test`.
+
+## Sürüm yayınlama (Android)
+
+1. `pubspec.yaml`'daki `version`'ı artırın (ör. `1.0.1+2`; `+N` her yayında büyümeli).
+2. Etiketleyip gönderin: `git tag v1.0.1 && git push origin v1.0.1`.
+3. GitHub Actions (`.github/workflows/android-release.yml`) APK'yı derler, imzalar ve
+   Releases'e koyar. `-` içeren etiketler (ör. `v1.0.1-rc1`) ön sürüm olur.
+
+İmza anahtarı (`usturlap-release.jks`) ve parolaları GitHub secret'larında ve
+`android/key.properties`'te durur. **Yedeklenmeli:** kaybolursa mevcut kurulumlar
+güncellenemez.
 
 Çevrimdışı karo dosyaları (`.mbtiles` / `.pmtiles`) büyük olduğu için repoda değildir;
 uygulama içinden içe aktarılır ya da `assets/tiles/` altına konur.

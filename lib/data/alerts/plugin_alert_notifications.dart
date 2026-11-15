@@ -25,7 +25,8 @@ class PluginAlertNotifications implements AlertNotifications {
     try {
       final ok = await _plugin.initialize(
         settings: const InitializationSettings(
-          android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+          // Durum çubuğu simgesi tek renk olmalı (renkli ikon beyaz kare görünür).
+          android: AndroidInitializationSettings('@drawable/ic_stat_usturlap'),
           // İzin açılışta değil, gerektiğinde (geofence / rota) sorulur.
           iOS: DarwinInitializationSettings(
             requestAlertPermission: false,

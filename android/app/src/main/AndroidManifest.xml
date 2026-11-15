@@ -1,8 +1,23 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Harita karoları (Mapbox, OSM) ve isteğe bağlı hava durumu. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Konum: haritada konum, navigasyon, ölçüm. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <!-- Yalnız iz kaydı ve arka planda izlenen geofence sırasında (ön plan
+         bildirimiyle); kullanıcı ayrıca "her zaman izin ver" seçmeli. -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
+    <!-- Arka plan iz kaydında ekran kapalıyken konum (geolocator enableWakeLock). -->
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <!-- Arka plandaki geofence / rota uyarıları (Android 13+). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="Usturlap"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:networkSecurityConfig="@xml/network_security_config">
         <activity
             android:name=".MainActivity"
             android:exported="true"

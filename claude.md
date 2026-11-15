@@ -3,8 +3,12 @@
 > **Ad (2026-11-14): uygulamanın adı artık Usturlap** (önce Pusula, sonra Kerteriz).
 > Dart paketi `usturlap` (`package:usturlap/`), GitHub deposu `aoyilmaz/usturlap`,
 > tanıtım sitesi `website/` → aoyilmaz.github.io/usturlap.
-> **Değişmeyenler** (eski veri ve dosyalar açılsın diye): paket kimliği
-> `com.pusula.pusula.ao`, veritabanı dosyası `pusula`, KML/GeoJSON `kerteriz` verisi,
+> **Paket kimliği (2026-11-15): `com.aoyilmaz.usturlap`** (iOS ve Android; mağaza öncesi kalıcı
+> kimlik). Eski `com.pusula.pusula.ao` kurulumundan veri `.krz` yedekle taşınır.
+> **Dağıtım:** Android APK GitHub Releases'ten (`.github/workflows/android-release.yml`, `v*` etiketi);
+> iPhone App Store'u Apple Developer üyeliği gelince. Sürüm imzası `android/key.properties`
+> (git dışı) + `~/Library/Usturlap/usturlap-release.jks`.
+> **Değişmeyenler** (eski veri ve dosyalar açılsın diye): veritabanı dosyası `pusula`, KML/GeoJSON `kerteriz` verisi,
 > CoT `__kerteriz` / `__pusula` öğeleri, `.krz` yedek biçimi ve `KRTZYDK1` imzası,
 > UTI `com.kerteriz.backup`, Mac'teki proje klasörü `pusula`. Yön açısı anlamındaki
 > "kerteriz" sözcüğü uygulama adı değildir, değişmez. Aşağıdaki brief'te geçen

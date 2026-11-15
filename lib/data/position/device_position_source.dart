@@ -142,6 +142,8 @@ class DevicePositionSource implements PositionSource {
               ? const ForegroundNotificationConfig(
                   notificationTitle: 'Usturlap',
                   notificationText: 'Konum izleniyor (iz kaydı / geofence)',
+                  notificationIcon: AndroidResource(
+                      name: 'ic_stat_usturlap', defType: 'drawable'),
                   enableWakeLock: true,
                 )
               : null,
