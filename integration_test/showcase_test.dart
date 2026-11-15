@@ -38,6 +38,7 @@ import 'package:usturlap/domain/models/waypoint.dart';
 import 'package:usturlap/domain/ports/alert_output.dart';
 import 'package:usturlap/domain/ports/position_source.dart';
 import 'package:usturlap/domain/usecases/viewshed.dart';
+import 'package:usturlap/features/hud/self_info_box.dart';
 import 'package:usturlap/features/map/engine/map_engine.dart';
 import 'package:usturlap/providers/alert_providers.dart';
 import 'package:usturlap/providers/bullseye_providers.dart';
@@ -738,6 +739,61 @@ void main() {
       await _shot(t, 'gece', settle: 4);
       _c.read(nightModeProvider.notifier).toggle();
       await _wait(t, 2);
+    });
+
+    // ------------------------------------------------ rehber sayfası için
+    await _step(t, 'r-kutu', () async {
+      _ctrl(t).moveTo(const LatLng(38.6450, 34.8300), zoom: 14);
+      await t.tap(find.byType(SelfInfoBox));
+      await _shot(t, 'rehber-konum-kutusu', settle: 1.5);
+      await t.tap(find.byType(SelfInfoBox));
+      await _wait(t, 0.6);
+    });
+
+    await _step(t, 'r-isaret', () async {
+      ((_engineView(t) as dynamic).onLongPress as MapPointCallback?)
+          ?.call(const LatLng(38.6480, 34.8260));
+      await _shot(t, 'rehber-isaret', settle: 1.5);
+      // Klavye açılınca kamera başlangıç konumuna sıçramamalı (viewport
+      // Idle'a alınmazsa Ankara'ya dönüyordu).
+      debugPrint('KAMERA: ${_ctrl(t).camera.center}');
+    });
+
+    await _step(t, 'r-git', () async {
+      await _tapLabel(t, 'Koordinat / Git');
+      await _shot(t, 'rehber-git', settle: 1.5);
+    });
+
+    await _step(t, 'r-kestirme', () async {
+      await _openTool(t, 'Geriden kestirme');
+      await _shot(t, 'rehber-kestirme', settle: 1.5);
+    });
+
+    await _step(t, 'r-takip', () async {
+      await _openTool(t, 'Takip (Bloodhound)');
+      await _shot(t, 'rehber-takip', settle: 1.5);
+    });
+
+    await _step(t, 'r-bullseye', () async {
+      _ctrl(t).moveTo(const LatLng(38.6460, 34.8289), zoom: 13.4);
+      _c.read(bullseyeProvider.notifier).set(
+          const Bullseye(center: RbEnd(_goreme), ringSpacing: 500, ringCount: 4));
+      await _wait(t, 1);
+      await _openTool(t, 'Bullseye');
+      await _shot(t, 'rehber-bullseye', settle: 2);
+      await _closeAll(t);
+      _c.read(bullseyeProvider.notifier).set(null);
+    });
+
+    await _step(t, 'r-casevac', () async {
+      await _openTool(t, 'Raporlar');
+      await _tapText(t, 'CASEVAC 9 satır');
+      await _shot(t, 'rehber-casevac', settle: 1.5);
+    });
+
+    await _step(t, 'r-ayarlar', () async {
+      await _openTool(t, 'Ayarlar');
+      await _shot(t, 'rehber-ayarlar', settle: 1.5);
     });
 
     await _step(t, 'yatay', () async {

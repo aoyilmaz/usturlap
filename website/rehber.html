@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kullanım rehberi · Usturlap</title>
+<meta name="description" content="Usturlap'ı arazide kullanmayı bir arama-kurtarma günüyle anlatan rehber: hangi araç ne işe yarar, menüde nerede, nasıl kullanılır; yabancı terimler sözlüğü.">
+<meta name="theme-color" content="#12110c">
+<meta property="og:type" content="article">
+<meta property="og:locale" content="tr_TR">
+<meta property="og:title" content="Usturlap kullanım rehberi: bir arama-kurtarma günü">
+<meta property="og:description" content="Akşam hazırlığından gece dönüşüne, arazide hangi aracı nerede kullanacağınızı bir hikâyeyle öğrenin.">
+<meta property="og:image" content="https://aoyilmaz.github.io/usturlap/assets/img/og.jpg">
+<meta property="og:url" content="https://aoyilmaz.github.io/usturlap/rehber.html">
+<link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="assets/css/site.css">
+<script>try{var t=localStorage.getItem("usturlap-tema");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+<a class="skip" href="#icerik">İçeriğe geç</a>
+
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="./" aria-label="Usturlap ana sayfa">
+      <img src="assets/img/logo.svg" alt="" width="34" height="34">
+      Usturlap
+    </a>
+    <nav class="site-nav" aria-label="Ana menü">
+      <a href="./#ozellikler">Özellikler</a>
+      <a href="rehber.html" aria-current="page">Rehber</a>
+      <a href="./#kurulum">Kurulum</a>
+      <a class="nav-gh" href="https://github.com/aoyilmaz/usturlap">GitHub</a>
+    </nav>
+    <button class="theme-btn" type="button" aria-label="Temayı değiştir">
+      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2.5M12 20v2.5M1.5 12H4M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="icerik">
+
+<section class="guide-hero">
+  <div class="wrap">
+    <p class="eyebrow">Kullanım rehberi</p>
+    <h1>Arazide Usturlap: bir arama-kurtarma günü</h1>
+    <p class="lead">Kapadokya'da kaybolan bir yürüyüşçüyü arayan gönüllü bir ekibin bir gününü baştan sona izleyin. Her bölümde ekibin hangi aracı neden kullandığını, aracın menüde nerede olduğunu ve nasıl kullanıldığını göreceksiniz. Sonda bütün araçların kısa bir rehberi ve yabancı terimler sözlüğü var.</p>
+    <div class="guide-parts">
+      <a href="#hikaye"><strong>1 · Hikâye</strong><span>Akşam hazırlığından gece dönüşüne, dokuz bölüm</span></a>
+      <a href="#araclar"><strong>2 · Araç rehberi</strong><span>Bütün araçlar: nerede, ne işe yarar</span></a>
+      <a href="#sozluk"><strong>3 · Sözlük</strong><span>MGRS, R&amp;B, geofence, 9 satır, BMNT, CTCSS…</span></a>
+    </div>
+    <p class="credit">Hikâye ve kişiler uydurmadır; bir tatbikat senaryosudur. Ekran görüntüleri Kapadokya'da örnek veriyle alındı. Gerçek bir acil durumda önce 112'yi arayın.</p>
+  </div>
+</section>
+
+<div class="wrap guide">
+  <nav class="toc" aria-label="Bu sayfada">
+    <p class="toc-h">Hikâye</p>
+    <a href="#b0">Akşam: hazırlık</a>
+    <a href="#b1">Şafak: toplanma</a>
+    <a href="#b2">Vadilere iniş</a>
+    <a href="#b3">Gözetleme noktası</a>
+    <a href="#b4">İlk iz</a>
+    <a href="#b5">Telsiz ve GPS sorunu</a>
+    <a href="#b6">Kazazede bulundu</a>
+    <a href="#b7">Gece dönüşü</a>
+    <a href="#b8">Merkezde</a>
+    <p class="toc-h">Başvuru</p>
+    <a href="#harita-ekrani">Harita ekranı</a>
+    <a href="#araclar">Araç rehberi</a>
+    <a href="#sozluk">Sözlük</a>
+  </nav>
+
+  <div class="guide-body">
+
+  <!-- =========================================================== HİKÂYE -->
+  <section class="part" id="hikaye" aria-labelledby="h-hikaye">
+    <p class="eyebrow">1 · Hikâye</p>
+    <h2 id="h-hikaye">Kayıp yürüyüşçü</h2>
+    <p class="part-intro">Cuma akşamı saat 20.00 sularında koordinasyon merkezine bir ihbar gelir: 34 yaşındaki Can, sabah Göreme'den Güvercinlik Vadisi'ne yürüyüşe çıkmış, akşam dönmemiş ve telefonuna ulaşılamıyor. Gönüllü arama-kurtarma ekibinin lideri Elif ile ekip arkadaşı Murat, şafakta aramaya başlayacak. Elif'in telefonunda Usturlap var; çağrı adı <strong>USTURLAP-1</strong>.</p>
+
+    <!-- 0 -->
+    <article class="chapter" id="b0" aria-labelledby="t-b0">
+      <div class="story">
+        <p class="when">Cuma 20.30 · Evde · İnternet var</p>
+        <h3 id="t-b0">Akşam: hazırlık</h3>
+        <p>Elif bilir ki Kapadokya'nın vadilerinde telefon çoğu zaman çekmez. Bu yüzden ilk iş, arama bölgesinin haritasını telefona indirmektir. Haritayı Göreme, Uçhisar ve Çavuşin'i kapsayacak şekilde çerçeveler, uydu ve topografik haritayı birlikte seçer.</p>
+        <div class="tool">
+          <h4>Çevrimdışı bölge indirme</h4>
+          <p class="path"><b>≡</b> → <b>Harita</b> → <b>Çevrimdışı bölgeler</b> → <b>Yeni bölge indir</b></p>
+          <ol>
+            <li>Haritayı kaydırıp yakınlaştırarak alanı sarı çerçevenin içine alın.</li>
+            <li><em>Harita türü</em>nden Uydu ve Topografik'i seçin; <em>Detay</em>da "Arazi (z16)" çoğu iş için yeter.</li>
+            <li>Tahmini boyutu kontrol edip <b>İndir</b>'e dokunun. İndirilen bölge çevrimdışı açılır (<a class="term" href="#g-cevrimdisi">çevrimdışı bölge</a>).</li>
+          </ol>
+        </div>
+        <p>Ardından arazinin yükseklik verisini yükler; ertesi gün nereden nereyi görebileceklerini ve hangi yamacın dik olduğunu hesaplamak için buna ihtiyacı olacak.</p>
+        <div class="tool">
+          <h4>Yükseklik verisi</h4>
+          <p class="path"><b>≡</b> → <b>Harita</b> → <b>Yükseklik verisi</b> → <b>Dosya içe aktar</b></p>
+          <p>Bölgenin <a class="term" href="#g-dted">HGT ya da DTED</a> dosyasını seçin (Kapadokya için N38E034). Görüş alanı, eğim, eş yükselti ve yükseklik profili bu veriyle, çevrimdışı hesaplanır.</p>
+        </div>
+        <p>Vadilerde telsiz de zorlanabilir. Elif en yakın <a class="term" href="#g-role">telsiz rölesini</a> bulur: Uçhisar'ın batısında, Nevşehir Kahveci Dağı'nda bir VHF rölesi var. Frekanslarını not edip telsizine girer.</p>
+        <div class="tool">
+          <h4>Telsiz röleleri</h4>
+          <p class="path"><b>≡</b> → <b>Sistem</b> → <b>Ayarlar</b> → <b>Telsiz röleleri</b> (aç) → Band: <b>VHF</b></p>
+          <ol>
+            <li>Haritada anten simgesine dokunun → <b>Detay</b>.</li>
+            <li>Telsize <em>RX (dinle)</em> 145,600 MHz'i girin, <a class="term" href="#g-shift">shift</a>'i −0,6 MHz yapın; <a class="term" href="#g-ctcss">CTCSS</a> "yok" ise ton girmeyin.</li>
+            <li>Rölenin çevresindeki halka yaklaşık 30 km'lik kaba kapsamadır; gerçek kapsama araziye göre değişir.</li>
+          </ol>
+        </div>
+        <p>Sonra arama planını haritaya döker. Ekibin izleyeceği rotayı (<em>DEVRİYE</em>) Göreme'den kuzeydoğuya doğru noktalarla çizer. Vadideki kayalık, tehlikeli yamacı da bir alan olarak çizip <em>YASAK BÖLGE</em> adını verir ve bir <a class="term" href="#g-geofence">geofence</a> kurar: biri farkında olmadan oraya girerse telefon uyaracak.</p>
+        <div class="tool">
+          <h4>Rota planlama</h4>
+          <p class="path"><b>≡</b> → <b>Navigasyon</b> → <b>Rotalar</b> → <b>Yeni rota planla</b></p>
+          <p>Haritada rota noktalarına sırayla dokunun, bitince kaydedin. Rotanın menüsünden noktalara ad verebilir (KN1, KN2…), yükseklik profilini görebilir, dönüş için ters çevirebilirsiniz.</p>
+        </div>
+        <div class="tool">
+          <h4>Alan çizmek ve geofence kurmak</h4>
+          <p class="path"><b>≡</b> → <b>Veri</b> → <b>Çizim araçları</b> → Alan</p>
+          <ol>
+            <li>Alanın köşelerine dokunun, bitirip ad verin.</li>
+            <li>Çizime dokunun → <b>Geofence</b> → "Girişte" uyarısını seçin.</li>
+            <li>Uygulama arka plandayken de uyarsın istiyorsanız <b>≡</b> → <b>Veri</b> → <b>Geofence</b> → <b>Arka planda da izle</b>.</li>
+          </ol>
+        </div>
+        <p>Son olarak ayarlara bakar: koordinat biçimi <a class="term" href="#g-mgrs">MGRS</a>, kuzey "manyetik" (el pusulasıyla aynı değerleri görmek için), düşük pil uyarısı açık. Planı Murat'ın telefonuna da gönderir.</p>
+        <div class="tool">
+          <h4>Planı paylaşmak</h4>
+          <p class="path"><b>≡</b> → <b>Veri</b> → <b>Dışa aktar</b></p>
+          <p>Ekipte Usturlap ya da <a class="term" href="#g-cot">TAK uyumlu</a> bir uygulama varsa <b>Veri paketi</b>, Google Earth için <b>KMZ</b>, GPS cihazları için <b>GPX</b> seçin. Usturlap'tan Usturlap'a giden dosyada daire, halka ve rota gibi ayrıntılar kaybolmaz.</p>
+        </div>
+      </div>
+      <div class="chapter-media">
+        <figure><div class="phone phone-sm"><img src="assets/shots/cevrimdisi.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Bölge indir paneli: çerçeve, harita türü, ayrıntı ve tahmini boyut."></div><figcaption>Bölge indirme</figcaption></figure>
+        <figure><div class="phone phone-sm"><img src="assets/shots/role-detay.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Nevşehir Kahveci Dağı rölesinin RX, TX, shift ve CTCSS bilgileri."></div><figcaption>Röle ayrıntısı</figcaption></figure>
+        <figure><div class="phone phone-sm"><img src="assets/shots/rehber-ayarlar.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Ayarlar: gece modu, artı imleç, çağrı adı ve koordinat biçimi seçimi."></div><figcaption>Ayarlar</figcaption></figure>
+      </div>
+    </article>
+
+    <!-- 1 -->
+    <article class="chapter" id="b1" aria-labelledby="t-b1">
+      <div class="story">
+        <p class="when">Cumartesi 05.45 · Göreme · Şebeke zayıf</p>
+        <h3 id="t-b1">Şafak: toplanma</h3>
+        <p>Ekip Göreme'nin güneydoğusunda toplanır. Elif önce gün ışığının ne kadar süreceğine bakar: denizci <a class="term" href="#g-alacakaranlik">alacakaranlığı</a> (BMNT) 06.21'de başlıyor, gün 17.29'da batıyor, 18.29'da (EENT) karanlık çöküyor. Aramayı bu pencereye göre planlar.</p>
+        <div class="tool">
+          <h4>Güneş ve ay</h4>
+          <p class="path"><b>≡</b> → <b>Saha</b> → <b>Güneş ve ay</b></p>
+          <p>Alacakaranlık başlangıçları, gün doğumu, öğle, gün batımı, gün ışığı süresi ve ay saatleri bulunduğunuz yer için çevrimdışı hesaplanır.</p>
+        </div>
+        <p>Telefon son bir kez çekerken hava durumuna da bakar: hava kapalı, rüzgâr güneyden hafif, görüş iyi.</p>
+        <div class="tool">
+          <h4>Hava durumu</h4>
+          <p class="path"><b>≡</b> → <b>Saha</b> → <b>Hava durumu</b> → <b>Güncelle</b></p>
+          <p>İnternet ister; konum yaklaşık 11 km'ye yuvarlanarak sorulur. Son alınan bilgi çevrimdışıyken de görünür.</p>
+        </div>
+        <p>Toplanma yerini haritaya işaretler. Haritaya uzun basar, adını <em>TOPLANMA</em> yapar ve türü "Toplanma noktası" seçer. Kaybolan biri olursa herkes buraya dönecek.</p>
+        <div class="tool">
+          <h4>İşaret eklemek</h4>
+          <p class="path">Haritada bir yere <b>uzun bas</b> → <b>İşaret ekle</b></p>
+          <p>Ad, isteğe bağlı not ve tür (nokta, gözetleme, kontrol, toplanma noktası, sensör ya da <a class="term" href="#g-app6">askerî sembol</a>) seçilir. Hızlı işaretlemek için araç çubuğundaki <b>Nokta bırak</b>'ı kullanın: türü seçip haritaya dokunmanız yeter, ad sırayla verilir.</p>
+        </div>
+        <p>Murat telsizden konumunu sorar. Elif sağ alttaki konum kutusuna bakıp okur: "Otuz altı Sierra, X-ray Hotel, beş dokuz dört iki yedi, yedi sekiz üç üç bir." Bu, metre doğruluğunda bir <a class="term" href="#g-mgrs">MGRS</a> koordinatıdır.</p>
+        <div class="tool">
+          <h4>Konum kutusu</h4>
+          <p class="path">Sağ alttaki kutu: <b>dokun</b> → ayrıntı · <b>çift dokun</b> → biçim · çağrı adına <b>dokun</b> → değiştir</p>
+          <p>Kutu çağrı adını, koordinatı, <a class="term" href="#g-msl">MSL</a> yüksekliği, yönü, hızı ve GPS doğruluğunu gösterir. Dokununca UTM, WGS84, DM, DMS, <a class="term" href="#g-sapma">manyetik sapma</a> ve grid yakınsaması da görünür. Çift dokunuş biçimi MGRS → UTM → WGS84 → DM → DMS sırasıyla değiştirir.</p>
+        </div>
+      </div>
+      <div class="chapter-media">
+        <figure><div class="phone phone-sm"><img src="assets/shots/gunes-ay.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Güneş ve ay paneli: BMNT, BMCT, gün doğumu, öğle, gün batımı, EECT, EENT."></div><figcaption>Güneş ve ay</figcaption></figure>
+        <figure><div class="phone phone-sm"><img src="assets/shots/rehber-isaret.webp" width="800" height="1739" loading="lazy" decoding="async" alt="İşaret ekle penceresi: koordinat, ad, not ve tür seçimi."></div><figcaption>İşaret ekle</figcaption></figure>
+        <figure><div class="phone phone-sm"><img src="assets/shots/rehber-konum-kutusu.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Genişletilmiş konum kutusu: MGRS, UTM, WGS84, DM, DMS, sapma ve grid."></div><figcaption>Konum kutusu</figcaption></figure>
+      </div>
+    </article>
+
+    <!-- 2 -->
+    <article class="chapter" id="b2" aria-labelledby="t-b2">
+      <div class="story">
+        <p class="when">06.30 · Vadiye iniş · Şebeke yok</p>
+        <h3 id="t-b2">Vadilere iniş</h3>
+        <p>Vadiye inerken telefonun şebekesi tamamen gider; Usturlap'ın haritası ise indirilmiş olduğu için açık kalır. Elif yürüdükleri yolun kaydını başlatır: akşam koordinasyon merkezine hangi vadileri taradıklarını göstermesi gerekecek.</p>
+        <div class="tool">
+          <h4>İz kaydı</h4>
+          <p class="path">Araç çubuğunda <b>İz kaydı</b> düğmesi (kırmızı olunca kayıtta)</p>
+          <p>Ekran kapalıyken de kaydeder (bunun için konum izninde "her zaman" gerekir). Kayıtlı izler <b>≡</b> → <b>Veri</b> → <b>İzler</b>'de; GPX ya da KML olarak paylaşılabilir.</p>
+        </div>
+        <p>Sonra akşamdan hazırladığı DEVRİYE rotasını takibe alır. Ekranın altındaki şerit sıradaki noktaya mesafeyi ve <a class="term" href="#g-kerteriz">kerterizi</a>, kalan mesafeyi ve tahmini varış saatini gösterir. Bir noktaya varınca telefon bunu sesli söyler.</p>
+        <div class="tool">
+          <h4>Rota takibi</h4>
+          <p class="path"><b>≡</b> → <b>Navigasyon</b> → <b>Rotalar</b> → rotaya <b>dokun</b></p>
+          <p>Şeritteki oklarla önceki ya da sonraki noktaya geçebilir, ✕ ile takibi bırakabilirsiniz. Tek bir hedefe düz hatta gitmek için bir noktaya dokunup <b>Git</b>'i seçin ya da araç çubuğunda <b>Koordinat / Git</b>'e koordinat yazın.</p>
+        </div>
+        <p>Murat yanlış bir patikaya sapınca telefonu öter: "YASAK BÖLGE: girildi." Akşam kurduğu geofence, kayalık yamaca yaklaştığını haber vermiştir. Geri dönüp rotaya katılır.</p>
+        <div class="tool">
+          <h4>Geofence uyarısı</h4>
+          <p>Uyarı uygulama öndeyken sesli okunur ve ekranda görünür; arkadayken bildirim olarak gelir. Girilen ve çıkılan alanların geçmişi <b>≡</b> → <b>Veri</b> → <b>Geofence</b>'de durur.</p>
+        </div>
+      </div>
+      <div class="chapter-media">
+        <figure><div class="phone phone-sm"><img src="assets/shots/rota.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Rota takibi şeridi: ayak, sıradaki noktaya mesafe ve kerteriz, kalan mesafe, varış saati."></div><figcaption>Rota takibi</figcaption></figure>
+        <figure><div class="phone phone-sm"><img src="assets/shots/geofence.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Geofence uyarısı: YASAK BÖLGE alanına girildi."></div><figcaption>Geofence uyarısı</figcaption></figure>
+      </div>
+    </article>
+
+    <!-- 3 -->
+    <article class="chapter" id="b3" aria-labelledby="t-b3">
+      <div class="story">
+        <p class="when">09.15 · Uçhisar Kalesi · Gözetleme</p>
+        <h3 id="t-b3">Gözetleme noktası</h3>
+        <p>Murat aramaya devam ederken Elif, bölgenin en yüksek noktası olan Uçhisar Kalesi'ne çıkar. Buraya <em>GN-1</em> adında bir gözetleme noktası koymuştu. Asıl sorusu şu: buradan dürbünle hangi vadilerin içini görebilirim, hangileri gözden saklı kalır?</p>
+        <div class="tool">
+          <h4>Görüş alanı</h4>
+          <p class="path"><b>≡</b> → <b>Ölçüm</b> → <b>Görüş alanı</b></p>
+          <ol>
+            <li>Gözlemci olarak <b>Konumum</b>'u ya da harita ortasını seçin.</li>
+            <li>Gözlemci yüksekliğini (kalede 10 m), görülecek hedefi (ayakta bir insan) ve yarıçapı belirleyin.</li>
+            <li><b>Hesapla</b>. Yeşil alanlar görülür, kırmızılar görülmez. Bitki örtüsü ve binalar hesaba katılmaz (<a class="term" href="#g-gorus-alani">görüş alanı</a>).</li>
+          </ol>
+        </div>
+        <p>Haritadaki kırmızı lekeler, kaleden görülemeyen vadi diplerini gösterir. Elif, Murat'ı bunlardan en yakınına yönlendirir. Önce yolun ne kadar dik olduğuna bakar.</p>
+        <div class="tool">
+          <h4>Arazi analizi: eğim ve eş yükselti</h4>
+          <p class="path"><b>≡</b> → <b>Ölçüm</b> → <b>Arazi analizi</b></p>
+          <p>Seçilen alan için <a class="term" href="#g-egim">eğim</a> renklendirmesi (kırmızı = dik) ya da yükseklik katmanı çizer; <b>Eğrileri çiz</b> ile <a class="term" href="#g-es-yukselti">eş yükselti eğrileri</a> eklenir. İki nokta arasındaki iniş-çıkışları görmek için bir çizgiye ya da rotaya dokunup <b>Profil</b>'i seçin.</p>
+        </div>
+        <p>Kaleden ileriye, yaklaşık kuzeydoğu yönünde bir ışık parlaması görür. Telefonu o yöne tutar ve kerterizi kilitler.</p>
+        <div class="tool">
+          <h4>Taktik pusula</h4>
+          <p class="path"><b>≡</b> → <b>Navigasyon</b> → <b>Taktik pusula</b> (ya da pusula okuna uzun bas)</p>
+          <p>Büyük pusula gülü, telefonun baktığı yönü ve <a class="term" href="#g-kerteriz">ters kerterizi</a> gösterir. <b>Kerterizi kilitle</b> ile yön sabitlenir; yürürken "DOĞRU" bandından ne kadar saptığınızı görürsünüz. <b>Kerteriz gir</b> ile bir telsiz mesajındaki yönü elle yazabilirsiniz.</p>
+        </div>
+        <p>Işığın geldiği yere olan mesafeyi kestirmek için haritada kaleden o noktaya bir çizgi çeker.</p>
+        <div class="tool">
+          <h4>Mesafe-kerteriz çizgisi (R&amp;B)</h4>
+          <p class="path">Araç çubuğunda <b>Ölçüm (R&amp;B)</b> → <b>Mesafe / R&amp;B</b> → iki noktaya dokun</p>
+          <p><a class="term" href="#g-rb">R&amp;B</a> çizgisi mesafeyi, kerterizi, ters kerterizi, yükseklik farkını ve eğimi gösterir. Uçları bir noktaya bağlanırsa nokta taşındığında çizgi de güncellenir.</p>
+        </div>
+      </div>
+      <div class="chapter-media">
+        <figure><div class="phone phone-sm"><img src="assets/shots/gorus-alani.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Uçhisar'daki gözetleme noktasından görülen yerler yeşil, görülmeyenler kırmızı."></div><figcaption>Görüş alanı</figcaption></figure>
+        <figure><div class="phone phone-sm"><img src="assets/shots/arazi.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Eğim renklendirmesi ve eş yükselti eğrileri."></div><figcaption>Eğim ve eş yükselti</figcaption></figure>
+        <figure><div class="phone phone-sm"><img src="assets/shots/taktik-pusula.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Taktik pusula: 035° ve ters kerteriz 215°, kerteriz kilidi."></div><figcaption>Taktik pusula</figcaption></figure>
+      </div>
+    </article>
+
+    <!-- 4 -->
+    <article class="chapter" id="b4" aria-labelledby="t-b4">
+      <div class="story">
+        <p class="when">11.40 · Güvercinlik Vadisi · İz</p>
+        <h3 id="t-b4">İlk iz</h3>
+        <p>Murat, ışığın görüldüğü yönde bir patikanın kenarında yere düşmüş bir su şişesi bulur. Yerini hemen işaretler ve fotoğrafını çeker; fotoğraf bulunduğu yere yeni bir nokta olarak eklenir.</p>
+        <div class="tool">
+          <h4>Hızlı fotoğraf ve galeri</h4>
+          <p class="path"><b>≡</b> → <b>Veri</b> → <b>Hızlı fotoğraf</b></p>
+          <p>Kamera açılır; çektiğiniz fotoğraf bulunduğunuz yerde yeni bir noktaya (FOTO-1, FOTO-2…) bağlanır. Bütün fotoğraflar <b>≡</b> → <b>Veri</b> → <b>Galeri</b>'de; fotoğrafa dokununca haritada yerine gidilir.</p>
+        </div>
+        <p>Elif telsizden yeri sormak ister, ama açık telsizde tam koordinat okumak istemez. Akşamdan Göreme'nin ortasına bir <a class="term" href="#g-bullseye">bullseye</a> kurmuşlardı. Murat konumunu bu ortak noktaya göre söyler: "Bullseye'dan yüz elli derece, beş yüz metre."</p>
+        <div class="tool">
+          <h4>Bullseye</h4>
+          <p class="path"><b>≡</b> → <b>Ölçüm</b> → <b>Bullseye</b></p>
+          <ol>
+            <li><b>Konumuma kur</b> ya da <b>Harita ortasına kur</b>.</li>
+            <li>Halka aralığını ve sayısını seçin; haritada eş merkezli halkalar ve 30°'de bir yön ışınları çizilir.</li>
+            <li>Paneldeki "BE 150° / 501 m" satırı, sizin bullseye'a göre yerinizdir; herkes aynı merkezi bildiği için telsizde kısa ve anlaşılır olur.</li>
+          </ol>
+        </div>
+        <p>Elif, şişenin bulunduğu noktaya dokunur ve açılan menüden noktayı Murat'a gönderir.</p>
+        <div class="tool">
+          <h4>Radyal menü</h4>
+          <p class="path">Haritadaki bir noktaya <b>dokun</b></p>
+          <p>Noktanın çevresinde düğmeler açılır: <b>Detay</b> (ad, not, fotoğraf, yükseklik), <b>Git</b>, <b>Takip</b>, <b>R&amp;B</b>, <b>Halka</b> (<a class="term" href="#g-menzil">menzil halkası</a>), <b>Taşı</b>, <b>Paylaş</b>, <b>Sil</b>. Çizimlere dokununca <b>Düzenle</b>, <b>Şekil</b>, <b>Geofence</b>, <b>Profil</b> çıkar.</p>
+        </div>
+      </div>
+      <div class="chapter-media">
+        <figure><div class="phone phone-sm"><img src="assets/shots/rehber-bullseye.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Bullseye paneli: merkez, konumun bullseye'a göre kerterizi ve mesafesi, halka aralığı ve sayısı."></div><figcaption>Bullseye</figcaption></figure>
+        <figure><div class="phone phone-sm"><img src="assets/shots/olcum.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Mesafe-kerteriz çizgisinin ayrıntısı: mesafe, kerteriz, ters kerteriz, yükseklik ve eğim."></div><figcaption>R&amp;B ayrıntısı</figcaption></figure>
+      </div>
+    </article>
+
+    <!-- 5 -->
+    <article class="chapter" id="b5" aria-labelledby="t-b5">
+      <div class="story">
+        <p class="when">13.20 · Dar vadi · Telsiz ve GPS zayıf</p>
+        <h3 id="t-b5">Telsiz ve GPS sorunu</h3>
+        <p>Murat dar ve derin bir vadiye girince telsizdeki sesi parçalanmaya başlar. Doğrudan bağlantı yetmiyor. Elif röleye geçmeye karar verir; röleye doğru biraz yükselmenin yardımcı olacağını bilir.</p>
+        <div class="tool">
+          <h4>Röleye yönelmek</h4>
+          <p class="path">Haritada anten simgesine <b>dokun</b> → <b>Git</b> ya da <b>R&amp;B</b></p>
+          <p><b>Git</b>, röleye düz hatta kerteriz ve mesafeyi ekranın altındaki şeritte gösterir. Telsizi RX 145,600 / TX 145,000 MHz'e ayarlayın (<a class="term" href="#g-shift">shift</a> −0,6). Röle kullanmak için <a class="term" href="#g-role">amatör telsiz ehliyeti</a> gerekir.</p>
+        </div>
+        <p>Vadinin dibinde Murat'ın GPS'i de şaşırır; konum kutusundaki doğruluk ±60 m'ye çıkar. Elif ona eski usulü hatırlatır: iki bilinen noktaya el pusulasıyla kerteriz almak. Murat, kaledeki GN-1'e ve toplanma noktasındaki direğe yön alır.</p>
+        <div class="tool">
+          <h4>Geriden kestirme</h4>
+          <p class="path"><b>≡</b> → <b>Navigasyon</b> → <b>Geriden kestirme</b></p>
+          <ol>
+            <li><b>Nokta 1</b> ve <b>Nokta 2</b>'de bilinen iki noktayı seçin; her birine pusulayla aldığınız kerterizi yazın.</li>
+            <li>Mümkünse üçüncü noktayı da ekleyin; en iyisi aralarında yaklaşık 90° olan noktalar.</li>
+            <li>Haritada bulunan yer ve hata alanı görünür. <b>Konumum yap</b> ile konumunuz bu noktaya çekilir (<a class="term" href="#g-kestirme">geriden kestirme</a>).</li>
+          </ol>
+        </div>
+        <div class="tool">
+          <h4>Konumu elle düzeltmek</h4>
+          <p class="path">Kendi işaretine (ok) <b>dokun</b> → <b>Düzelt</b></p>
+          <p>Haritada bir yere dokunarak, koordinat yazarak ya da bilinen bir noktadan kerteriz ve mesafeyle konumunuzu elle verebilirsiniz; elle verilen konum turuncu görünür. <b>GPS'e dön</b> ile yeniden GPS'e geçilir.</p>
+        </div>
+      </div>
+      <div class="chapter-media">
+        <figure><div class="phone phone-sm"><img src="assets/shots/roleler.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Kapadokya çevresindeki telsiz röleleri ve seçili rölenin kapsama halkası."></div><figcaption>Röleler</figcaption></figure>
+        <figure><div class="phone phone-sm"><img src="assets/shots/rehber-kestirme.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Geriden kestirme paneli: iki nokta, kerteriz alanları, üçüncü nokta ve pusula hassasiyeti."></div><figcaption>Geriden kestirme</figcaption></figure>
+      </div>
+    </article>
+
+    <!-- 6 -->
+    <article class="chapter" id="b6" aria-labelledby="t-b6">
+      <div class="story">
+        <p class="when">14.05 · Vadi dibi · Kazazede</p>
+        <h3 id="t-b6">Kazazede bulundu</h3>
+        <p>Su şişesinden yaklaşık 400 metre ileride Murat, Can'ı bir kaya çıkıntısının dibinde bulur. Bilinci açık ama ayak bileği kırık, yürüyemiyor. Elif hemen bir tahliye isteği hazırlar. Kurtarma ekipleri bu isteği standart bir biçimde, satır satır bekler.</p>
+        <div class="tool">
+          <h4>CASEVAC 9 satır</h4>
+          <p class="path"><b>≡</b> → <b>Saha</b> → <b>Raporlar</b> → <b>CASEVAC 9 satır</b></p>
+          <ol>
+            <li><em>1) Alım yeri</em>: <b>Konumum</b> ya da <b>Harita ortası</b> ile MGRS kendiliğinden dolar.</li>
+            <li><em>2) Frekans ve çağrı adı</em>, <em>3) öncelik</em> (A: acil), <em>4) özel teçhizat</em>, <em>5) sedyeli / yürüyebilen</em>, <em>7) işaretleme</em> (ör. duman) gibi satırları seçin.</li>
+            <li>Alttaki rapor metni telsizden okunmaya hazırdır: <b>Kopyala</b>, <b>Paylaş</b> ya da <b>Haritaya ekle</b>. Satırların anlamı için <a class="term" href="#g-casevac">sözlük</a>.</li>
+          </ol>
+        </div>
+        <p>Helikopter için yakında düz ve yeterince geniş bir alan gerekir. Elif eğim katmanında yeşil (düz) bir tarlayı seçer ve alanını ölçer: 78 hektar, fazlasıyla yeterli.</p>
+        <div class="tool">
+          <h4>Alan ölçümü</h4>
+          <p class="path">Araç çubuğunda <b>Ölçüm (R&amp;B)</b> → <b>Alan</b> → köşelere dokun</p>
+          <p>Alanı ve çevreyi canlı gösterir; geri al ve temizle düğmeleri şeritte. Kalıcı bir çizim olarak saklamak için <b>Çizim araçları</b>'nı kullanın.</p>
+        </div>
+        <p>Kurtarma ekibi Göreme'den yola çıkınca Elif, ekibin kazazedeye ne kadar kaldığını izlemek için bir takip açar. Varış süresi 15 dakikanın altına inince şerit sarıya, 5 dakikanın altında kırmızıya döner.</p>
+        <div class="tool">
+          <h4>Takip</h4>
+          <p class="path"><b>≡</b> → <b>Navigasyon</b> → <b>Takip (Bloodhound)</b> ya da noktaya dokun → <b>Takip</b></p>
+          <p>Başlangıç (genellikle "Ben") ve hedef seçilir; haritada ikisi arasında canlı bir çizgi, şeritte kerteriz, mesafe ve varış süresi görünür. Renk eşikleri panelden ayarlanır (<a class="term" href="#g-takip">takip</a>).</p>
+        </div>
+      </div>
+      <div class="chapter-media">
+        <figure><div class="phone phone-sm"><img src="assets/shots/rehber-casevac.webp" width="800" height="1739" loading="lazy" decoding="async" alt="CASEVAC 9 satır formu: alım yeri MGRS, frekans ve çağrı adı, önceliğe göre hasta sayısı, özel teçhizat."></div><figcaption>CASEVAC 9 satır</figcaption></figure>
+        <figure><div class="phone phone-sm"><img src="assets/shots/olcum-alan.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Alan ölçümü: 78,23 hektar, çevre 3,43 km."></div><figcaption>Alan ölçümü</figcaption></figure>
+        <figure><div class="phone phone-sm"><img src="assets/shots/rehber-takip.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Takip paneli: başlangıç, hedef ve varış süresi renkleri."></div><figcaption>Takip</figcaption></figure>
+      </div>
+    </article>
+
+    <!-- 7 -->
+    <article class="chapter" id="b7" aria-labelledby="t-b7">
+      <div class="story">
+        <p class="when">17.50 · Karanlık çökerken · Dönüş</p>
+        <h3 id="t-b7">Gece dönüşü</h3>
+        <p>Can helikopterle hastaneye götürüldükten sonra ekip geri döner. Hava kararmıştır; parlak ekran hem gözü kamaştırır hem de karanlığa alışmış gözü bozar. Elif gece moduna geçer: arayüz ve harita kırmızı tonlara bürünür.</p>
+        <div class="tool">
+          <h4>Gece modu</h4>
+          <p class="path"><b>≡</b> → <b>Sistem</b> → <b>Ayarlar</b> → <b>Gece modu</b></p>
+          <p>Işık disiplini için karartma ve kırmızı renkler. Araç çubuğuna da eklenebilir (<b>≡</b> → <b>Sistem</b> → <b>Araç çubuğu</b>).</p>
+        </div>
+        <p>Dönüş için sabahki rotayı ters çevirir; böylece aynı kontrol noktalarından geri dönerler.</p>
+        <div class="tool">
+          <h4>Rotayı ters çevirmek</h4>
+          <p class="path"><b>≡</b> → <b>Navigasyon</b> → <b>Rotalar</b> → rotanın <b>⋮</b> menüsü → <b>Ters çevir (dönüş)</b></p>
+          <p>Ardından rotaya dokunup takibe alın.</p>
+        </div>
+        <div class="tool">
+          <h4>Ekranı açık tutmak, pil</h4>
+          <p class="path"><b>≡</b> → <b>Sistem</b> → <b>Ayarlar</b></p>
+          <p><b>Ekranı açık tut</b> rota izlerken ekranın kararmasını önler. <b>Düşük pil uyarısı</b> %20, %10 ve %5'te titreşim ve uyarı verir. <b>İz kaydı kendiliğinden dursun</b> ile kayıt seçtiğiniz süre (ör. 2 saat) dolunca kendiliğinden durur; kapatmayı unutsanız da pil boşa gitmez.</p>
+        </div>
+      </div>
+      <div class="chapter-media">
+        <figure><div class="phone phone-sm"><img src="assets/shots/gece.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Gece modu: harita ve arayüz kırmızı tonlarda."></div><figcaption>Gece modu</figcaption></figure>
+      </div>
+    </article>
+
+    <!-- 8 -->
+    <article class="chapter" id="b8" aria-labelledby="t-b8">
+      <div class="story">
+        <p class="when">20.10 · Koordinasyon merkezi · İnternet var</p>
+        <h3 id="t-b8">Merkezde</h3>
+        <p>Merkezde Elif günün kaydını teslim eder. İz kaydını durdurur. Taradıkları vadilerin izini GPX olarak, bulunan iz ve kazazede noktalarını KML olarak gönderir; merkez bunları bilgisayardaki haritaya yükler. Diğer ekipteki arkadaşı Usturlap kullandığı için ona bütün günü tek bir veri paketi olarak AirDrop'la yollar.</p>
+        <div class="tool">
+          <h4>Dışa aktarma ve veri paketi</h4>
+          <p class="path"><b>≡</b> → <b>Veri</b> → <b>Dışa aktar</b></p>
+          <p>Biçimi (<a class="term" href="#g-kml">KMZ, KML</a>, <a class="term" href="#g-gpx">GPX</a>, GeoJSON, <a class="term" href="#g-veri-paketi">veri paketi</a>) ve neyin gideceğini (noktalar, çizimler, izler, R&amp;B çizgileri, halkalar) seçin. Gelen bir dosya iPhone'da Dosyalar ya da AirDrop'tan "Usturlap ile aç" ile açılır; içe aktarmadan önce neyin alınacağı gösterilir.</p>
+        </div>
+        <p>Son olarak telefonun yedeğini alır: bütün noktalar, çizimler, izler ve fotoğraflar tek bir şifreli dosyada.</p>
+        <div class="tool">
+          <h4>Şifreli yedek</h4>
+          <p class="path"><b>≡</b> → <b>Sistem</b> → <b>Yedekle / geri yükle</b></p>
+          <p>Bir parola belirleyin; yedek bu parolayla şifrelenir (AES-256). Parola unutulursa yedek açılamaz. Harita dosyaları ve yükseklik verisi büyük olduğu için yedeğe girmez.</p>
+        </div>
+        <div class="tool">
+          <h4>Haritayı temizlemek ve acil silme</h4>
+          <p class="path"><b>≡</b> → <b>Harita</b> → <b>Haritayı temizle</b> · <b>≡</b> → <b>Sistem</b> → <b>Acil veri silme</b></p>
+          <p><b>Haritayı temizle</b> seçtiğiniz türleri (ör. tatbikatın çizimleri) siler ya da yalnız gizler; geri alınabilir. <b>Acil veri silme</b> ise telefon kaybolma ya da ele geçme tehlikesindeyse bütün içeriği kalıcı olarak siler; isterseniz indirilen haritaları da.</p>
+        </div>
+        <p class="moral">Can'ın ailesi gece yarısı hastaneden aradığında Elif telefonunu şarja takmıştı bile. Ertesi hafta ekip, aynı vadilerde bir tatbikat yaptı; bu sefer herkesin telefonunda harita önceden indirilmişti.</p>
+      </div>
+      <div class="chapter-media">
+        <figure><div class="phone phone-sm"><img src="assets/shots/disa-aktar.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Dışa aktar paneli: KMZ, veri paketi, KML, GPX, GeoJSON ve nesne türleri."></div><figcaption>Dışa aktar</figcaption></figure>
+        <figure><div class="phone phone-sm"><img src="assets/shots/yedek.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Yedekle / geri yükle paneli."></div><figcaption>Şifreli yedek</figcaption></figure>
+      </div>
+    </article>
+  </section>
+
+  <!-- =========================================================== HARİTA EKRANI -->
+  <section class="part" id="harita-ekrani" aria-labelledby="h-ekran">
+    <p class="eyebrow">2 · Araç rehberi</p>
+    <h2 id="h-ekran">Harita ekranı</h2>
+    <p class="part-intro">Usturlap'ta her şey tek ekranda. Araçlar sol üstteki çubukta, bütün liste <b>≡</b> düğmesinde. Düğmeler eldivenle basılacak kadar büyük.</p>
+    <div class="screen-map">
+      <figure><div class="phone phone-sm"><img src="assets/shots/ana-ekran.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Ana ekran: sol üstte araç çubuğu, altında pusula, kendine ortala ve yakınlaştırma; sağ altta konum kutusu."></div></figure>
+      <dl class="screen-keys">
+        <dt>Araç çubuğu (sol üst)</dt>
+        <dd><b>≡</b> bütün araçlar; yanında varsayılan olarak Nokta bırak, Ölçüm (R&amp;B), Koordinat / Git, Haritalar ve İz kaydı. Çubuğa hangi araçların konacağı <b>≡</b> → <b>Sistem</b> → <b>Araç çubuğu</b>'ndan seçilir.</dd>
+        <dt>Pusula oku</dt>
+        <dd>Kırmızı uç kuzeyi gösterir. Dokunmak <a class="term" href="#g-track-up">kuzey-yukarı ile yön-yukarı</a> arasında geçirir. Uzun basınca döndürme kilidi, <a class="term" href="#g-3b">3B arazi</a> ve taktik pusula düğmeleri açılır.</dd>
+        <dt>◎ Kendine ortala</dt>
+        <dd>Haritayı konumunuza getirir ve takip eder; haritayı elle kaydırınca takip bırakılır.</dd>
+        <dt>＋ / −</dt>
+        <dd>Yakınlaştırma; iki parmakla da yapılır.</dd>
+        <dt>Konum kutusu (sağ alt)</dt>
+        <dd>Dokun: ayrıntı · çift dokun: koordinat biçimi · çağrı adına dokun: değiştir.</dd>
+        <dt>Haritaya uzun bas</dt>
+        <dd>O noktaya işaret ekle.</dd>
+        <dt>Bir nesneye dokun</dt>
+        <dd>Radyal menü: Detay, Git, Takip, R&amp;B, Halka, Taşı, Paylaş, Sil (çizimlerde Düzenle, Şekil, Geofence, Profil).</dd>
+        <dt>Kendi işaretine dokun</dt>
+        <dd>Ortala, Düzelt (elle konum), GPS'e dön, Daire (GPS doğruluk dairesi), Pusula (çevrende pusula gülü), 15 dk (son 15 dakikanın izi), R&amp;B.</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- =========================================================== ARAÇLAR -->
+  <section class="part" id="araclar" aria-labelledby="h-araclar">
+    <h2 id="h-araclar">Bütün araçlar</h2>
+    <p class="part-intro"><b>≡</b> düğmesindeki bölümlere göre. "Nerede" sütunu ≡ ızgarasındaki yolu gösterir.</p>
+
+    <h3 class="tools-h">Navigasyon</h3>
+    <div class="table-scroll"><table class="tools">
+      <thead><tr><th scope="col">Araç</th><th scope="col">Nerede</th><th scope="col">Ne işe yarar</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Koordinat / Git</th><td>Araç çubuğu · Navigasyon</td><td>MGRS, UTM ya da enlem-boylam yazıp o noktayı <b>Göster</b>, <b>Kaydet</b> ya da düz hatta <b>Git</b>. Kendi konumunuzu kopyalamak için de.</td></tr>
+        <tr><th scope="row">Takip (Bloodhound)</th><td>Navigasyon</td><td>İki nesne arasında canlı kerteriz, mesafe ve varış süresi; süre eşiklerinde renk ve titreşim.</td></tr>
+        <tr><th scope="row">Geriden kestirme</th><td>Navigasyon</td><td>Bilinen 2–3 noktaya alınan pusula kerterizlerinden konum ve hata alanı.</td></tr>
+        <tr><th scope="row">Taktik pusula</th><td>Navigasyon · pusula okuna uzun bas</td><td>Büyük pusula gülü, ters kerteriz, kerteriz kilidi ve sapma bandı.</td></tr>
+        <tr><th scope="row">Rotalar</th><td>Navigasyon</td><td>Rota planlama, takip (sıradaki nokta, kalan mesafe, varış), sesli uyarı; ters çevirme, nokta adları, yükseklik profili, GPX/KML paylaşımı.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 class="tools-h">Ölçüm</h3>
+    <div class="table-scroll"><table class="tools">
+      <thead><tr><th scope="col">Araç</th><th scope="col">Nerede</th><th scope="col">Ne işe yarar</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Mesafe / R&amp;B</th><td>Araç çubuğu: Ölçüm (R&amp;B) · Ölçüm</td><td>İki nokta arası mesafe, kerteriz, ters kerteriz, yükseklik farkı ve eğim; uçlar noktalara bağlanabilir.</td></tr>
+        <tr><th scope="row">Alan</th><td>Ölçüm</td><td>Köşelere dokunarak alan ve çevre ölçümü.</td></tr>
+        <tr><th scope="row">Sektör</th><td>Ölçüm</td><td>Merkez, yarıçap ve iki kerteriz arasındaki dilim (ör. bir gözcünün sorumlu olduğu yön aralığı).</td></tr>
+        <tr><th scope="row">Menzil halkası</th><td>Ölçüm · noktaya dokun → Halka</td><td>Bir merkez çevresinde 500 m, 1 km… gibi eş mesafe halkaları.</td></tr>
+        <tr><th scope="row">Görüş hattı</th><td>Ölçüm</td><td>İki nokta arasında görüşün engellenip engellenmediği, arazi profiliyle.</td></tr>
+        <tr><th scope="row">Bullseye</th><td>Ölçüm</td><td>Herkesin bildiği ortak bir merkez; yerler bu merkeze göre "kerteriz / mesafe" olarak söylenir.</td></tr>
+        <tr><th scope="row">Görüş alanı</th><td>Ölçüm</td><td>Bir noktadan görülen (yeşil) ve görülmeyen (kırmızı) yerler; yükseklik verisi gerekir.</td></tr>
+        <tr><th scope="row">Arazi analizi</th><td>Ölçüm</td><td>Eğim ya da yükseklik renklendirmesi ve eş yükselti eğrileri; yükseklik verisi gerekir.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 class="tools-h">Veri</h3>
+    <div class="table-scroll"><table class="tools">
+      <thead><tr><th scope="col">Araç</th><th scope="col">Nerede</th><th scope="col">Ne işe yarar</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Nokta bırak</th><td>Araç çubuğu · Veri</td><td>Paletten tür seç (Sadakat, Görev, Tehlike sekmeleri), haritaya dokun; ad sırayla verilir. Artı imleç açıksa nokta ekran ortasına konur.</td></tr>
+        <tr><th scope="row">İz kaydı</th><td>Araç çubuğu · Veri</td><td>Yürüdüğünüz yolu kaydeder; ekran kapalıyken de.</td></tr>
+        <tr><th scope="row">Noktalar · İzler · Çizimler</th><td>Veri</td><td>Listeler; dokununca haritada ortalar, ad ve özellik değiştirilir.</td></tr>
+        <tr><th scope="row">Çizim araçları</th><td>Veri</td><td>Alan, çizgi, daire, dikdörtgen, serbest çizim; yükseklik verilirse 3B kutu. Çizime dokun → <b>Şekil</b> ile köşeler sonradan düzenlenir.</td></tr>
+        <tr><th scope="row">Seç (lasso)</th><td>Veri</td><td>Parmakla bir çevre çizerek içindeki nesneleri toplu seçme: etiket ekle, dışa aktar ya da sil.</td></tr>
+        <tr><th scope="row">Hızlı fotoğraf · Galeri</th><td>Veri</td><td>Çekilen fotoğraf bulunduğunuz yere nokta olarak eklenir; galeride bütün fotoğraflar.</td></tr>
+        <tr><th scope="row">Geofence</th><td>Veri · çizime dokun → Geofence</td><td>Alanlara girişte, çıkışta ya da ikisinde uyarı; arka planda izleme ve geçmiş.</td></tr>
+        <tr><th scope="row">İçe aktar · Dışa aktar</th><td>Veri</td><td>KML, KMZ, GPX, GeoJSON ve TAK uyumlu veri paketi alışverişi; içe aktarmadan önce önizleme.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 class="tools-h">Saha</h3>
+    <div class="table-scroll"><table class="tools">
+      <thead><tr><th scope="col">Araç</th><th scope="col">Nerede</th><th scope="col">Ne işe yarar</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Raporlar</th><td>Saha</td><td>CASEVAC 9 satır (tahliye isteği) ve SPOTREP (gözlem raporu); konum MGRS olarak dolar, metin kopyalanır, paylaşılır ya da haritaya eklenir.</td></tr>
+        <tr><th scope="row">Hava durumu</th><td>Saha</td><td>Anlık durum ve 24 saatlik tahmin (Open-Meteo); internet ister.</td></tr>
+        <tr><th scope="row">Güneş ve ay</th><td>Saha</td><td>Alacakaranlıklar, gün doğumu ve batımı, gün ışığı süresi, ay saatleri; çevrimdışı.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 class="tools-h">Harita</h3>
+    <div class="table-scroll"><table class="tools">
+      <thead><tr><th scope="col">Araç</th><th scope="col">Nerede</th><th scope="col">Ne işe yarar</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Haritalar</th><td>Araç çubuğu · Harita</td><td>Altlık seçimi: Uydu, Sokak, Topografik, OpenStreetMap, OpenTopoMap ve içe aktardığınız harita paketleri.</td></tr>
+        <tr><th scope="row">Overlay yöneticisi</th><td>Harita</td><td>Nokta türlerini, çizimleri, R&amp;B çizgilerini, halkaları ve röleleri göster/gizle; #etiket süzgeci.</td></tr>
+        <tr><th scope="row">Kayıtlı görünümler</th><td>Harita</td><td>Sık baktığınız harita görünümlerini kaydedip tek dokunuşla dönme.</td></tr>
+        <tr><th scope="row">Haritayı temizle</th><td>Harita</td><td>Seçilen türleri silme ya da yalnız gizleme; geri alınabilir.</td></tr>
+        <tr><th scope="row">Yükseklik verisi</th><td>Harita</td><td>HGT / DTED dosyalarını içe aktarma ve haritada kapsamını görme.</td></tr>
+        <tr><th scope="row">Çevrimdışı bölgeler</th><td>Harita</td><td>Bölge indirme (harita türü ve ayrıntı seçerek), indirilenleri görme ve silme.</td></tr>
+        <tr><th scope="row">Harita paketi içe aktar</th><td>Harita</td><td>Kendi MBTiles, PMTiles ya da GeoPackage harita dosyalarınızı ekleme.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 class="tools-h">Sistem</h3>
+    <div class="table-scroll"><table class="tools">
+      <thead><tr><th scope="col">Araç</th><th scope="col">Nerede</th><th scope="col">Ne işe yarar</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Ayarlar</th><td>Sistem</td><td>Gece modu, artı imleç, çağrı adı, koordinat biçimi, kuzey ve açı birimi, sesli uyarılar, ekranı açık tutma, iz kaydını kendiliğinden durdurma, düşük pil uyarısı, iz doğruluk filtresi, telsiz röleleri.</td></tr>
+        <tr><th scope="row">Araç çubuğu</th><td>Sistem</td><td>Çubukta hangi araçların hangi sırayla duracağı (en çok 6).</td></tr>
+        <tr><th scope="row">Yedekle / geri yükle</th><td>Sistem</td><td>Parolayla şifreli yedek dosyası (.krz) ve geri yükleme.</td></tr>
+        <tr><th scope="row">Acil veri silme</th><td>Sistem</td><td>Bütün içeriği kalıcı olarak silme; isteğe bağlı olarak indirilen haritalarla birlikte.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- =========================================================== SÖZLÜK -->
+  <section class="part" id="sozluk" aria-labelledby="h-sozluk">
+    <p class="eyebrow">3 · Sözlük</p>
+    <h2 id="h-sozluk">Yabancı terimler ve kısaltmalar</h2>
+    <p class="part-intro">Uygulamada ve bu rehberde geçen terimler. Parantez içinde İngilizce açılımı.</p>
+
+    <h3 class="gloss-h">Konum ve koordinat</h3>
+    <dl class="glossary">
+      <dt id="g-mgrs">MGRS <span>Military Grid Reference System</span></dt>
+      <dd>Dünyayı kare kare bölen ızgara sistemi; telsizde okunması kolay olduğu için arama-kurtarma ve askerî işlerde yaygındır. <code>36S XH 59427 78331</code> şöyle okunur: <b>36S</b> bölge (UTM dilimi ve enlem bandı), <b>XH</b> 100 km'lik kare, <b>59427</b> doğuya, <b>78331</b> kuzeye doğru metre. Rakam sayısı doğruluğu belirler: 5+5 hane 1 m, 4+4 hane 10 m, 3+3 hane 100 m.</dd>
+      <dt id="g-utm">UTM <span>Universal Transverse Mercator</span></dt>
+      <dd>Dünyayı 60 dilime bölen, konumu metre cinsinden doğu ve kuzey değerleriyle veren koordinat sistemi. MGRS bunun üzerine kuruludur.</dd>
+      <dt id="g-wgs84">WGS84</dt>
+      <dd>GPS'in kullandığı dünya modeli. "Enlem, boylam" (ör. 38.6392°N, 34.8318°E) bu modelle verilir.</dd>
+      <dt id="g-dms">DM / DMS</dt>
+      <dd>Enlem-boylamın derece-dakika (38°38.352′) ve derece-dakika-saniye (38°38′21.1″) yazımları. Eski haritalarda ve denizcilikte yaygındır.</dd>
+      <dt id="g-msl">MSL <span>Mean Sea Level</span></dt>
+      <dd>Ortalama deniz seviyesinden yükseklik. Konum kutusundaki "1105 m MSL" budur.</dd>
+      <dt id="g-track-up">Kuzey-yukarı / yön-yukarı <span>north-up / track-up</span></dt>
+      <dd>Kuzey-yukarıda harita hep kuzeyi yukarıda tutar. Yön-yukarıda harita, gittiğiniz yön yukarıda kalacak şekilde döner; yürürken sağ-sol karıştırmamak için kullanışlıdır.</dd>
+    </dl>
+
+    <h3 class="gloss-h">Yön ve mesafe</h3>
+    <dl class="glossary">
+      <dt id="g-kerteriz">Kerteriz ve ters kerteriz <span>bearing / back bearing</span></dt>
+      <dd>Kerteriz, bir noktaya olan yönün kuzeyden saat yönünde açısıdır (0–360°): 90° doğu, 180° güney. Ters kerteriz bunun tam tersidir (±180°); bulunduğunuz yere geri dönüş yönünü verir.</dd>
+      <dt id="g-kuzey">Coğrafi, manyetik ve grid kuzey</dt>
+      <dd>Coğrafi kuzey Kuzey Kutbu'nu, manyetik kuzey pusula iğnesinin gösterdiği yönü, grid kuzey de harita ızgarasının dikey çizgilerini gösterir. Usturlap kerterizleri seçtiğiniz kuzeye göre yazar; el pusulasıyla çalışırken "manyetik" seçin.</dd>
+      <dt id="g-sapma">Manyetik sapma ve grid yakınsaması</dt>
+      <dd>Sapma, coğrafi ve manyetik kuzey arasındaki açıdır (Kapadokya'da yaklaşık 6° doğu); Usturlap bunu dünya manyetik modeliyle (WMM2025) hesaplar. Grid yakınsaması da coğrafi ve grid kuzey arasındaki açıdır.</dd>
+      <dt id="g-mil">Mil (açı birimi)</dt>
+      <dd>Tam turun 6400 parçaya bölündüğü açı birimi (NATO mili). Derecenin yerine bazı pusula ve dürbünlerde kullanılır; Ayarlar'dan seçilebilir.</dd>
+      <dt id="g-rb">R&amp;B <span>Range &amp; Bearing</span></dt>
+      <dd>Mesafe ve kerteriz. İki nokta arasındaki R&amp;B çizgisi bu ikisini ve yükseklik farkını gösterir.</dd>
+      <dt id="g-bullseye">Bullseye</dt>
+      <dd>"Hedef tahtasının ortası." Ekipçe önceden belirlenen ortak bir merkez nokta; yerler bu noktaya göre kerteriz ve mesafeyle söylenir ("bullseye'dan 150°, 500 m"). Açık telsizde tam koordinat söylemeden konum bildirmeyi sağlar.</dd>
+      <dt id="g-menzil">Menzil halkası <span>range ring</span></dt>
+      <dd>Bir merkezin çevresine çizilen eş mesafe halkaları; "500 m içinde ne var?" sorusunu bir bakışta yanıtlar.</dd>
+      <dt id="g-kestirme">Geriden kestirme <span>resection</span></dt>
+      <dd>Haritada yeri bilinen iki ya da üç noktaya pusulayla kerteriz alıp kendi konumunuzu bulma yöntemi. Çizgilerin kesiştiği yer konumunuzdur; aralarında yaklaşık 90° olan noktalar en doğru sonucu verir.</dd>
+      <dt id="g-takip">Takip <span>bloodhound</span></dt>
+      <dd>Adı iz süren köpekten gelir. İki nesne (ör. siz ve bir hedef nokta) arasındaki kerterizi, mesafeyi ve varış süresini canlı izler.</dd>
+    </dl>
+
+    <h3 class="gloss-h">Arazi</h3>
+    <dl class="glossary">
+      <dt id="g-gorus-alani">Görüş alanı <span>viewshed</span></dt>
+      <dd>Bir noktadan, arazinin engellemediği, görülebilen bütün yerler. Yalnız arazi şekli hesaba katılır; ağaç ve binalar değil.</dd>
+      <dt id="g-gorus-hatti">Görüş hattı <span>line of sight</span></dt>
+      <dd>İki nokta arasında doğrudan görüş olup olmadığı. Telsiz bağlantısını kestirmek için de kullanılır.</dd>
+      <dt id="g-egim">Eğim <span>slope</span></dt>
+      <dd>Arazinin dikliği (derece). Eğim katmanında kırmızı dik, yeşil düz yerlerdir; yürüyüş yolu ya da iniş alanı seçerken işe yarar.</dd>
+      <dt id="g-es-yukselti">Eş yükselti eğrisi <span>contour</span></dt>
+      <dd>Aynı yükseklikteki noktaları birleştiren çizgi. Çizgiler sıklaştıkça arazi dikleşir.</dd>
+      <dt id="g-profil">Yükseklik profili</dt>
+      <dd>Bir çizgi ya da rota boyunca iniş-çıkışların grafiği.</dd>
+      <dt id="g-dted">HGT / DTED / SRTM</dt>
+      <dd>Sayısal yükseklik verisi dosyaları. HGT, uzaydan ölçülmüş SRTM verisinin dosya biçimi; DTED askerî standart biçim. Her dosya 1°×1°'lik bir kareyi kaplar (ör. N38E034).</dd>
+      <dt id="g-3b">3B arazi</dt>
+      <dd>Haritayı eğerek dağları ve vadileri üç boyutlu gösterir; pusula okuna uzun basınca açılır.</dd>
+    </dl>
+
+    <h3 class="gloss-h">Harita ve dosyalar</h3>
+    <dl class="glossary">
+      <dt id="g-cevrimdisi">Çevrimdışı bölge, karo ve zoom</dt>
+      <dd>Harita küçük kare parçalardan (karo) oluşur; zoom seviyesi büyüdükçe ayrıntı artar. Çevrimdışı bölge, seçtiğiniz alanın karolarının önceden telefona indirilmesidir: z14 genel keşif, z16 arazi, z18 sokak ayrıntısı.</dd>
+      <dt id="g-mbtiles">MBTiles / PMTiles / GeoPackage</dt>
+      <dd>Kendi hazırladığınız ya da indirdiğiniz harita paketlerinin dosya biçimleri; uygulamaya içe aktarılınca çevrimdışı açılır.</dd>
+      <dt id="g-kml">KML / KMZ</dt>
+      <dd>Google Earth'ün nokta, çizgi ve alan biçimi. KMZ, fotoğrafları da içeren sıkıştırılmış hâlidir.</dd>
+      <dt id="g-gpx">GPX</dt>
+      <dd>GPS cihazlarının ortak biçimi: noktalar, izler ve rotalar.</dd>
+      <dt>GeoJSON</dt>
+      <dd>CBS (coğrafi bilgi sistemi) yazılımlarında yaygın, metin tabanlı biçim.</dd>
+      <dt id="g-overlay">Overlay ve #etiket</dt>
+      <dd>Overlay, haritanın üstündeki nesne katmanlarıdır (noktalar, çizimler, halkalar…). Bir noktanın adına ya da notuna #arama gibi bir etiket yazarsanız Overlay yöneticisinde yalnız o etiketi taşıyanları gösterebilirsiniz.</dd>
+      <dt id="g-lasso">Lasso</dt>
+      <dd>"Kement." Parmakla bir alanın çevresini çizerek içindeki nesneleri toplu seçme.</dd>
+      <dt id="g-fov">Görüş konisi <span>FOV, field of view</span></dt>
+      <dd>Bir gözetleme noktasının ya da kameranın baktığı yön ve açı genişliği; noktanın ayrıntısından eklenir.</dd>
+    </dl>
+
+    <h3 class="gloss-h">Raporlar ve paylaşım</h3>
+    <dl class="glossary">
+      <dt id="g-casevac">CASEVAC 9 satır <span>Casualty Evacuation 9-line</span></dt>
+      <dd>Yaralı tahliyesi için standart, dokuz satırlık istek: 1) alım yeri, 2) frekans ve çağrı adı, 3) önceliğe göre hasta sayısı (A acil … E uygun olduğunda), 4) özel teçhizat (vinç, kurtarma ekipmanı, solunum cihazı), 5) sedyeli / yürüyebilen hasta sayısı, 6) alım yerinin güvenliği, 7) işaretleme yöntemi (panel, piroteknik, duman), 8) uyruk / statü, 9) KBRN kirliliği ya da arazi bilgisi. MEDEVAC, tıbbi ekipli tahliyedir.</dd>
+      <dt id="g-spotrep">SPOTREP <span>Spot Report</span></dt>
+      <dd>Bir gözlemi hızlı ve standart biçimde bildiren kısa rapor.</dd>
+      <dt id="g-salute">SALUTE</dt>
+      <dd>SPOTREP'in alanları: Size (sayı/büyüklük), Activity (faaliyet), Location (konum), Unit (birlik/kıyafet), Time (zaman), Equipment (teçhizat).</dd>
+      <dt id="g-dtg">DTG ve Zulu saati <span>Date-Time Group</span></dt>
+      <dd>Raporlardaki tarih-saat yazımı: <code>141801Z KAS 26</code> = ayın 14'ü, saat 18.01, Z (Zulu, yani UTC), Kasım 2026. Türkiye saati UTC+3'tür.</dd>
+      <dt id="g-veri-paketi">Veri paketi</dt>
+      <dd>Noktaları, çizimleri, rotaları ve fotoğrafları tek bir zip dosyasında taşıyan paket. Usturlap'tan Usturlap'a bütün ayrıntılar korunur; TAK uyumlu uygulamalar da açabilir.</dd>
+      <dt id="g-cot">CoT ve TAK <span>Cursor on Target · Team Awareness Kit</span></dt>
+      <dd>CoT, konum ve nesne bilgisini taşıyan açık bir mesaj biçimidir; TAK ailesi uygulamalar bu biçimle veri paylaşır. Usturlap'ın veri paketi bu biçimle uyumludur.</dd>
+      <dt id="g-app6">APP-6 sembolleri</dt>
+      <dd>NATO'nun ortak harita sembolleri. Sadakat (dost mavi, düşman kırmızı, nötr yeşil, bilinmeyen sarı), kademe (takım, manga, bölük…) ve rol (piyade, keşif…) çerçeve ve simgeyle gösterilir. Sivil işlerde görev noktaları (gözetleme, kontrol, toplanma) yeter.</dd>
+    </dl>
+
+    <h3 class="gloss-h">Telsiz</h3>
+    <dl class="glossary">
+      <dt id="g-role">Röle <span>repeater</span></dt>
+      <dd>Yüksek bir tepeye kurulu, bir frekanstan duyduğunu başka bir frekanstan yeniden yayınlayan telsiz istasyonu; el telsizlerinin menzilini onlarca kilometreye çıkarır. Amatör rölelerde yayın yapmak için amatör telsiz ehliyeti gerekir.</dd>
+      <dt id="g-vhf">VHF / UHF</dt>
+      <dd>Telsiz frekans bantları. Amatör rölelerde VHF (2 metre bandı) 145 MHz civarında, UHF (70 santim bandı) 439 MHz civarındadır.</dd>
+      <dt>RX / TX</dt>
+      <dd>RX dinlediğiniz (rölenin yayın yaptığı), TX gönderdiğiniz (rölenin dinlediği) frekanstır.</dd>
+      <dt id="g-shift">Shift (offset) ve simpleks</dt>
+      <dd>Shift, gönderme frekansının dinleme frekansından farkıdır: 145,600 MHz'i dinleyen bir telsiz −0,6 MHz shift ile 145,000 MHz'ten gönderir. Shift'siz, aynı frekansta konuşmaya simpleks denir.</dd>
+      <dt id="g-ctcss">CTCSS</dt>
+      <dd>Konuşmanın altına eklenen, kulağın duymadığı bir ses tonu. Bazı röleler yalnız doğru tonu (ör. 88,5 Hz) taşıyan yayını aktarır.</dd>
+    </dl>
+
+    <h3 class="gloss-h">Uyarılar ve zaman</h3>
+    <dl class="glossary">
+      <dt id="g-geofence">Geofence</dt>
+      <dd>"Sanal çit." Haritada çizilen bir alan; içine girildiğinde ya da dışına çıkıldığında telefon uyarır.</dd>
+      <dt id="g-alacakaranlik">Alacakaranlık: BMNT, BMCT, EECT, EENT</dt>
+      <dd>Gün doğumundan önce ve gün batımından sonraki loş süreler. BMNT (denizci alacakaranlığı başı) ufkun seçilmeye başladığı, BMCT (sivil alacakaranlık başı) ışıksız okunabilecek kadar aydınlandığı an; EECT ve EENT akşamki karşılıklarıdır. Açık arazide çalışma süresini bunlar belirler.</dd>
+    </dl>
+  </section>
+
+  </div>
+</div>
+
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <a class="brand" href="./">
+        <img src="assets/img/logo.svg" alt="" width="34" height="34">
+        Usturlap
+      </a>
+      <ul class="foot-links">
+        <li><a href="./">Ana sayfa</a></li>
+        <li><a href="./#kurulum">Kurulum</a></li>
+        <li><a href="gizlilik.html">Gizlilik</a></li>
+        <li><a href="https://github.com/aoyilmaz/usturlap">Kaynak kodu</a></li>
+        <li><a href="#icerik">Yukarı dön ↑</a></li>
+      </ul>
+    </div>
+    <p class="foot-note">Usturlap kişisel bir projedir. Harita görüntüleri: © Mapbox © OpenStreetMap © Maxar.</p>
+  </div>
+</footer>
+
+<script src="assets/js/site.js" defer></script>
+</body>
+</html>
