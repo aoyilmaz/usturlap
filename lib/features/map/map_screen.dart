@@ -3423,15 +3423,21 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   /// Gece modunda FAB'ları kırmızı tonlar (gece görüşü).
+  /// Gece teması. Theme her zaman ağaçta kalır, yalnız verisi değişir: koşullu
+  /// sarmalama (gece → Theme, gündüz → çıplak) ağacın yapısını değiştirir ve
+  /// alttaki her şeyi, haritanın platform görünümü dahil, yeniden yaratır
+  /// (Android'de eski haritanın kanalları kopar, iOS'ta harita baştan kurulur).
   Widget _wrapNight(bool night, Widget child) {
-    if (!night) return child;
+    final base = Theme.of(context);
     return Theme(
-      data: Theme.of(context).copyWith(
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: Color(0xFF7F1D1D),
-          foregroundColor: Color(0xFFFECACA),
-        ),
-      ),
+      data: night
+          ? base.copyWith(
+              floatingActionButtonTheme: const FloatingActionButtonThemeData(
+                backgroundColor: Color(0xFF7F1D1D),
+                foregroundColor: Color(0xFFFECACA),
+              ),
+            )
+          : base,
       child: child,
     );
   }
