@@ -331,7 +331,13 @@ class _MapboxEngineView extends StatefulWidget {
 }
 
 class _MapboxEngineViewState extends State<_MapboxEngineView> {
-  late final CameraViewportState _initialViewport;
+  /// Başlangıç kamerası. MapWidget'a viewport (CameraViewportState) olarak
+  /// VERİLMEZ: verilirse Mapbox viewport'u kullanıcı elle kaydırana kadar
+  /// kamerayı o hedefte tutar; programla yapılan hareketlerden (takip, Git,
+  /// ortala) sonra harita yeniden boyutlanınca (ör. klavye açılınca) kamera
+  /// başlangıç konumuna geri sıçrıyordu. Kamera harita kurulunca bir kez
+  /// setCamera ile verilir (bkz. [_onCreated]); viewport hep boşta kalır.
+  late final MapCameraState _initialCamera;
 
   /// Yüklenen/yüklenecek stil (dosya katmanında çözülene kadar null).
   _StyleSpec? _style;
@@ -368,11 +374,7 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
     super.initState();
     final cam = widget.initialCamera;
     _c._camera = cam;
-    _initialViewport = CameraViewportState(
-      center: _pt(cam.center),
-      zoom: cam.zoom,
-      bearing: cam.bearing,
-    );
+    _initialCamera = cam;
     _baseKey = _baseKeyOf(widget.baseLayer);
     final b = widget.baseLayer;
     _style = (b is MbtilesBaseLayer || b is PmtilesBaseLayer) ? null : _styleFor(b);
@@ -462,6 +464,10 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
 
   Future<void> _onCreated(MapboxMap map) async {
     _c._map = map;
+    // Başlangıç kamerası (viewport kullanılmaz; bkz. [_initialCamera]).
+    final cam = _initialCamera;
+    await map.setCamera(CameraOptions(
+        center: _pt(cam.center), zoom: cam.zoom, bearing: cam.bearing));
     _c._applyGestureLocks();
     await map.setBounds(
         CameraBoundsOptions(minZoom: widget.minZoom, maxZoom: widget.maxZoom));
@@ -896,7 +902,6 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
       key: const ValueKey('pz-mapbox'),
       // JSON stiller (OSM/Topo/kendi dosyaların) harita kurulunca yüklenir.
       styleUri: _style?.uri ?? MapboxStyles.SATELLITE_STREETS,
-      viewport: _initialViewport,
       onMapCreated: _onCreated,
       onStyleLoadedListener: _onStyleLoaded,
       onCameraChangeListener: _onCamera,
