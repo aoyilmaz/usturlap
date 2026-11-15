@@ -6,8 +6,9 @@
 
 İnternet ve baz istasyonu olmadan çalışan, tek elle (eldivenle de) kullanılan kişisel
 **taktik harita** uygulaması. Flutter ile yazıldı; önce iOS (iPhone), Android'e hazır.
-Hesap yok, reklam yok; uygulama kendi adına veri toplamaz, bütün veri cihazda kalır
-(harita karoları Mapbox'tan gelir, bkz. [gizlilik](website/gizlilik.html)).
+Hesap yok, reklam yok; uygulama kendi adına veri toplamaz, bütün veri cihazda kalır.
+Harita karoları Mapbox'tan gelir; Mapbox'ın isteğe bağlı telemetrisi kapalı başlar
+(bkz. [gizlilik](website/gizlilik.html)).
 
 > Proje önce **Pusula**, sonra **Kerteriz** adını taşıdı. Eski dosyalar açılmaya devam
 > etsin diye bazı görünmez biçim kimlikleri eski adla kalır (KML/GeoJSON `kerteriz`

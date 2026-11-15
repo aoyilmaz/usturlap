@@ -11,7 +11,21 @@ import UserNotifications
     // Yerel bildirimler (flutter_local_notifications): bildirim olayları
     // Flutter'a iletilsin.
     UNUserNotificationCenter.current().delegate = self as? UNUserNotificationCenterDelegate
+    disableMapboxTelemetryByDefault()
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  /// Mapbox'ın isteğe bağlı kullanım / konum telemetrisi varsayılan olarak
+  /// kapalı başlar. Mapbox SDK'sı bu UserDefaults anahtarını izler (varsayılanı
+  /// açık); haritanın (i) menüsündeki "Mapbox Telemetry" de aynı anahtarı
+  /// değiştirir. Yalnız hiç seçim yapılmamışsa yazılır: kullanıcı (i)
+  /// menüsünden açarsa seçimi korunur. Faturalandırma için zorunlu harita
+  /// yükleme sayımı bundan etkilenmez.
+  private func disableMapboxTelemetryByDefault() {
+    let key = "MGLMapboxMetricsEnabled"
+    if UserDefaults.standard.object(forKey: key) == nil {
+      UserDefaults.standard.set(false, forKey: key)
+    }
   }
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
