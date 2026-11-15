@@ -92,7 +92,7 @@ jobs:
             - `…-armeabi-v7a.apk`: eski, 32-bit telefonlar ("uygulama yüklenmedi" hatası alırsanız).
             - `…-x86_64.apk`: emülatörler ve bazı Chromebook'lar.
 
-            Android 7.0 ve üzeri. Bu ilk sürüm emülatörde denendi.
+            Android 7.0 ve üzeri. Android sürümü şimdilik emülatörde denendi.
 
             Dosyanın bozulmadığını `SHA256SUMS.txt` ile doğrulayabilirsiniz.
 
