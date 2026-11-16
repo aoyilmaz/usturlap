@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kaynak küçültme (shrinkResources) yalnız Dart'tan adıyla çağrılan
+     kaynakları kullanılmıyor sanıp siler. Bildirim simgesi Dart'tan
+     ("ic_stat_usturlap") istenir: silinirse ön plan konum bildirimi simgesiz
+     kalır, uyarı bildirimleri hiç başlamaz. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_stat_usturlap" />

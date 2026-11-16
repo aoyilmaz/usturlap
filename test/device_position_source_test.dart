@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:geolocator/geolocator.dart';
 
 import 'package:usturlap/data/position/device_position_source.dart';
 
@@ -67,6 +69,81 @@ void main() {
         accuracyMeters: -1,
       );
       expect(bad.accuracyMeters, isNull);
+    });
+  });
+
+  group('DevicePositionSource.normalizeCompass', () {
+    const android = TargetPlatform.android, ios = TargetPlatform.iOS;
+
+    test('Android: eksi açılar (batı yarım daire) 0–360\'a sarılır', () {
+      // flutter_compass Android −180…180 verir: batı = −90.
+      expect(DevicePositionSource.normalizeCompass(-90, android), 270);
+      expect(DevicePositionSource.normalizeCompass(-179, android), 181);
+      expect(DevicePositionSource.normalizeCompass(-1, android), 359);
+      expect(DevicePositionSource.normalizeCompass(90, android), 90);
+      expect(DevicePositionSource.normalizeCompass(180, android), 180);
+      expect(DevicePositionSource.normalizeCompass(0, android), 0);
+    });
+
+    test('iOS: −1 "geçersiz" demektir, atılır', () {
+      expect(DevicePositionSource.normalizeCompass(-1, ios), isNull);
+      expect(DevicePositionSource.normalizeCompass(270, ios), 270);
+    });
+
+    test('boş ve sayı olmayan değer atılır', () {
+      expect(DevicePositionSource.normalizeCompass(null, android), isNull);
+      expect(
+        DevicePositionSource.normalizeCompass(double.nan, android),
+        isNull,
+      );
+    });
+  });
+
+  group('DevicePositionSource.buildLocationSettings', () {
+    test('Android: saniyede bir konum ve MSL yükseklik', () {
+      final s =
+          DevicePositionSource.buildLocationSettings(
+                background: false,
+                platform: TargetPlatform.android,
+              )
+              as AndroidSettings;
+      expect(s.intervalDuration, const Duration(seconds: 1));
+      expect(s.useMSLAltitude, isTrue);
+      expect(s.foregroundNotificationConfig, isNull);
+    });
+
+    test(
+      'Android: arka planda ön plan servisi bildirimi, kendi simgesiyle',
+      () {
+        final s =
+            DevicePositionSource.buildLocationSettings(
+                  background: true,
+                  platform: TargetPlatform.android,
+                )
+                as AndroidSettings;
+        expect(s.foregroundNotificationConfig, isNotNull);
+        expect(
+          s.foregroundNotificationConfig!.notificationIcon.name,
+          'ic_stat_usturlap',
+        );
+      },
+    );
+
+    test('iOS: arka plan güncellemesi yalnız istenince', () {
+      final off =
+          DevicePositionSource.buildLocationSettings(
+                background: false,
+                platform: TargetPlatform.iOS,
+              )
+              as AppleSettings;
+      final on =
+          DevicePositionSource.buildLocationSettings(
+                background: true,
+                platform: TargetPlatform.iOS,
+              )
+              as AppleSettings;
+      expect(off.allowBackgroundLocationUpdates, isFalse);
+      expect(on.allowBackgroundLocationUpdates, isTrue);
     });
   });
 }

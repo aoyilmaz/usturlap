@@ -128,6 +128,43 @@ class PanelHostState extends State<PanelHost> with TickerProviderStateMixin {
   /// Açık (kapanmakta olmayan) panel var mı.
   bool get hasOpenPanel => _top != null;
 
+  // --- Android geri tuşu ---------------------------------------------------
+  // Flutter, kök sayfadaki LocalHistoryEntry'leri (panellerimiz) platforma
+  // bildirmez; yalnız PopScope bildirir. Android 13+'ın geri hareketinde bu
+  // yüzden tuş Flutter'a hiç gelmeden uygulamadan çıkıyordu. build'deki
+  // PopScope panel açıkken (ya da harita bir moddayken) geri tuşunu üstlenir.
+
+  /// Panel yokken geri tuşunu harita ekranı istiyor mu (etkin mod var mı).
+  final _childWantsBack = ValueNotifier<bool>(false);
+  bool? _pendingChildWantsBack;
+  VoidCallback? _onChildBack;
+
+  /// Harita ekranı her build'de bildirir: [wanted] etkin bir mod (nokta
+  /// taşıma, çizim düzenleme, ölçüm…) varken true; geri tuşu panel yoksa
+  /// [onBack]'i çağırır.
+  void setBackHandler({required bool wanted, required VoidCallback onBack}) {
+    _onChildBack = onBack;
+    if (_pendingChildWantsBack == null) {
+      if (wanted == _childWantsBack.value) return;
+      // build içinden çağrılır; dinleyici (PopScope) kare bitince yenilensin.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final x = _pendingChildWantsBack;
+        _pendingChildWantsBack = null;
+        if (mounted && x != null) _childWantsBack.value = x;
+      });
+    }
+    _pendingChildWantsBack = wanted;
+  }
+
+  void _onSystemBack() {
+    final t = _top;
+    if (t != null) {
+      _close(t);
+    } else {
+      _onChildBack?.call();
+    }
+  }
+
   /// [runStacked] içindeyken açılan paneller açık olanların üstüne biner.
   int _stackDepth = 0;
   int _openCount = 0;
@@ -267,6 +304,7 @@ class PanelHostState extends State<PanelHost> with TickerProviderStateMixin {
       p.dispose();
     }
     _insets.dispose();
+    _childWantsBack.dispose();
     super.dispose();
   }
 
@@ -326,15 +364,26 @@ class PanelHostState extends State<PanelHost> with TickerProviderStateMixin {
     // Dış Scaffold: bilgi şeritleri (SnackBar) en dıştaki Scaffold'da
     // çizilir → panelin arkasında kalmaz (ör. koordinat panelinde
     // "Kopyalandı"). Klavye payını paneller kendisi uygular (resize yok).
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          widget.child,
-          for (final p in _panels)
-            _positioned(context, p, landscape, visible: _visible(p, top)),
-        ],
+    return ValueListenableBuilder<bool>(
+      valueListenable: _childWantsBack,
+      builder: (context, childWantsBack, child) => PopScope(
+        // false = geri tuşunu biz üstleniriz (bkz. _onSystemBack).
+        canPop: top == null && !childWantsBack,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _onSystemBack();
+        },
+        child: child!,
+      ),
+      child: Scaffold(
+        resizeToAvoidBottomInset: false,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            widget.child,
+            for (final p in _panels)
+              _positioned(context, p, landscape, visible: _visible(p, top)),
+          ],
+        ),
       ),
     );
   }

@@ -1113,6 +1113,38 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     setState(() => _radial = _RadialTarget(point, title, actions, screen));
   }
 
+  /// Android geri tuşu (panel açık değilken): en üstteki modu kapatır.
+  /// Geri alınabilecek adım varsa (çizim düzenleme, rota planı, ölçüm
+  /// noktaları) önce onu geri alır; kaydedilmemiş iş tek tuşla gitmesin.
+  void _onSystemBack() {
+    if (_radial != null) return _closeRadial();
+    if (_framing) return setState(() => _framing = false);
+    final edit = _shapeEdit;
+    if (edit != null) {
+      return setState(() => _shapeEdit = edit.canUndo ? edit.undo() : null);
+    }
+    if (_moving != null) return setState(() => _moving = null);
+    if (_placingSelf) return setState(() => _placingSelf = false);
+    if (_lassoMode) return setState(() => _lassoMode = false);
+    if (_dropMode) return setState(() => _dropMode = false);
+    final planning = ref.read(routePlanningProvider);
+    if (planning.active) {
+      final n = ref.read(routePlanningProvider.notifier);
+      return planning.points.isEmpty ? n.cancel() : n.undo();
+    }
+    final tool = ref.read(toolProvider);
+    if (tool.active && tool.points.isNotEmpty) {
+      return ref.read(toolProvider.notifier).undo();
+    }
+    if (tool.active || _rangeBarOpen || _drawBarOpen) {
+      ref.read(toolProvider.notifier).reset();
+      setState(() {
+        _rangeBarOpen = false;
+        _drawBarOpen = false;
+      });
+    }
+  }
+
   void _closeRadial() {
     if (_radial != null) setState(() => _radial = null);
   }
@@ -2560,6 +2592,21 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final landscape = isLandscape(context);
     // Açık panelin haritadan kapladığı kenar (yatay: sağ, dikey: alt).
     final panelInsets = PanelHost.insetsOf(context);
+    // Android geri tuşu: etkin mod varken uygulamadan çıkmasın, modu kapatsın.
+    PanelHost.maybeOf(context)?.setBackHandler(
+      wanted: _radial != null ||
+          _framing ||
+          _shapeEdit != null ||
+          _moving != null ||
+          _placingSelf ||
+          _lassoMode ||
+          _dropMode ||
+          planning.active ||
+          tool.active ||
+          _rangeBarOpen ||
+          _drawBarOpen,
+      onBack: _onSystemBack,
+    );
     final screenH = MediaQuery.sizeOf(context).height;
     final safe = MediaQuery.paddingOf(context);
     final safeBottom = safe.bottom;

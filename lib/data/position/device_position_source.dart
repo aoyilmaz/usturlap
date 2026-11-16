@@ -49,7 +49,8 @@ class DevicePositionSource implements PositionSource {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       _controller.addError(
-          StateError('Konum servisi kapalı. Ayarlardan açın.'));
+        StateError('Konum servisi kapalı. Ayarlardan açın.'),
+      );
       return;
     }
 
@@ -70,13 +71,24 @@ class DevicePositionSource implements PositionSource {
     final compass = FlutterCompass.events;
     if (compass != null) {
       _headingSub = compass.listen((event) {
-        final raw = event.heading;
-        // iOS konum yokken trueHeading'i -1 (geçersiz) verir.
-        if (raw == null || raw < 0) return;
+        final raw = normalizeCompass(event.heading, defaultTargetPlatform);
+        if (raw == null) return;
         _lastHeading = _headingFilter.update(_toTrueNorth(raw));
         _emit();
       });
     }
+  }
+
+  /// Pusula eklentisinin ham açısını 0–360'a çevirir; geçersizse null.
+  /// - iOS: konum yokken `trueHeading` −1 (geçersiz) gelir → null.
+  /// - Android: eklenti `SensorManager.getOrientation` açısını olduğu gibi
+  ///   verir (−180…180; batı yarım daire eksi) → 0–360'a sarılır. Eksi
+  ///   değerleri atmak pusulayı batı yarıda dondururdu.
+  @visibleForTesting
+  static double? normalizeCompass(double? raw, TargetPlatform platform) {
+    if (raw == null || !raw.isFinite) return null;
+    if (platform == TargetPlatform.android) return raw % 360;
+    return raw < 0 ? null : raw % 360;
   }
 
   /// Pusula okumasını coğrafi kuzeye çevirir. Uygulamanın bütün hesapları
@@ -96,11 +108,12 @@ class DevicePositionSource implements PositionSource {
   void _subscribePosition() {
     _posSub?.cancel();
     _posSub =
-        Geolocator.getPositionStream(locationSettings: _buildLocationSettings())
-            .listen((pos) {
-      _lastPosition = pos;
-      _emit();
-    }, onError: _controller.addError);
+        Geolocator.getPositionStream(
+          locationSettings: _buildLocationSettings(),
+        ).listen((pos) {
+          _lastPosition = pos;
+          _emit();
+        }, onError: _controller.addError);
   }
 
   @override
@@ -117,13 +130,22 @@ class DevicePositionSource implements PositionSource {
   /// da arka planda izlenen geofence) iOS arka plan güncellemeleri + gösterge,
   /// Android foreground servis bildirimi açılır. Aksi halde ön-plan (batarya
   /// dostu).
-  LocationSettings _buildLocationSettings() {
+  LocationSettings _buildLocationSettings() => buildLocationSettings(
+    background: _backgroundEnabled,
+    platform: defaultTargetPlatform,
+  );
+
+  /// Saf yardımcı (test edilebilir): platforma göre konum ayarları.
+  @visibleForTesting
+  static LocationSettings buildLocationSettings({
+    required bool background,
+    required TargetPlatform platform,
+  }) {
     const accuracy = LocationAccuracy.best;
-    // Batarya optimizasyonu için Mesafe Filtresi (Distance Filter)
-    // 2 metre hareket etmeden yeni konum akışı tetiklenmez.
+    // 0 = mesafe süzgeci yok, her güncelleme gelir (iz süzgeci ayrıca var).
     const int distanceFilterMeters = 0;
 
-    switch (defaultTargetPlatform) {
+    switch (platform) {
       case TargetPlatform.iOS:
       case TargetPlatform.macOS:
         return AppleSettings(
@@ -131,26 +153,36 @@ class DevicePositionSource implements PositionSource {
           distanceFilter: distanceFilterMeters,
           activityType: ActivityType.fitness,
           pauseLocationUpdatesAutomatically: false,
-          allowBackgroundLocationUpdates: _backgroundEnabled,
-          showBackgroundLocationIndicator: _backgroundEnabled,
+          allowBackgroundLocationUpdates: background,
+          showBackgroundLocationIndicator: background,
         );
       case TargetPlatform.android:
         return AndroidSettings(
           accuracy: accuracy,
           distanceFilter: distanceFilterMeters,
-          foregroundNotificationConfig: _backgroundEnabled
+          // Verilmezse eklenti 5 sn'de bir konum ister (iOS ~1 sn).
+          intervalDuration: const Duration(seconds: 1),
+          // Varsayılan elipsoit yüksekliği (WGS84); ekranda MSL gösteriyoruz
+          // ve iOS MSL veriyor. Cihaz desteklemezse elipsoit kalır.
+          useMSLAltitude: true,
+          foregroundNotificationConfig: background
               ? const ForegroundNotificationConfig(
                   notificationTitle: 'Usturlap',
-                  notificationText: 'Konum izleniyor (iz kaydı / geofence)',
+                  notificationText:
+                      'Konum izleniyor (iz kaydı, rota, Git ya da geofence)',
                   notificationIcon: AndroidResource(
-                      name: 'ic_stat_usturlap', defType: 'drawable'),
+                    name: 'ic_stat_usturlap',
+                    defType: 'drawable',
+                  ),
                   enableWakeLock: true,
                 )
               : null,
         );
       default:
         return const LocationSettings(
-            accuracy: accuracy, distanceFilter: distanceFilterMeters);
+          accuracy: accuracy,
+          distanceFilter: distanceFilterMeters,
+        );
     }
   }
 

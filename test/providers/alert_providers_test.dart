@@ -5,11 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:usturlap/data/db/app_database.dart';
 import 'package:usturlap/domain/models/map_graphic.dart';
+import 'package:usturlap/domain/models/route_plan.dart';
 import 'package:usturlap/domain/ports/alert_output.dart';
 import 'package:usturlap/providers/alert_providers.dart';
 import 'package:usturlap/providers/background_location_providers.dart';
 import 'package:usturlap/providers/graphic_providers.dart';
 import 'package:usturlap/providers/location_providers.dart';
+import 'package:usturlap/providers/nav_providers.dart';
+import 'package:usturlap/providers/route_providers.dart';
 import 'package:usturlap/providers/track_providers.dart';
 import 'package:usturlap/providers/waypoint_providers.dart';
 import 'package:latlong2/latlong.dart';
@@ -159,6 +162,27 @@ void main() {
       expect(c.read(backgroundLocationNeededProvider), isFalse);
       expect(c.read(alertPermissionWantedProvider), isTrue);
       await _settle();
+
+      // "Git" hedefi seçiliyken de (ekran kapalıyken yön / varış bilgisi).
+      c = await make(recording: false, graphics: const []);
+      expect(c.read(backgroundLocationNeededProvider), isFalse);
+      c.read(navTargetProvider.notifier).set(const LatLng(39, 32), 'HEDEF');
+      expect(c.read(backgroundLocationNeededProvider), isTrue);
+      c.read(navTargetProvider.notifier).clear();
+      expect(c.read(backgroundLocationNeededProvider), isFalse);
+
+      // Rota takibinde de (ekran kapalıyken "noktaya vardın" uyarısı).
+      c.read(activeRouteProvider.notifier).start(
+        RoutePlan(
+          uid: 'r1',
+          name: 'ROTA',
+          points: const [LatLng(39, 32), LatLng(39.01, 32)],
+          createdAt: DateTime.utc(2026, 11, 16),
+        ),
+      );
+      expect(c.read(backgroundLocationNeededProvider), isTrue);
+      c.read(activeRouteProvider.notifier).stop();
+      expect(c.read(backgroundLocationNeededProvider), isFalse);
     },
   );
 }

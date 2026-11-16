@@ -17,6 +17,9 @@
         android:label="Usturlap"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:networkSecurityConfig="@xml/network_security_config">
         <activity
             android:name=".MainActivity"
@@ -55,6 +58,10 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- Sesli uyarılar (flutter_tts): Android 11+ konuşma motorunu görebilsin. -->
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE"/>
         </intent>
         <!-- Hakkında → Web sitesi / Kaynak kodu: url_launcher tarayıcıyı bulabilsin. -->
         <intent>
