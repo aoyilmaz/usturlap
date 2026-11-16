@@ -67,7 +67,7 @@ kullandığı kütüphane) ve **milsymbol** (MIT). Lisansları eklemeden önce y
 Her aşama küçük adımlara bölünür ve her adım cihazda test edilir.
 
 ### Aşama B kapanışı
-Navigasyon + yatay düzen commit edildi (`d9a600e`, 2026-11-06). Yürüme testi bekliyor;
+Navigasyon + yatay düzen commit edildi (`3746b24`, 2026-11-06). Yürüme testi bekliyor;
 bir sorun çıkarsa ayrı düzeltme commit'i atılır.
 
 ### Aşama C: Hızlı kazanımlar + ATAK nesne modeli
@@ -436,7 +436,7 @@ resim katmanı eklenecek.
 
 Adımlar: **G1** çizim araçları, **G2** 3B şekiller, **G6** iz arama (üçü cihazda ✓, 2026-11-10),
 **G4** lasso / çoklu seçim, **G3** geofence, **G5** hızlı fotoğraf / galeri (üçü cihazda ✓,
-commit `f4cb0ff`), **G7** içe/dışa aktarma + çizim düzenleme (cihazda ✓, commit `6a92204`),
+commit `c82e563`), **G7** içe/dışa aktarma + çizim düzenleme (cihazda ✓, commit `bff39c8`),
 **G8** veri paketi (kodda tamam, cihaz testi bekliyor). `archive` 4.6.0 eklendi (onaylı, 2026-11-11).
 
 > G1: **Çizim araçları** çubuğu (araç çubuğuna eklenebilir; ≡ → Veri): Çizgi (çoklu nokta; 2
