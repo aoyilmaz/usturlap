@@ -733,6 +733,11 @@ void main() {
       await _shot(t, 'yedek');
     });
 
+    await _step(t, 'hakkinda', () async {
+      await _openTool(t, 'Hakkında');
+      await _shot(t, 'hakkinda');
+    });
+
     await _step(t, 'gece', () async {
       _ctrl(t).moveTo(const LatLng(38.6500, 34.8290), zoom: 14);
       _c.read(nightModeProvider.notifier).toggle();

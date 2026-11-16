@@ -59,6 +59,8 @@ dependencies:
   http: ^1.6.0
   cryptography: ^2.9.0
   sqlite3: ^2.9.4
+  url_launcher: ^6.3.3
+  package_info_plus: ^9.0.1
 
 dev_dependencies:
   flutter_test:
@@ -90,6 +92,7 @@ flutter:
   # Gömülü çevrimdışı karo paketleri (MBTiles) buraya konacak — Adım 2.
   # Klasörü şimdiden tanımlıyoruz; içine .mbtiles dosyası eklenince çalışır.
   assets:
+    - assets/icon/usturlap_icon_256.png
     - assets/tiles/
     - assets/style/
     - assets/data/

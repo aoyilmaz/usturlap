@@ -81,6 +81,7 @@ import '../layers/import_layer_action.dart';
 import '../nav/nav_banner.dart';
 import '../symbols/nato_symbol.dart';
 import '../elevation/elevation_data_panel.dart';
+import '../about/about_panel.dart';
 import '../backup/backup_panel.dart';
 import '../export/export_sheet.dart';
 import '../field/reports_panel.dart';
@@ -2087,6 +2088,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             icon: Icons.backup_outlined,
             label: 'Yedekle / geri yükle',
             onTap: () => showBackupPanel(context)),
+        ToolGridItem(
+            icon: Icons.info_outline,
+            label: 'Hakkında',
+            onTap: () => showAboutPanel(context)),
         ToolGridItem(
           icon: Icons.delete_forever,
           label: 'Acil veri silme',
