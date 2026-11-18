@@ -21,15 +21,19 @@ class MbtilesAssetLoader {
     // Zaten kopyalanmışsa asset'i belleğe HİÇ alma (72 MB topo'yu her açılışta
     // okumamak için). Dosya adı sürümlü olduğundan (ör. _z10-16) içerik sabittir;
     // güncellenmiş aynı-adlı asset için uygulamayı yeniden kur.
-    if (await outFile.exists() && await outFile.length() > 0) {
+    final data = await rootBundle.load(assetPath);
+    // Boyut da tutmalı: kopya yarıda kesildiyse (uygulama kapandı) kalan
+    // eksik dosya "bozuk veritabanı" verip katmanı kalıcı bozuyordu.
+    if (await outFile.exists() &&
+        await outFile.length() == data.lengthInBytes) {
       return outPath;
     }
-
-    final data = await rootBundle.load(assetPath);
-    await outFile.writeAsBytes(
+    final part = File('$outPath.part');
+    await part.writeAsBytes(
       data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
       flush: true,
     );
+    await part.rename(outPath);
     return outPath;
   }
 }

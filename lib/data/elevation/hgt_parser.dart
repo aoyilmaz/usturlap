@@ -27,6 +27,9 @@ class HgtParser {
   /// Anahtar → yüklenen kare (null = yok). Ekleme sırası = kullanım sırası.
   final _tiles = <String, Future<DemTile?>>{};
 
+  /// Yüklenmesi bitmiş ve veri bulunan kareler (bellekte yer tutanlar).
+  final _present = <String>{};
+
   Directory? _dir;
   Future<void>? _ready;
 
@@ -51,13 +54,44 @@ class HgtParser {
       _tiles[key] = hit; // en sona: yakın zamanda kullanıldı
       return hit;
     }
-    final f = _load(key, s, w);
+    final f = _load(key, s, w).then(
+      (t) {
+        if (t != null && _tiles.containsKey(key)) {
+          _present.add(key);
+          _evict();
+        }
+        _pending.remove(key);
+        return t;
+      },
+      onError: (Object e, StackTrace st) {
+        // Okuma hatası (izin, G/Ç) önbellekte kalmasın: sonra yeniden dene.
+        _tiles.remove(key);
+        _pending.remove(key);
+        return null;
+      },
+    );
     _tiles[key] = f;
-    // Boş (bulunamayan) girişler de sayılır; sınır onları da kapsar.
-    while (_tiles.length > maxTiles * 2) {
-      _tiles.remove(_tiles.keys.first);
-    }
+    _pending[key] = f;
+    _evict();
     return f;
+  }
+
+  final _pending = <String, Future<DemTile?>>{};
+
+  /// Bellekte en çok [maxTiles] dolu kare (SRTM 1″ karesi ~26 MB; eskiden
+  /// boş girişlerle birlikte sayıldığı için 8 dolu kare, ~200 MB kalabiliyordu).
+  /// Boş ("bu karede veri yok") girişler ucuz; onlar ayrıca sınırlanır.
+  void _evict() {
+    while (_present.length > maxTiles) {
+      final oldest = _tiles.keys.firstWhere(_present.contains);
+      _tiles.remove(oldest);
+      _present.remove(oldest);
+    }
+    while (_tiles.length > maxTiles * 8) {
+      final k = _tiles.keys.first;
+      _tiles.remove(k);
+      _present.remove(k);
+    }
   }
 
   Future<DemTile?> _load(String key, int south, int west) async {
@@ -121,5 +155,9 @@ class HgtParser {
       (await tileAt(lat, lon))?.sample(lat, lon);
 
   /// Dosyalar değişti (içe aktarma / silme): önbelleği boşalt.
-  void invalidate() => _tiles.clear();
+  void invalidate() {
+    _tiles.clear();
+    _present.clear();
+    _pending.clear();
+  }
 }

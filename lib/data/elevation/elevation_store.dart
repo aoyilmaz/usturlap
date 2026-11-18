@@ -177,12 +177,20 @@ class ElevationStore {
           ? 'dt1'
           : 'dt0';
     }
+    // Önce geçici ada yaz: disk dolarsa eski (çalışan) kare silinmemiş olur.
+    final dest = File('${dir.path}/$tileKey.$ext');
+    final part = File('${dest.path}.part');
+    try {
+      await part.writeAsBytes(bytes, flush: true);
+    } catch (_) {
+      if (await part.exists()) await part.delete();
+      rethrow;
+    }
     for (final e in _exts) {
       final old = File('${dir.path}/$tileKey.$e');
-      if (await old.exists()) await old.delete();
+      if (e != ext && await old.exists()) await old.delete();
     }
-    final dest = File('${dir.path}/$tileKey.$ext');
-    await dest.writeAsBytes(bytes, flush: true);
+    await part.rename(dest.path);
     return ElevationTileInfo(
       key: tileKey,
       fileName: '$tileKey.$ext',

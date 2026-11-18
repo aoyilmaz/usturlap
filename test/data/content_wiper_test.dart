@@ -59,8 +59,16 @@ void main() {
     test('kimlik sayaçları sıfırlanır (silinen kayıt sayısı sızmaz)', () async {
       await seed();
       await db.wipeAll();
-      final id = await db.into(db.waypoints).insert(WaypointsCompanion.insert(
-          name: 'Yeni', lat: 0, lon: 0, createdAt: DateTime(2026)));
+      final id = await db
+          .into(db.waypoints)
+          .insert(
+            WaypointsCompanion.insert(
+              name: 'Yeni',
+              lat: 0,
+              lon: 0,
+              createdAt: DateTime(2026),
+            ),
+          );
       expect(id, 1);
     });
 
@@ -120,10 +128,37 @@ void main() {
       expect(names(temp), isEmpty);
     });
 
+    test(
+      'veritabanı adımı hata verse de dosyalar silinir, hata bildirilir',
+      () async {
+        final db = _FailingWipeDb();
+        addTearDown(db.close);
+        final wiper = ContentWiper(
+          db: db,
+          documentsDir: () async => docs,
+          tempDir: () async => temp,
+          // Bilgisayarın ortak geçici klasörüne dokunulmasın.
+          systemTemp: () => temp,
+        );
+        await expectLater(wiper.wipe(), throwsA(isA<StateError>()));
+        expect(names(docs), ['pusula.sqlite', 'pusula.sqlite-wal']);
+        expect(names(temp), isEmpty);
+      },
+    );
+
     test('olmayan klasörler hata vermez', () async {
       await ContentWiper.wipeFiles(Directory('${root.path}/yok'), [
         Directory('${root.path}/yok2'),
       ], includeMaps: true);
     });
   });
+}
+
+/// Veritabanı silme adımı hata veren veritabanı (ör. VACUUM için yer yok).
+class _FailingWipeDb extends AppDatabase {
+  _FailingWipeDb() : super.forTesting(NativeDatabase.memory());
+
+  @override
+  Future<void> wipeAll({bool keepImportedLayers = false}) async =>
+      throw StateError('disk dolu');
 }

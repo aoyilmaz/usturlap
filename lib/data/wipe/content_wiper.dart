@@ -25,13 +25,20 @@ class ContentWiper {
     this.offline,
     Future<Directory> Function()? documentsDir,
     Future<Directory> Function()? tempDir,
+    Directory Function()? systemTemp,
   }) : _documentsDir = documentsDir ?? getApplicationDocumentsDirectory,
-       _tempDir = tempDir ?? getTemporaryDirectory;
+       _tempDir = tempDir ?? getTemporaryDirectory,
+       _systemTemp = systemTemp ?? (() => Directory.systemTemp);
 
   final AppDatabase db;
   final MapboxOfflineStore? offline;
   final Future<Directory> Function() _documentsDir;
   final Future<Directory> Function() _tempDir;
+
+  /// Uygulamanın sistem geçici klasörü (telefonda uygulamanın kendi
+  /// klasörü). Testte MUTLAKA verilmeli: bilgisayarda Directory.systemTemp
+  /// kullanıcının ortak geçici klasörüdür.
+  final Directory Function() _systemTemp;
 
   /// drift dosyası (`pusula.sqlite`, `-wal`, `-shm`): açık olduğu için
   /// silinmez; içi [AppDatabase.wipeAll] ile boşaltılır.
@@ -41,12 +48,29 @@ class ContentWiper {
   static const elevationDir = 'tiles_external';
 
   Future<void> wipe({bool includeMaps = true}) async {
-    await db.wipeAll(keepImportedLayers: !includeMaps);
-    final temps = {(await _tempDir()).path, Directory.systemTemp.path};
-    await wipeFiles(await _documentsDir(), [
-      for (final t in temps) Directory(t),
-    ], includeMaps: includeMaps);
-    if (includeMaps) await offline?.deleteAll();
+    // Bir adım hata verse de ötekiler yapılır (acil silme yarım kalmasın:
+    // eskiden veritabanı adımı düşünce fotoğraflar ve dosyalar kalıyordu);
+    // ilk hata sonda yükseltilir.
+    Object? first;
+    StackTrace? firstStack;
+    Future<void> step(Future<void> Function() f) async {
+      try {
+        await f();
+      } catch (e, st) {
+        first ??= e;
+        firstStack ??= st;
+      }
+    }
+
+    await step(() => db.wipeAll(keepImportedLayers: !includeMaps));
+    await step(() async {
+      final temps = {(await _tempDir()).path, _systemTemp().path};
+      await wipeFiles(await _documentsDir(), [
+        for (final t in temps) Directory(t),
+      ], includeMaps: includeMaps);
+    });
+    if (includeMaps) await step(() async => offline?.deleteAll());
+    if (first != null) Error.throwWithStackTrace(first!, firstStack!);
   }
 
   /// Dosya silme kısmı (test edilebilsin diye ayrı).

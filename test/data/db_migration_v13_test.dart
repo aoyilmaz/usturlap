@@ -37,7 +37,7 @@ void main() {
     );
     addTearDown(db.close);
     final v = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(v.read<int>('user_version'), 15);
+    expect(v.read<int>('user_version'), 16);
     final g = (await MapGraphicRepository(
       db,
     ).watchAll().first).firstWhere((g) => g.name == 'HAT');

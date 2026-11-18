@@ -211,7 +211,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 15;
+  int get schemaVersion => 16;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -219,6 +219,7 @@ class AppDatabase extends _$AppDatabase {
           await m.createAll();
           await _createUidIndexes();
           await _createAttachmentIndex();
+          await _createTrackPointIndex();
         },
         onUpgrade: (m, from, to) async {
           // Mevcut veriyi koruyarak yeni tablo/sütun ekle.
@@ -296,6 +297,7 @@ class AppDatabase extends _$AppDatabase {
           if (from < 15) {
             await _addColumnIfMissing(m, mapGraphics, mapGraphics.geofence);
           }
+          if (from < 16) await _createTrackPointIndex();
         },
         beforeOpen: (details) async {
           // Cascade delete için foreign key'leri aç.
@@ -323,6 +325,14 @@ class AppDatabase extends _$AppDatabase {
     ).get();
     return rows.isNotEmpty;
   }
+
+  /// İz noktaları iz kimliğiyle aransın (v16). İndeks yokken iz listesi
+  /// sorgusu bütün noktaları tarıyordu; kayıt sırasında her yeni noktada
+  /// yinelendiği için uzun süre kullanılan cihazda pil ve takılma.
+  Future<void> _createTrackPointIndex() => customStatement(
+    'CREATE INDEX IF NOT EXISTS track_points_track '
+    'ON track_points (track_id, timestamp)',
+  );
 
   /// Bir nesnenin ekleri hızlı bulunsun.
   Future<void> _createAttachmentIndex() => customStatement(

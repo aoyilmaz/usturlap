@@ -115,6 +115,51 @@ void main() {
       expect(await p.getElevation(10.5, 10.5), 500);
     });
 
+    test(
+      'bellekte en çok 4 dolu kare tutulur (boş girişler sayılmaz)',
+      () async {
+        var loads = 0;
+        final p = HgtParser(
+          directory: () async => null,
+          bundled: (key) async {
+            loads++;
+            // Kuzeydeki kareler dolu, güneydekiler boş.
+            return key.startsWith('N') ? makeHgt(1201, (r, c) => 1) : null;
+          },
+        );
+        // 4 boş kare + 6 dolu kare.
+        for (var i = 0; i < 4; i++) {
+          await p.getElevation(-10.5, i + 0.5);
+        }
+        for (var i = 0; i < 6; i++) {
+          await p.getElevation(10.5, i + 0.5);
+        }
+        expect(loads, 10);
+        // En son kullanılan 4 dolu kare önbellekte: yeniden yüklenmez.
+        for (var i = 2; i < 6; i++) {
+          await p.getElevation(10.5, i + 0.5);
+        }
+        expect(loads, 10);
+        // En eski dolu kare atıldı: yeniden yüklenir.
+        await p.getElevation(10.5, 0.5);
+        expect(loads, 11);
+      },
+    );
+
+    test('okuma hatası önbellekte kalmaz, sonra yeniden denenir', () async {
+      var fail = true;
+      final p = HgtParser(
+        directory: () async => null,
+        bundled: (key) async {
+          if (fail) throw const FileSystemException('G/Ç');
+          return makeHgt(1201, (r, c) => 9);
+        },
+      );
+      expect(await p.getElevation(5.5, 5.5), isNull);
+      fail = false;
+      expect(await p.getElevation(5.5, 5.5), 9);
+    });
+
     test('klasör yoksa hata yok, örnekten okur', () async {
       final p = HgtParser(
         directory: () async => throw const FileSystemException('izin yok'),
@@ -122,5 +167,16 @@ void main() {
       );
       expect(await p.getElevation(37.1, 37.1), 7);
     });
+  });
+
+  test('kare yazılamazsa eski kare silinmez, yarım dosya kalmaz', () async {
+    await store.importBytes(hgt, 'N38E037.hgt');
+    // Hedef ".part" adında bir KLASÖR: yazım hata verir (disk dolu gibi).
+    final blocker = Directory('${dir.path}/N38E037.dt0.part')..createSync();
+    await expectLater(store.importBytes(dted, 'n38.dt0'), throwsA(anything));
+    blocker.deleteSync();
+    expect(File('${dir.path}/N38E037.hgt').existsSync(), isTrue);
+    final names = dir.listSync().map((e) => e.path.split('/').last).toList();
+    expect(names.where((n) => n.endsWith('.part')), isEmpty);
   });
 }

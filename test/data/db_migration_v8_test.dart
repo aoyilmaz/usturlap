@@ -39,7 +39,7 @@ void main() {
 
   test('şema güncel sürüme (9) yükselir', () async {
     final v = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(v.read<int>('user_version'), 15);
+    expect(v.read<int>('user_version'), 16);
   });
 
   test('noktalar korunur, sembolleri CoT tipine dönüşür, uid alır', () async {

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart' show AppLifecycleListener;
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
@@ -37,6 +38,14 @@ class DevicePositionSource implements PositionSource {
   /// true iken arka planda (ekran kapalı) da konum gelir. Sadece iz kaydında.
   bool _backgroundEnabled = false;
 
+  /// İzin bir kez sorulur; reddedilirse her dönüşte yeniden sorulmaz
+  /// (kullanıcı Ayarlar'dan verince uygulamaya dönüşte kendiliğinden başlar).
+  bool _askedPermission = false;
+
+  /// Konum servisi açılınca / uygulamaya dönülünce yeniden dene.
+  StreamSubscription<ServiceStatus>? _serviceSub;
+  AppLifecycleListener? _lifecycle;
+
   @override
   Stream<List<Contact>> get contacts => _controller.stream;
 
@@ -44,10 +53,14 @@ class DevicePositionSource implements PositionSource {
   Future<void> start() async {
     if (_started) return;
     _started = true;
+    _watchForRecovery();
 
-    // 1) Konum servisi açık mı + izin var mı?
+    // 1) Konum servisi açık mı + izin var mı? Değilse başlamış sayılmaz:
+    // servis açılınca ya da uygulamaya dönülünce yeniden denenir (eskiden
+    // uygulama yeniden başlatılana kadar konum gelmiyordu).
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
+      _started = false;
       _controller.addError(
         StateError('Konum servisi kapalı. Ayarlardan açın.'),
       );
@@ -55,11 +68,13 @@ class DevicePositionSource implements PositionSource {
     }
 
     LocationPermission perm = await Geolocator.checkPermission();
-    if (perm == LocationPermission.denied) {
+    if (perm == LocationPermission.denied && !_askedPermission) {
+      _askedPermission = true;
       perm = await Geolocator.requestPermission();
     }
     if (perm == LocationPermission.denied ||
         perm == LocationPermission.deniedForever) {
+      _started = false;
       _controller.addError(StateError('Konum izni verilmedi.'));
       return;
     }
@@ -77,6 +92,29 @@ class DevicePositionSource implements PositionSource {
         _emit();
       });
     }
+  }
+
+  /// Konum servisi sonradan açılınca ya da kullanıcı Ayarlar'dan izin verip
+  /// uygulamaya dönünce yeniden başlat; servis oturum ortasında kapanıp
+  /// açılırsa konum akışına yeniden abone ol.
+  void _watchForRecovery() {
+    try {
+      _serviceSub ??= Geolocator.getServiceStatusStream().listen((s) {
+        if (s != ServiceStatus.enabled) return;
+        if (_started && _posSub != null) {
+          _subscribePosition();
+        } else {
+          start();
+        }
+      }, onError: (Object _) {});
+    } catch (_) {
+      // Platform desteklemiyorsa yalnız uygulamaya dönüşte denenir.
+    }
+    _lifecycle ??= AppLifecycleListener(
+      onResume: () {
+        if (!_started) start();
+      },
+    );
   }
 
   /// Pusula eklentisinin ham açısını 0–360'a çevirir; geçersizse null.
@@ -198,7 +236,11 @@ class DevicePositionSource implements PositionSource {
         // pusula yoksa GPS'in rota açısına (course) düşeriz.
         speedMps: pos.speed,
         altitudeMeters: pos.altitude,
-        headingDeg: _lastHeading ?? (pos.heading.isFinite ? pos.heading : null),
+        // GPS rota açısı yalnız hareket hâlinde anlamlı: duran cihazda
+        // Android 0 verir, ok yanlışlıkla kuzeyi gösterirdi.
+        headingDeg:
+            _lastHeading ??
+            (pos.heading.isFinite && pos.speed > 0.5 ? pos.heading : null),
         accuracyMeters: pos.accuracy,
         timestamp: pos.timestamp,
       ),
@@ -209,6 +251,10 @@ class DevicePositionSource implements PositionSource {
   Future<void> stop() async {
     await _posSub?.cancel();
     await _headingSub?.cancel();
+    await _serviceSub?.cancel();
+    _lifecycle?.dispose();
+    _serviceSub = null;
+    _lifecycle = null;
     _posSub = null;
     _headingSub = null;
     _started = false;

@@ -182,6 +182,7 @@ const _srcAreas = 'pz-areas';
 const _srcLines = 'pz-lines';
 const _srcMarkers = 'pz-markers';
 const _layerMarkers = 'pz-markers';
+const _imgLayerPrefix = 'pz-img-layer-';
 const _srcDem = 'pz-dem';
 const _layerSky = 'pz-sky';
 
@@ -189,7 +190,12 @@ const _layerSky = 'pz-sky';
 const _ownLayers = {
   'pz-areas-fill',
   'pz-areas-line',
+  // Kesikli çizgiler, 3B alanlar: eksikken gece modu açılınca koyu kırmızıya
+  // boyanıp karartılıyordu (veri renkleri kayboluyordu).
+  'pz-areas-line-dashed',
+  'pz-areas-3d',
   'pz-lines',
+  'pz-lines-dashed',
   _layerMarkers,
   // pz-sky bilerek yok: gece modunda gökyüzü de söndürülür.
 };
@@ -346,6 +352,13 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
 
   bool _styleReady = false;
   bool _layersAdded = false;
+
+  /// Kaynaklara en son gönderilen veri: aynıysa yeniden gönderilmez. Her
+  /// konum güncellemesinde bütün çizimler (uzun iz kaydında yüzlerce KB)
+  /// platform kanalından yeniden geçiyordu.
+  String? _sentAreas, _sentLines, _sentMarkers;
+
+  void _forgetSent() => _sentAreas = _sentLines = _sentMarkers = null;
   final Set<String> _imagesInStyle = {};
 
   /// Stile eklenmiş resim katmanları (kaynak id → son gönderilen).
@@ -390,6 +403,7 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
     if (map == null) return;
     _styleGen++;
     _layersAdded = false;
+    _forgetSent();
     _imagesInStyle.clear();
     _imageLayers.clear();
     await _scheduleSync();
@@ -534,6 +548,7 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
     _styleReady = true;
     _styleGen++;
     _layersAdded = false;
+    _forgetSent();
     _imagesInStyle.clear();
     _imageLayers.clear();
     try {
@@ -595,7 +610,12 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
     final infos = await map.getStyleLayers();
     final edits = nightStyleEdits(
       [for (final i in infos) if (i != null) (id: i.id, type: i.type)],
-      keep: _ownLayers,
+      keep: {
+        ..._ownLayers,
+        // Görüş alanı / arazi analizi resimleri de uygulamanın kendi verisi.
+        for (final i in infos)
+          if (i != null && i.id.startsWith(_imgLayerPrefix)) i.id,
+      },
     );
     for (final e in edits) {
       try {
@@ -635,6 +655,7 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
       // ve kısa süre sonra bir kez yeniden dene (yeni bir değişiklik
       // beklenmeden çizgiler geri gelsin).
       _layersAdded = false;
+      _forgetSent();
       _imagesInStyle.clear();
       _imageLayers.clear();
       if (!_retryScheduled && mounted) {
@@ -665,8 +686,11 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
           await rasterizeWidgetToPng(m.child,
               size: Size(m.width, m.height), pixelRatio: _dpr),
         );
+        final gen = _styleGen;
         await map.addImage(m.imageKey, _dpr, StyleImage.bytes(png));
-        _imagesInStyle.add(m.imageKey);
+        // Bu sırada stil yenilendiyse resim eski stile gitti: eklendi sayma,
+        // yoksa yeni stilde işaretçi görünmez kalırdı.
+        if (gen == _styleGen) _imagesInStyle.add(m.imageKey);
       } catch (e) {
         debugPrint('Mapbox işaretçi resmi hatası (${m.imageKey}): $e');
       }
@@ -678,11 +702,27 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
       await _addSourcesAndLayers(map, data);
       // Kurulum sürerken stil yenilendiyse kurulu sayma; yeniden kurulsun.
       _layersAdded = gen == _styleGen;
-      if (!_layersAdded) _pending = true;
+      if (_layersAdded) {
+        _sentAreas = data.areas;
+        _sentLines = data.lines;
+        _sentMarkers = data.markers;
+      } else {
+        _pending = true;
+      }
     } else {
-      await map.setStyleSourceProperty(_srcAreas, 'data', data.areas);
-      await map.setStyleSourceProperty(_srcLines, 'data', data.lines);
-      await map.setStyleSourceProperty(_srcMarkers, 'data', data.markers);
+      final gen = _styleGen;
+      if (data.areas != _sentAreas) {
+        await map.setStyleSourceProperty(_srcAreas, 'data', data.areas);
+        if (gen == _styleGen) _sentAreas = data.areas;
+      }
+      if (data.lines != _sentLines) {
+        await map.setStyleSourceProperty(_srcLines, 'data', data.lines);
+        if (gen == _styleGen) _sentLines = data.lines;
+      }
+      if (data.markers != _sentMarkers) {
+        await map.setStyleSourceProperty(_srcMarkers, 'data', data.markers);
+        if (gen == _styleGen) _sentMarkers = data.markers;
+      }
     }
 
     // 2b) Resim katmanları (görüş alanı vb.): çizimlerin altında.
@@ -706,7 +746,7 @@ class _MapboxEngineViewState extends State<_MapboxEngineView> {
   }
 
   static String _imgSource(String id) => 'pz-img-$id';
-  static String _imgLayer(String id) => 'pz-img-layer-$id';
+  static String _imgLayer(String id) => '$_imgLayerPrefix$id';
 
   /// Resim katmanlarını istenenle eşitler: yeni → kaynak + raster katman
   /// (çizimlerin altına), değişen → pikseller / köşeler güncellenir,

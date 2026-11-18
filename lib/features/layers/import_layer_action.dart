@@ -59,11 +59,21 @@ Future<LayerImportResult?> pickAndImportLayer(
       return null;
     }
 
-    // Documents'a kopyala (stream — belleğe yüklenmez).
+    // Documents'a kopyala (stream — belleğe yüklenmez). Önce geçici ada:
+    // kopya yarıda kalırsa (disk doldu, uygulama kapandı) eksik dosya katman
+    // adıyla kalıp bozuk harita göstermesin; açık olan aynı adlı dosya da
+    // kopya bitmeden ezilmesin.
     final dir = await getApplicationDocumentsDirectory();
     final destPath = '${dir.path}/$name';
     if (srcPath != destPath) {
-      await File(srcPath).copy(destPath);
+      final part = File('$destPath.part');
+      try {
+        await File(srcPath).copy(part.path);
+        await part.rename(destPath);
+      } catch (_) {
+        if (await part.exists()) await part.delete();
+        rethrow;
+      }
     }
 
     // Yerleşik katmanın dosyası (ör. turkey.pmtiles): o katman etkinleşir.
@@ -112,19 +122,22 @@ Future<LayerImportResult?> pickAndImportLayer(
       }
     } else {
       final mp = MbTiles(mbtilesPath: destPath);
-      final md = mp.getMetadata();
-      minZoom = md.minZoom?.round();
-      maxZoom = md.maxZoom?.round();
-      final c = md.defaultCenter;
-      final b = md.bounds;
-      if (c != null) {
-        centerLat = c.latitude;
-        centerLon = c.longitude;
-      } else if (b != null) {
-        centerLat = (b.top + b.bottom) / 2;
-        centerLon = (b.left + b.right) / 2;
+      try {
+        final md = mp.getMetadata();
+        minZoom = md.minZoom?.round();
+        maxZoom = md.maxZoom?.round();
+        final c = md.defaultCenter;
+        final b = md.bounds;
+        if (c != null) {
+          centerLat = c.latitude;
+          centerLon = c.longitude;
+        } else if (b != null) {
+          centerLat = (b.top + b.bottom) / 2;
+          centerLon = (b.left + b.right) / 2;
+        }
+      } finally {
+        mp.dispose();
       }
-      mp.dispose();
     }
 
     final layer = ImportedLayer(
