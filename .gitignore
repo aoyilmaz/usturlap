@@ -65,3 +65,11 @@ tiles_external/
 # Gizli derleme değişkenleri (Mapbox token vb.)
 dart_defines.json
 assets/tiles/*.hgt
+
+# Yalnız geliştiricinin bilgisayarında (GitHub'da yayınlanmaz; 2026-11-18):
+# testler, belgeler ve README dışındaki Markdown dosyaları.
+/test/
+/integration_test/
+/docs/
+*.md
+!/README.md
