@@ -51,7 +51,27 @@ class ImportedTrack {
   final String name;
   final List<LatLng> points;
   final String? uid;
-  const ImportedTrack({required this.name, required this.points, this.uid});
+
+  /// Nokta başına zaman / yükseklik / hız (varsa; bkz. [TrackDetail]).
+  final TrackDetail? detail;
+  const ImportedTrack({
+    required this.name,
+    required this.points,
+    this.uid,
+    this.detail,
+  });
+}
+
+/// İz noktalarının ayrıntısı: her liste ya null ya da nokta sayısıyla aynı
+/// uzunlukta. Dışa aktarıp geri alınan izin tarihi, süresi, yüksekliği ve
+/// hızı korunsun diye (yoksa bütün noktalar "şimdi"ye damgalanırdı).
+class TrackDetail {
+  const TrackDetail({this.times, this.altitudes, this.speeds});
+  final List<DateTime>? times;
+  final List<double?>? altitudes;
+  final List<double?>? speeds;
+
+  bool get isEmpty => times == null && altitudes == null && speeds == null;
 }
 
 /// Bir dosyadan çıkan nesneler.
@@ -110,11 +130,30 @@ class GpxKmlImporter {
     }
     final root = doc.rootElement;
     final tag = root.name.local.toLowerCase();
-    if (tag == 'gpx') return _parseGpx(root);
-    if (tag == 'kml') return _parseKml(root);
+    if (tag == 'gpx') return _checked(_parseGpx(root));
+    if (tag == 'kml') return _checked(_parseKml(root));
     throw const FormatException(
       'Desteklenmeyen dosya. GPX veya KML bekleniyor.',
     );
+  }
+
+  /// Çok büyük dosyalarda telefon donmasın (GeoJSON'daki sınırla aynı).
+  static const maxObjects = 20000;
+
+  static ImportResult _checked(ImportResult r) {
+    final n =
+        r.waypoints.length +
+        r.tracks.length +
+        r.graphics.length +
+        r.rangeLines.length +
+        r.rangeRings.length +
+        r.routes.length;
+    if (n > maxObjects) {
+      throw FormatException(
+        'Dosyada çok fazla nesne var ($n; en çok $maxObjects).',
+      );
+    }
+    return r;
   }
 
   // ---- GPX ----
@@ -139,13 +178,31 @@ class GpxKmlImporter {
 
     // <trk> … <trkpt> → iz
     for (final trk in root.findAllElements('trk', namespace: '*')) {
-      final pts = [
-        for (final tp in trk.findAllElements('trkpt', namespace: '*'))
-          ?_latLonAttr(tp),
-      ];
+      final pts = <LatLng>[];
+      final times = <DateTime?>[];
+      final alts = <double?>[];
+      for (final tp in trk.findAllElements('trkpt', namespace: '*')) {
+        final p = _latLonAttr(tp);
+        if (p == null) continue;
+        pts.add(p);
+        times.add(DateTime.tryParse(_childText(tp, 'time') ?? '')?.toUtc());
+        final ele = double.tryParse(_childText(tp, 'ele') ?? '');
+        alts.add(ele != null && ele.isFinite ? ele : null);
+      }
       if (pts.isNotEmpty) {
+        // Zaman ancak bütün noktalarda varsa kullanılır.
+        final detail = TrackDetail(
+          times: times.every((t) => t != null)
+              ? [for (final t in times) t!]
+              : null,
+          altitudes: alts.any((a) => a != null) ? alts : null,
+        );
         tracks.add(
-          ImportedTrack(name: _childText(trk, 'name') ?? 'İZ', points: pts),
+          ImportedTrack(
+            name: _childText(trk, 'name') ?? 'İZ',
+            points: pts,
+            detail: detail.isEmpty ? null : detail,
+          ),
         );
       }
     }
@@ -235,14 +292,20 @@ class GpxKmlImporter {
         }
       }
 
-      final trackUid = data?['kind'] == 'track'
-          ? data!['uid'] as String?
-          : null;
+      final rawUid = data?['kind'] == 'track' ? data!['uid'] : null;
+      final trackUid = rawUid is String ? rawUid : null;
       // Çizgiler → iz.
       for (final line in _all(pm, 'LineString')) {
         final coords = _parseKmlCoords(_childText(line, 'coordinates'));
         if (coords.isNotEmpty) {
-          tracks.add(ImportedTrack(name: name, points: coords, uid: trackUid));
+          tracks.add(
+            ImportedTrack(
+              name: name,
+              points: coords,
+              uid: trackUid,
+              detail: KerterizData.trackDetail(data, coords.length),
+            ),
+          );
         }
       }
       // gx:Track → iz ("boylam enlem yükseklik").

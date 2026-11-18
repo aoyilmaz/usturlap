@@ -27,6 +27,48 @@ class KerterizData {
     return LatLng(lat, lon);
   }
 
+  /// Metin değilse null (dış veri: `as String?` TypeError fırlatırdı).
+  static String? _str(Object? v) => v is String ? v : null;
+
+  /// İz ayrıntısı: nokta başına zaman (`t`, epoch sn), yükseklik (`alt`) ve
+  /// hız (`spd`). Listeler [n] noktayla aynı uzunlukta değilse ya da içinde
+  /// geçersiz değer varsa o liste yok sayılır.
+  static TrackDetail? trackDetail(Map<String, dynamic>? d, int n) {
+    if (d == null || d['kind'] != 'track') return null;
+    List<DateTime>? times;
+    final t = d['t'];
+    if (t is List && t.length == n) {
+      final out = <DateTime>[];
+      for (final v in t) {
+        // 1970–2100 arası, tam sayı saniye.
+        if (v is! int || v < 0 || v > 4102444800) break;
+        out.add(DateTime.fromMillisecondsSinceEpoch(v * 1000, isUtc: true));
+      }
+      if (out.length == n) times = out;
+    }
+    List<double?>? nums(Object? raw, double lo, double hi) {
+      if (raw is! List || raw.length != n) return null;
+      final out = <double?>[];
+      for (final v in raw) {
+        if (v == null) {
+          out.add(null);
+        } else {
+          final x = _num(v);
+          if (x == null || x < lo || x > hi) return null;
+          out.add(x);
+        }
+      }
+      return out;
+    }
+
+    final detail = TrackDetail(
+      times: times,
+      altitudes: nums(d['alt'], -1000, 100000),
+      speeds: nums(d['spd'], 0, 1000),
+    );
+    return detail.isEmpty ? null : detail;
+  }
+
   static double? _num(Object? v) =>
       v is num && v.isFinite ? v.toDouble() : null;
 
@@ -83,7 +125,7 @@ class KerterizData {
       height: type == GraphicType.line || h == null ? null : h.clamp(1, 1000),
       geofence: type == GraphicType.line
           ? null
-          : GeofenceTrigger.fromName(d['geofence'] as String?),
+          : GeofenceTrigger.fromName(_str(d['geofence'])),
     );
   }
 
@@ -162,9 +204,9 @@ class KerterizData {
       position: position,
       note: note is String ? note : fallbackNote,
       uid: _uid(d['uid']),
-      affiliation: Affiliation.fromName(d['affiliation'] as String?),
-      echelon: Echelon.fromName(d['echelon'] as String?),
-      role: SymbolRole.fromName(d['role'] as String?),
+      affiliation: Affiliation.fromName(_str(d['affiliation'])),
+      echelon: Echelon.fromName(_str(d['echelon'])),
+      role: SymbolRole.fromName(_str(d['role'])),
       cotType: cot is String && cot.length <= 64 ? cot : null,
       hae: _num(d['hae']),
       elevation: _num(d['elevation']),

@@ -61,11 +61,7 @@ class KmzPhoto {
 /// Dışa aktarma biçimleri.
 enum ExportFormat {
   kmz('KMZ', 'kmz', 'Fotoğraflarla; Google Earth, TAK uyumlu uygulamalar'),
-  package(
-    'Veri paketi',
-    'zip',
-    'TAK uyumlu görev paketi (CoT + fotoğraflar)',
-  ),
+  package('Veri paketi', 'zip', 'TAK uyumlu görev paketi (CoT + fotoğraflar)'),
   kml('KML', 'kml', 'Google Earth, TAK uyumlu ve çoğu harita uygulaması'),
   gpx('GPX', 'gpx', 'Yalnız noktalar, izler ve rotalar; GPS cihazları'),
   geojson('GeoJSON', 'geojson', 'CBS yazılımları (QGIS vb.)');
@@ -165,7 +161,7 @@ class GeoExporter {
           '      <Style><LineStyle><color>ff00a5ff</color><width>4</width>'
           '</LineStyle></Style>',
         );
-      _data(b, {'kind': 'track', 'uid': t.track.uid});
+      _data(b, trackData(t));
       b
         ..writeln(
           '      <LineString><tessellate>1</tessellate><coordinates>'
@@ -224,6 +220,25 @@ class GeoExporter {
     }
     b.writeln('    </Placemark>');
   }
+
+  /// İzin "kerteriz" verisi: kimlik + nokta başına zaman (epoch sn),
+  /// yükseklik ve hız. KML / GeoJSON çizgisi bunları taşımaz; geri içe
+  /// aktarınca izin tarihi, süresi ve profili korunsun diye.
+  static Map<String, Object?> trackData(TrackExport t) {
+    final pts = t.points;
+    return {
+      'kind': 'track',
+      'uid': t.track.uid,
+      't': [for (final p in pts) p.timestamp.millisecondsSinceEpoch ~/ 1000],
+      if (pts.any((p) => p.altitude != null))
+        'alt': [for (final p in pts) _round(p.altitude, 1)],
+      if (pts.any((p) => p.speedMps != null))
+        'spd': [for (final p in pts) _round(p.speedMps, 2)],
+    };
+  }
+
+  static double? _round(double? v, int digits) =>
+      v == null || !v.isFinite ? null : double.parse(v.toStringAsFixed(digits));
 
   static void _data(StringBuffer b, Map<String, Object?> data) {
     b.writeln(
@@ -473,11 +488,7 @@ class GeoExporter {
                   ],
               ],
             },
-            {
-              'name': t.track.name,
-              'stroke': '#ffa500',
-              dataKey: {'kind': 'track', 'uid': t.track.uid},
-            },
+            {'name': t.track.name, 'stroke': '#ffa500', dataKey: trackData(t)},
           ),
       for (final r in s.routes)
         if (r.points.length >= 2)

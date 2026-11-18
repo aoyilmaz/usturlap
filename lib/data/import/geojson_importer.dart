@@ -19,6 +19,9 @@ class GeoJsonImporter {
   /// Çok büyük dosyalarda telefon donmasın.
   static const maxFeatures = 20000;
 
+  /// İç içe GeometryCollection derinliği.
+  static const maxDepth = 16;
+
   static ImportResult parse(String content) {
     final Object? root;
     try {
@@ -119,7 +122,11 @@ class _Collector {
   static List<LatLng> _line(Object? c) =>
       c is List ? [for (final p in c) ?_pos(p)] : const [];
 
-  void geometry(Map<String, dynamic> g, Map<String, dynamic> p) {
+  void geometry(
+    Map<String, dynamic> g,
+    Map<String, dynamic> p, {
+    int depth = 0,
+  }) {
     final data = p[KerterizData.key];
     final k = data is Map<String, dynamic> ? data : null;
     final c = g['coordinates'];
@@ -189,8 +196,12 @@ class _Collector {
       case 'GeometryCollection':
         final gs = g['geometries'];
         if (gs is! List) return;
+        // İç içe koleksiyon sınırı: kötü niyetli dosya yığını taşırmasın.
+        if (depth >= GeoJsonImporter.maxDepth) {
+          throw const FormatException('GeoJSON çok derin iç içe.');
+        }
         for (final sub in gs) {
-          if (sub is Map<String, dynamic>) geometry(sub, p);
+          if (sub is Map<String, dynamic>) geometry(sub, p, depth: depth + 1);
         }
     }
   }
@@ -207,6 +218,7 @@ class _Collector {
         name: _name(p, 'İZ'),
         points: pts,
         uid: uid is String ? uid : null,
+        detail: KerterizData.trackDetail(k, pts.length),
       ),
     );
   }

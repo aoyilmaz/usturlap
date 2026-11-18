@@ -57,6 +57,16 @@ Future<void> importFromPath(
   final f = File(path);
   final fileName = path.split('/').last;
   try {
+    // Önce yedek mi diye bak: yedekte bütün fotoğraflar olduğu için 50
+    // MB'ı kolayca aşar; boyut sınırı yalnız harita / veri dosyaları için.
+    final head = await f
+        .openRead(0, BackupCrypto.magic.length)
+        .fold<List<int>>(<int>[], (a, b) => a..addAll(b));
+    if (BackupCrypto.looksLike(Uint8List.fromList(head))) {
+      final bytes = await f.readAsBytes();
+      if (context.mounted) await restoreBackupBytes(context, ref, bytes);
+      return;
+    }
     if (await f.length() > GeoImport.maxFileBytes) {
       messenger.showSnackBar(
         const SnackBar(content: Text('Dosya çok büyük (en çok 50 MB).')),
@@ -64,11 +74,6 @@ Future<void> importFromPath(
       return;
     }
     final Uint8List bytes = await f.readAsBytes();
-    // Usturlap yedeği (.krz): geri yükleme akışı.
-    if (BackupCrypto.looksLike(bytes)) {
-      if (context.mounted) await restoreBackupBytes(context, ref, bytes);
-      return;
-    }
     // Büyük dosya arayüzü dondurmasın: ayrıştırma ayrı iş parçacığında.
     final bundle = await Isolate.run(() => GeoImport.parse(bytes));
     if (!context.mounted) return;
@@ -210,6 +215,7 @@ Future<ImportReport?> importBundle(
     rangeLines: ref.read(rangeLineRepositoryProvider),
     rangeRings: ref.read(rangeRingRepositoryProvider),
     attachments: ref.read(attachmentRepositoryProvider),
+    db: ref.read(appDatabaseProvider),
     routes: ref.read(routeRepositoryProvider),
   ).write(bundle);
   final skipped = report.skipped > 0

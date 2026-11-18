@@ -143,4 +143,84 @@ void main() {
     );
     expect(() => BackupArchive.read(zip), throwsA(isA<BackupException>()));
   });
+
+  group('denetim 2026-11-16', () {
+    test('yeni yedekler 600 bin turla şifrelenir', () {
+      expect(BackupCrypto.iterations, 600000);
+    });
+
+    test('başlıktaki aşırı tur sayısı parola denenmeden reddedilir', () async {
+      final enc = await BackupCrypto.encrypt(
+        Uint8List.fromList([1, 2, 3]),
+        'parola',
+        iterations: 20000,
+      );
+      ByteData.sublistView(enc, 9, 13).setUint32(0, 10000000);
+      final sw = Stopwatch()..start();
+      await expectLater(
+        BackupCrypto.decrypt(enc, 'parola'),
+        throwsA(isA<BackupException>()),
+      );
+      expect(sw.elapsed.inSeconds, lessThan(2));
+    });
+
+    test('eski (300 bin turlu) yedek açılmaya devam eder', () async {
+      final plain = Uint8List.fromList([9, 8, 7]);
+      final enc = await BackupCrypto.encrypt(plain, 'eski', iterations: 300000);
+      expect(await BackupCrypto.decrypt(enc, 'eski'), plain);
+    });
+
+    test(
+      'fotoğraf yazılamazsa veritabanı ve fotoğraflar hiç değişmez',
+      () async {
+        final wps = WaypointRepository(db);
+        final photos = AttachmentRepository(db, documentsDir: () async => docs);
+        await wps.add(
+          name: 'YEDEKTEKİ',
+          position: const LatLng(39, 32),
+          uid: 'a',
+        );
+        await photos.addFile(
+          'a',
+          File('${tmp.path}/a.jpg')..writeAsBytesSync([1, 1, 1]),
+        );
+        final c = await service.open(await service.create('p'), 'p');
+
+        // Yedekten sonra cihazdaki hâl.
+        await wps.delete((await wps.watchAll().first).single.id!);
+        await photos.deleteAllFor('a');
+        await wps.add(
+          name: 'CİHAZDAKİ',
+          position: const LatLng(40, 33),
+          uid: 'b',
+        );
+        await photos.addFile(
+          'b',
+          File('${tmp.path}/b.jpg')..writeAsBytesSync([2, 2, 2]),
+        );
+
+        // Geçersiz dosya adlı bir fotoğraf: hazırlık klasörüne yazım düşer.
+        final broken = BackupContents(
+          database: c.database,
+          attachments: {
+            ...c.attachments,
+            'attachments/x/\u0000geçersiz.jpg': Uint8List.fromList([0]),
+          },
+          meta: c.meta,
+        );
+        await expectLater(service.restore(broken), throwsA(anything));
+
+        // Hiçbir şey değişmedi: cihazdaki nokta ve fotoğrafı yerinde.
+        final now = await wps.watchAll().first;
+        expect(now.map((w) => w.name), ['CİHAZDAKİ']);
+        final pics = await photos.watchFor('b').first;
+        expect(pics, hasLength(1));
+        expect(await File(pics.single.filePath).readAsBytes(), [2, 2, 2]);
+        expect(
+          Directory('${docs.path}/attachments_yeni').existsSync(),
+          isFalse,
+        );
+      },
+    );
+  });
 }

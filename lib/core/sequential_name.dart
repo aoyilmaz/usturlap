@@ -7,8 +7,9 @@ String nextSequentialName(String prefix, Iterable<String> existing) {
   for (final name in existing) {
     final m = re.firstMatch(name.trim());
     if (m == null) continue;
-    final n = int.parse(m.group(1)!);
-    if (n > max) max = n;
+    // Çok uzun sayı (kullanıcı elle yazdı) int'e sığmaz: yok say.
+    final n = int.tryParse(m.group(1)!);
+    if (n != null && n > max && n < 1000000000) max = n;
   }
   return '$prefix-${max + 1}';
 }

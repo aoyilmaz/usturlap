@@ -26,4 +26,11 @@ void main() {
   test('önekteki özel karakterler kaçırılır', () {
     expect(nextSequentialName('A.B', const ['AXB-5', 'A.B-1']), 'A.B-2');
   });
+
+  test('int\'e sığmayan sayı sonraki adı bozmaz', () {
+    expect(
+      nextSequentialName('OP', ['OP-99999999999999999999', 'OP-4']),
+      'OP-5',
+    );
+  });
 }

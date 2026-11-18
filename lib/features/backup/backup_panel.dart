@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../data/backup/backup_service.dart';
+import '../../providers/track_providers.dart';
 import '../../providers/waypoint_providers.dart';
 import '../shell/adaptive_sheet.dart';
 
@@ -204,6 +205,16 @@ Future<void> restoreBackupBytes(
   if (!BackupCrypto.looksLike(bytes)) {
     messenger.showSnackBar(
       const SnackBar(content: Text('Bu bir Usturlap yedeği değil.')),
+    );
+    return;
+  }
+  // Kayıt sürerken geri yükleme: izler yedektekilerle değişir, yeni
+  // noktalar yedekteki aynı numaralı ize eklenirdi.
+  if (ref.read(recordingProvider).isRecording) {
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('İz kaydı sürüyor. Geri yüklemek için önce kaydı durdur.'),
+      ),
     );
     return;
   }

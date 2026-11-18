@@ -17,6 +17,8 @@ import 'package:usturlap/data/export/geo_exporter.dart';
 import 'package:usturlap/data/import/geo_import.dart';
 import 'package:usturlap/data/import/import_writer.dart';
 import 'package:usturlap/domain/models/map_graphic.dart';
+import 'package:usturlap/data/import/gpx_kml_importer.dart';
+import 'package:usturlap/domain/models/track.dart';
 import 'package:usturlap/domain/models/route_plan.dart';
 import 'package:usturlap/domain/models/sensor_fov.dart';
 import 'package:usturlap/domain/models/waypoint.dart';
@@ -168,5 +170,144 @@ void main() {
     expect(r.summary, '1 nokta, 1 iz');
     await writer.write(gpx);
     expect(await WaypointRepository(db).watchAll().first, hasLength(2));
+  });
+
+  group('denetim 2026-11-16', () {
+    Uint8List b(String text) => Uint8List.fromList(utf8.encode(text));
+    String pm(String name, int i) =>
+        '<Placemark><name>$name</name><Point><coordinates>'
+        '32.$i,39.$i</coordinates></Point></Placemark>';
+
+    test(
+      '80 karakterden uzun ad kırpılır, içe aktarma yarıda kalmaz',
+      () async {
+        final kml =
+            '<kml><Document>${pm('BİR', 1)}${pm('x' * 120, 2)}'
+            '${pm('ÜÇ', 3)}</Document></kml>';
+        final report = await writer.write(GeoImport.parse(b(kml)));
+        expect(report.waypoints, 3);
+        final names = (await db.select(db.waypoints).get()).map((w) => w.name);
+        expect(names, contains('x' * 80));
+      },
+    );
+
+    test(
+      'ortada hata olursa hiçbir nesne yazılmaz (ya hepsi ya hiçbiri)',
+      () async {
+        final atomic = ImportWriter(
+          waypoints: WaypointRepository(db),
+          graphics: MapGraphicRepository(db),
+          tracks: TrackRepository(db),
+          rangeLines: RangeLineRepository(db),
+          rangeRings: RangeRingRepository(db),
+          attachments: AttachmentRepository(db, documentsDir: () async => root),
+          routes: RouteRepository(db),
+          tempDir: root,
+          db: db,
+        );
+        // İki nokta + tek noktalı (geçersiz) çizgi değil; yazımı bozmak için
+        // aynı dosyada 2 noktadan sonra bozuk bir çizim (boş nokta listesi).
+        final bundle = GeoImport.parse(
+          b('<kml><Document>${pm('A', 1)}${pm('B', 2)}</Document></kml>'),
+        );
+        final bad = ImportBundle(
+          ImportResult(
+            bundle.result.waypoints,
+            const [],
+            graphics: [
+              MapGraphic(
+                uid: 'g-bozuk',
+                name: 'BOZUK',
+                type: GraphicType.line,
+                // NaN koordinat: kaydederken jsonEncode hata verir.
+                points: const [LatLng(double.nan, 0), LatLng(1, 1)],
+                colorValue: 0xFFFF0000,
+                createdAt: DateTime.utc(2026),
+              ),
+            ],
+          ),
+        );
+        await expectLater(atomic.write(bad), throwsA(anything));
+        expect(await db.select(db.waypoints).get(), isEmpty);
+        expect(await db.select(db.mapGraphics).get(), isEmpty);
+
+        // Düzgün dosya sonradan sorunsuz gelir (kimlikler "zaten var" sayılmaz).
+        final ok = await atomic.write(bundle);
+        expect(ok.waypoints, 2);
+        expect(ok.skipped, 0);
+      },
+    );
+
+    test(
+      'dışa aktarılan iz geri alınınca zaman, yükseklik ve hız korunur',
+      () async {
+        final t0 = DateTime.utc(2026, 11, 10, 8, 30);
+        final pts = [
+          for (var i = 0; i < 4; i++)
+            TrackPoint(
+              position: LatLng(39 + i * 0.001, 32),
+              timestamp: t0.add(Duration(minutes: i * 5)),
+              altitude: 1000.0 + i * 10,
+              speedMps: 1.25 + i,
+            ),
+        ];
+        final track = Track(
+          id: 1,
+          uid: 'iz-1',
+          name: 'SABAH',
+          startedAt: t0,
+          endedAt: t0.add(const Duration(minutes: 15)),
+        );
+        final set = ExportSet(tracks: [TrackExport(track, pts)]);
+        for (final format in ['kml', 'geojson', 'gpx']) {
+          final text = switch (format) {
+            'kml' => GeoExporter.toKml(set, name: 't'),
+            'gpx' => GeoExporter.toGpx(set, name: 't'),
+            _ => GeoExporter.toGeoJson(set, name: 't'),
+          };
+          final fresh = AppDatabase.forTesting(NativeDatabase.memory());
+          addTearDown(fresh.close);
+          final w = ImportWriter(
+            waypoints: WaypointRepository(fresh),
+            graphics: MapGraphicRepository(fresh),
+            tracks: TrackRepository(fresh),
+            rangeLines: RangeLineRepository(fresh),
+            rangeRings: RangeRingRepository(fresh),
+            attachments: AttachmentRepository(
+              fresh,
+              documentsDir: () async => root,
+            ),
+            tempDir: root,
+          );
+          await w.write(GeoImport.parse(b(text)));
+          final row = (await fresh.select(fresh.tracks).get()).single;
+          final got = await TrackRepository(fresh).pointsOf(row.id);
+          expect(row.startedAt.toUtc(), t0, reason: format);
+          expect(
+            row.endedAt!.toUtc(),
+            t0.add(const Duration(minutes: 15)),
+            reason: format,
+          );
+          expect(
+            [for (final p in got) p.timestamp.toUtc()],
+            [for (final p in pts) p.timestamp],
+            reason: format,
+          );
+          expect(
+            [for (final p in got) p.altitude],
+            [1000.0, 1010.0, 1020.0, 1030.0],
+            reason: format,
+          );
+          if (format != 'gpx') {
+            // GPX'te hız alanı yok.
+            expect(
+              [for (final p in got) p.speedMps],
+              [1.25, 2.25, 3.25, 4.25],
+              reason: format,
+            );
+          }
+        }
+      },
+    );
   });
 }

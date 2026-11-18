@@ -30,7 +30,15 @@ class BackupCrypto {
 
   static final magic = ascii.encode('KRTZYDK1');
   static const version = 1;
-  static const iterations = 300000;
+
+  /// PBKDF2-HMAC-SHA256 tur sayısı (yeni yedekler; OWASP önerisi 600 bin).
+  /// Eski yedekler kendi başlıklarındaki sayıyla (300 bin) açılır.
+  static const iterations = 600000;
+
+  /// Başlıkta kabul edilen en büyük tur sayısı. Sayı parola doğrulanmadan
+  /// önce kullanıldığı için sınırsız olamaz: 10 milyonluk sahte bir başlık
+  /// parola ekranını dakikalarca kilitliyordu.
+  static const maxIterations = 2000000;
 
   static bool looksLike(Uint8List data) {
     if (data.length < magic.length) return false;
@@ -81,7 +89,7 @@ class BackupCrypto {
       throw const BackupException('Yedek biçimi bu sürümde açılamıyor.');
     }
     final it = ByteData.sublistView(data, 9, 13).getUint32(0);
-    if (it < 10000 || it > 10000000) {
+    if (it < 10000 || it > maxIterations) {
       throw const BackupException('Yedek dosyası bozuk.');
     }
     final salt = data.sublist(13, 29);
@@ -262,7 +270,55 @@ class BackupService {
       });
 
   /// Mevcut veriyi yedektekiyle değiştirir.
+  ///
+  /// Sıra önemli: önce yedekteki fotoğraflar ayrı bir klasöre yazılır
+  /// (disk doluysa burada durur, hiçbir şey değişmemiş olur), sonra
+  /// veritabanı tek işlemde değiştirilir, en son klasörler yer değiştirir.
+  /// Eskiden veritabanı önce değişiyordu; fotoğraf yazımı bozulunca yeni
+  /// veritabanı eski fotoğraflarla kalıyor ve "geri yüklenemedi" deniyordu.
   Future<void> restore(BackupContents c) async {
+    final docs = (await _documentsDir()).path;
+    const folder = AttachmentRepository.folder;
+    final dir = Directory('$docs/$folder');
+    final aside = Directory('$docs/${folder}_eski');
+    final staged = Directory('$docs/${folder}_yeni');
+    if (await staged.exists()) await staged.delete(recursive: true);
+    try {
+      await staged.create(recursive: true);
+      for (final e in c.attachments.entries) {
+        // Anahtarlar "attachments/…" (BackupArchive.read doğrular).
+        final rel = e.key.substring(folder.length + 1);
+        final f = File('${staged.path}/$rel');
+        await f.parent.create(recursive: true);
+        await f.writeAsBytes(e.value, flush: true);
+      }
+      await _restoreDatabase(c);
+    } catch (_) {
+      if (await staged.exists()) await staged.delete(recursive: true);
+      rethrow;
+    }
+
+    // Fotoğraflar yerine konur: hazırlanan klasör asıl adını alır.
+    try {
+      if (await aside.exists()) await aside.delete(recursive: true);
+      if (await dir.exists()) await dir.rename(aside.path);
+      await staged.rename(dir.path);
+    } catch (_) {
+      // Yer değiştirme yarıda kaldıysa eski fotoğrafları geri koy.
+      if (!await dir.exists() && await aside.exists()) {
+        await aside.rename(dir.path);
+      }
+      rethrow;
+    }
+    // Eski fotoğrafların silinememesi geri yüklemeyi başarısız yapmaz.
+    try {
+      if (await aside.exists()) await aside.delete(recursive: true);
+    } catch (_) {}
+  }
+
+  /// Veritabanını yedektekiyle değiştirir (tek işlem; hata olursa eski veri
+  /// aynen kalır).
+  Future<void> _restoreDatabase(BackupContents c) async {
     final tmp = await _tempDir();
     final file = File('${tmp.path}/geri_${newUuidV4()}.sqlite');
     await file.writeAsBytes(c.database, flush: true);
@@ -300,26 +356,6 @@ class BackupService {
         final f = File('${file.path}$suffix');
         if (await f.exists()) await f.delete();
       }
-    }
-
-    // Fotoğraflar: eski klasör kenara alınır, yedektekiler yazılır.
-    final docs = (await _documentsDir()).path;
-    final dir = Directory('$docs/${AttachmentRepository.folder}');
-    final aside = Directory('$docs/${AttachmentRepository.folder}_eski');
-    if (await aside.exists()) await aside.delete(recursive: true);
-    if (await dir.exists()) await dir.rename(aside.path);
-    try {
-      for (final e in c.attachments.entries) {
-        final f = File('$docs/${e.key}');
-        await f.parent.create(recursive: true);
-        await f.writeAsBytes(e.value, flush: true);
-      }
-      if (await aside.exists()) await aside.delete(recursive: true);
-    } catch (_) {
-      // Yazılamadıysa eski fotoğrafları geri koy.
-      if (await dir.exists()) await dir.delete(recursive: true);
-      if (await aside.exists()) await aside.rename(dir.path);
-      rethrow;
     }
   }
 }

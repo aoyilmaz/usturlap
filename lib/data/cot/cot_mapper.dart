@@ -86,10 +86,7 @@ class CotMapper {
   CotEvent fromGraphic(MapGraphic g) {
     final closed = g.closed;
     final outline = g.outline;
-    final pts = [
-      ...outline,
-      if (closed && outline.isNotEmpty) outline.first,
-    ];
+    final pts = [...outline, if (closed && outline.isNotEmpty) outline.first];
     final d = _detail([
       for (final p in pts)
         _el('link', {'point': '${p.latitude},${p.longitude}'}),
@@ -370,7 +367,14 @@ class CotMapper {
     if (parts.length < 2) return null;
     final lat = double.tryParse(parts[0].trim());
     final lon = double.tryParse(parts[1].trim());
-    if (lat == null || lon == null || lat.abs() > 90 || lon.abs() > 180) {
+    // NaN aralık denetiminden geçer (NaN > 90 yanlıştır) → isFinite şart;
+    // yoksa NaN'lı çizim kaydedilirken jsonEncode hata verirdi.
+    if (lat == null ||
+        lon == null ||
+        !lat.isFinite ||
+        !lon.isFinite ||
+        lat.abs() > 90 ||
+        lon.abs() > 180) {
       return null;
     }
     return LatLng(lat, lon);
