@@ -13,7 +13,9 @@ class TrackRepository {
 
   /// Yeni iz başlatır (endedAt null), id döndürür.
   Future<int> startTrack(String name) {
-    return _db.into(_db.tracks).insert(
+    return _db
+        .into(_db.tracks)
+        .insert(
           TracksCompanion.insert(
             name: name,
             startedAt: DateTime.now(),
@@ -29,8 +31,18 @@ class TrackRepository {
     DateTime? timestamp,
     double? altitude,
     double? speed,
-  }) {
-    return _db.into(_db.trackPoints).insert(
+  }) async {
+    // Şemada yabancı anahtar yok (üretilen kodda REFERENCES çıkmıyor):
+    // silinmiş ize nokta yazılmasını veritabanı engellemez, biz engelleriz.
+    final exists =
+        await (_db.selectOnly(_db.tracks)
+              ..addColumns([_db.tracks.id])
+              ..where(_db.tracks.id.equals(trackId)))
+            .getSingleOrNull();
+    if (exists == null) throw StateError('İz bulunamadı: $trackId');
+    await _db
+        .into(_db.trackPoints)
+        .insert(
           TrackPointsCompanion.insert(
             trackId: trackId,
             lat: position.latitude,
@@ -45,27 +57,47 @@ class TrackRepository {
   /// Tam bir izi (tüm noktalarıyla) tek transaction'da ekler — GPX/KML içe
   /// aktarma için. Kaydı bitmiş (endedAt dolu) olarak ekler; noktalar 1 sn
   /// aralıkla sıralanır (çizim sırası korunur). İz id'sini döndürür.
-  Future<int> importTrack(String name, List<LatLng> points, {String? uid}) {
+  ///
+  /// [times] / [altitudes] / [speeds] verilirse (her biri nokta sayısıyla
+  /// aynı uzunlukta) izin gerçek tarihi, süresi, yüksekliği ve hızı korunur.
+  Future<int> importTrack(
+    String name,
+    List<LatLng> points, {
+    String? uid,
+    List<DateTime>? times,
+    List<double?>? altitudes,
+    List<double?>? speeds,
+  }) {
+    final n = points.length;
+    final useTimes = times != null && times.length == n && n > 0;
+    final alt = altitudes != null && altitudes.length == n ? altitudes : null;
+    final spd = speeds != null && speeds.length == n ? speeds : null;
     return _db.transaction(() async {
-      final start = DateTime.now();
-      final id = await _db.into(_db.tracks).insert(
+      final now = DateTime.now();
+      final start = useTimes ? times.first : now;
+      final id = await _db
+          .into(_db.tracks)
+          .insert(
             TracksCompanion.insert(
               name: name,
               startedAt: start,
-              endedAt: Value(start),
+              endedAt: Value(useTimes ? times.last : start),
               uid: Value(uid ?? newUuidV4()),
             ),
           );
       await _db.batch((b) {
         var ts = start;
-        for (final p in points) {
+        for (var i = 0; i < n; i++) {
+          final p = points[i];
           b.insert(
             _db.trackPoints,
             TrackPointsCompanion.insert(
               trackId: id,
               lat: p.latitude,
               lon: p.longitude,
-              timestamp: ts,
+              timestamp: useTimes ? times[i] : ts,
+              altitude: Value(alt?[i]),
+              speed: Value(spd?[i]),
             ),
           );
           ts = ts.add(const Duration(seconds: 1));
@@ -78,23 +110,40 @@ class TrackRepository {
   /// Kayıtlı iz sayısı (yeni ize sıra numarası vermek için).
   Future<int> trackCount() async {
     final count = _db.tracks.id.count();
-    final row = await (_db.selectOnly(_db.tracks)..addColumns([count]))
-        .getSingle();
+    final row = await (_db.selectOnly(
+      _db.tracks,
+    )..addColumns([count])).getSingle();
     return row.read(count) ?? 0;
+  }
+
+  /// Yarım kalmış (endedAt boş) izleri kapatır: uygulama kayıt sırasında
+  /// kapandıysa (sistem öldürdü, çöktü) iz sonsuza dek "kaydediliyor"
+  /// görünmesin, süresi büyümesin. Bitiş = son noktanın zamanı (nokta yoksa
+  /// başlangıç). Tek SQL: sonradan başlayan kayıtla yarışmaz. Kapatılan iz
+  /// sayısını döndürür.
+  Future<int> closeUnfinished() {
+    return _db.customUpdate(
+      'UPDATE tracks SET ended_at = COALESCE('
+      '(SELECT MAX(timestamp) FROM track_points WHERE track_id = tracks.id), '
+      'started_at) WHERE ended_at IS NULL',
+      updates: {_db.tracks},
+      updateKind: UpdateKind.update,
+    );
   }
 
   /// İzi sonlandırır (endedAt = now).
   Future<void> endTrack(int trackId) {
-    return (_db.update(_db.tracks)..where((t) => t.id.equals(trackId)))
-        .write(TracksCompanion(endedAt: Value(DateTime.now())));
+    return (_db.update(_db.tracks)..where((t) => t.id.equals(trackId))).write(
+      TracksCompanion(endedAt: Value(DateTime.now())),
+    );
   }
 
   Future<void> deleteTrack(int trackId) {
     // Noktaları ve izi açıkça sil (foreign_keys PRAGMA'sına bağlı kalmadan).
     return _db.transaction(() async {
-      await (_db.delete(_db.trackPoints)
-            ..where((t) => t.trackId.equals(trackId)))
-          .go();
+      await (_db.delete(
+        _db.trackPoints,
+      )..where((t) => t.trackId.equals(trackId))).go();
       await (_db.delete(_db.tracks)..where((t) => t.id.equals(trackId))).go();
     });
   }
@@ -102,14 +151,15 @@ class TrackRepository {
   /// Tüm izleri (en yeni üstte), her biri için nokta sayısıyla canlı verir.
   Stream<List<Track>> watchTracks() {
     final countExp = _db.trackPoints.id.count();
-    final query = _db.select(_db.tracks).join([
-      leftOuterJoin(
-        _db.trackPoints,
-        _db.trackPoints.trackId.equalsExp(_db.tracks.id),
-      ),
-    ])
-      ..groupBy([_db.tracks.id])
-      ..orderBy([OrderingTerm.desc(_db.tracks.startedAt)]);
+    final query =
+        _db.select(_db.tracks).join([
+            leftOuterJoin(
+              _db.trackPoints,
+              _db.trackPoints.trackId.equalsExp(_db.tracks.id),
+            ),
+          ])
+          ..groupBy([_db.tracks.id])
+          ..orderBy([OrderingTerm.desc(_db.tracks.startedAt)]);
     query.addColumns([countExp]);
 
     return query.watch().map((rows) {
@@ -146,9 +196,9 @@ class TrackRepository {
   }
 
   TrackPoint _toDomainPoint(TrackPointRow r) => TrackPoint(
-        position: LatLng(r.lat, r.lon),
-        timestamp: r.timestamp,
-        altitude: r.altitude,
-        speedMps: r.speed,
-      );
+    position: LatLng(r.lat, r.lon),
+    timestamp: r.timestamp,
+    altitude: r.altitude,
+    speedMps: r.speed,
+  );
 }

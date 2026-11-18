@@ -164,7 +164,19 @@ class _ReportFormPageState extends ConsumerState<ReportFormPage> {
     return _salute.toText(_now());
   }
 
+  bool _adding = false;
+
   Future<void> _addToMap() async {
+    if (_adding) return; // çift dokunuş iki nokta eklemesin
+    _adding = true;
+    try {
+      await _addToMapOnce();
+    } finally {
+      _adding = false;
+    }
+  }
+
+  Future<void> _addToMapOnce() async {
     final messenger = ScaffoldMessenger.of(context);
     final p = CoordParse.parse(_location.text);
     if (p == null) {
@@ -176,13 +188,12 @@ class _ReportFormPageState extends ConsumerState<ReportFormPage> {
       return;
     }
     final prefix = _isNine ? 'CASEVAC' : 'SPOT';
-    final names = [
-      for (final w in ref.read(waypointsProvider).value ?? const <Waypoint>[])
-        w.name,
-    ];
+    // Adları doğrudan veritabanından al: bu sayfa haritayı örttüğü için
+    // waypointsProvider duraklamış olabilir (boş liste → hep "…-1").
+    final repo = ref.read(waypointRepositoryProvider);
+    final names = [for (final w in await repo.watchAll().first) w.name];
     final name = nextSequentialName(prefix, names);
-    await ref
-        .read(waypointRepositoryProvider)
+    await repo
         .add(
           name: name,
           position: p,

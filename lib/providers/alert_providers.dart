@@ -29,19 +29,33 @@ class BoolSettingNotifier extends Notifier<bool> {
 
   final String _key;
   final bool _default;
+  late Future<void> _ready;
+
+  /// Kayıtlı değer gelmeden kullanıcı değiştirdiyse kayıtlı değer ezmesin.
+  bool _changed = false;
 
   @override
   bool build() {
-    _load();
+    _ready = _load();
     return _default;
   }
 
   Future<void> _load() async {
     final saved = await ref.read(settingsRepositoryProvider).get(_key);
-    if (saved != null && ref.mounted) state = saved == 'true';
+    if (saved != null && ref.mounted && !_changed) state = saved == 'true';
+  }
+
+  /// Kayıtlı değer okunduktan sonraki değer. `ref.read` ilk okumada
+  /// varsayılanı verir (yükleme sürer); bu ayara göre karar veren, widget
+  /// olmayan kod bunu beklesin (yoksa kapalı ayar bir kez açıkmış gibi
+  /// davranır).
+  Future<bool> loaded() async {
+    await _ready;
+    return state;
   }
 
   void set(bool value) {
+    _changed = true;
     state = value;
     ref.read(settingsRepositoryProvider).set(_key, value.toString());
   }
@@ -83,9 +97,11 @@ class AlertDispatcher {
   /// [speech]: okunacak metin (yoksa [body]).
   void alert({required String title, required String body, String? speech}) {
     if (_ref.read(appForegroundProvider)()) {
-      if (_ref.read(voiceAlertsProvider)) {
-        _ref.read(speakerProvider).speak(speech ?? body);
-      }
+      // Ayar yüklenmeden karar verme: açılıştan sonraki ilk uyarı, sesli
+      // uyarı kapalıyken de konuşuyordu.
+      _ref.read(voiceAlertsProvider.notifier).loaded().then((on) {
+        if (on) _ref.read(speakerProvider).speak(speech ?? body);
+      });
     } else {
       _ref.read(alertNotificationsProvider).show(_nextId++, title, body);
     }

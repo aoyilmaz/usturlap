@@ -65,20 +65,33 @@ class TrackAutoStopNotifier extends Notifier<int> {
   static const _key = 'track_auto_stop_min';
   static const choices = [0, 60, 120, 240];
 
+  late Future<void> _ready;
+  bool _changed = false;
+
   @override
   int build() {
-    _load();
+    _ready = _load();
     return 0;
+  }
+
+  /// Kayıtlı değer okunduktan sonraki değer (bkz. BoolSettingNotifier.loaded):
+  /// iz kaydı ilk başlatılışta varsayılanı (kapalı) görmesin.
+  Future<int> loaded() async {
+    await _ready;
+    return state;
   }
 
   Future<void> _load() async {
     final v = int.tryParse(
       await ref.read(settingsRepositoryProvider).get(_key) ?? '',
     );
-    if (v != null && choices.contains(v) && ref.mounted) state = v;
+    if (v != null && choices.contains(v) && ref.mounted && !_changed) {
+      state = v;
+    }
   }
 
   void set(int minutes) {
+    _changed = true;
     state = minutes;
     ref.read(settingsRepositoryProvider).set(_key, '$minutes');
   }
@@ -140,9 +153,13 @@ class LowBatteryNotifier extends Notifier<({int level, int seq})?> {
   ({int level, int seq})? build() {
     ref.listen<AsyncValue<BatteryStatus>>(batteryStatusProvider, (_, next) {
       final s = next.value;
-      if (s == null || !ref.read(lowBatteryAlertProvider)) return;
-      final hit = _alarm.update(s.level, charging: s.charging);
-      if (hit != null) state = (level: s.level, seq: ++_seq);
+      if (s == null) return;
+      // Ayar yüklenmeden karar verme (açılışta kapalı ayar açık sanılmasın).
+      ref.read(lowBatteryAlertProvider.notifier).loaded().then((on) {
+        if (!on || !ref.mounted) return;
+        final hit = _alarm.update(s.level, charging: s.charging);
+        if (hit != null) state = (level: s.level, seq: ++_seq);
+      });
     });
     return null;
   }

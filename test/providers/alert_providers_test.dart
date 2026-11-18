@@ -4,6 +4,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:usturlap/data/db/app_database.dart';
+import 'package:usturlap/data/db/settings_repository.dart';
 import 'package:usturlap/domain/models/map_graphic.dart';
 import 'package:usturlap/domain/models/route_plan.dart';
 import 'package:usturlap/domain/ports/alert_output.dart';
@@ -63,6 +64,27 @@ void main() {
     expect(spokenDuration(const Duration(hours: 2)), '2 saat');
   });
 
+  test(
+    'sesli uyarı kapalı kaydedildiyse açılıştan sonraki ilk uyarı da susar',
+    () async {
+      await SettingsRepository(db).set('voice_alerts', 'false');
+      final speaker = _FakeSpeaker();
+      // Gerçek uygulamadaki gibi: Ayarlar açılmadı, ayarı kimse izlemiyor.
+      final c = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(db),
+          speakerProvider.overrideWithValue(speaker),
+          alertNotificationsProvider.overrideWithValue(_FakeNotifications()),
+          appForegroundProvider.overrideWithValue(() => true),
+        ],
+      );
+      addTearDown(c.dispose);
+      c.read(alertDispatcherProvider).alert(title: 'Rota', body: 'x');
+      await _settle();
+      expect(speaker.said, isEmpty);
+    },
+  );
+
   test('önde sesli okur; ses kapalıysa susar; arka planda bildirim', () async {
     final speaker = _FakeSpeaker();
     final notes = _FakeNotifications();
@@ -85,11 +107,13 @@ void main() {
       body: 'KN1 geçildi · 1.2 km',
       speech: 'KN 1 geçildi.',
     );
+    await _settle(); // ayar yüklendikten sonra konuşur
     expect(speaker.said, ['KN 1 geçildi.']);
     expect(notes.shown, isEmpty);
 
     c.read(voiceAlertsProvider.notifier).set(false);
     alerts.alert(title: 'Rota', body: 'x', speech: 'y');
+    await _settle();
     expect(speaker.said, hasLength(1));
 
     foreground = false;
@@ -172,14 +196,16 @@ void main() {
       expect(c.read(backgroundLocationNeededProvider), isFalse);
 
       // Rota takibinde de (ekran kapalıyken "noktaya vardın" uyarısı).
-      c.read(activeRouteProvider.notifier).start(
-        RoutePlan(
-          uid: 'r1',
-          name: 'ROTA',
-          points: const [LatLng(39, 32), LatLng(39.01, 32)],
-          createdAt: DateTime.utc(2026, 11, 16),
-        ),
-      );
+      c
+          .read(activeRouteProvider.notifier)
+          .start(
+            RoutePlan(
+              uid: 'r1',
+              name: 'ROTA',
+              points: const [LatLng(39, 32), LatLng(39.01, 32)],
+              createdAt: DateTime.utc(2026, 11, 16),
+            ),
+          );
       expect(c.read(backgroundLocationNeededProvider), isTrue);
       c.read(activeRouteProvider.notifier).stop();
       expect(c.read(backgroundLocationNeededProvider), isFalse);

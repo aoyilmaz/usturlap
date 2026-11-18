@@ -8,6 +8,7 @@ import '../shell/adaptive_sheet.dart';
 import 'geofence_panel.dart';
 import 'graphic_labels.dart';
 import 'save_graphic_dialog.dart';
+import 'measure_common.dart';
 
 /// Kayıtlı taktik grafikler paneli: renk/tip/ölçü göster; dokununca
 /// düzenle (ad, renk, kalınlık…); geofence, profil, sil.
@@ -115,9 +116,14 @@ class _GraphicListBody extends ConsumerWidget {
                             IconButton(
                               icon: const Icon(Icons.delete_outline),
                               tooltip: 'Sil',
-                              onPressed: () => ref
-                                  .read(mapGraphicRepositoryProvider)
-                                  .delete(g.id!),
+                              onPressed: () async {
+                                final repo = ref.read(
+                                  mapGraphicRepositoryProvider,
+                                );
+                                if (await confirmDeleteNamed(context, g.name)) {
+                                  await repo.delete(g.id!);
+                                }
+                              },
                             ),
                           ],
                         ),

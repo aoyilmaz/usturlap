@@ -9,6 +9,7 @@ import '../../providers/waypoint_providers.dart';
 import '../import/import_action.dart';
 import '../symbols/nato_symbol.dart';
 import '../shell/adaptive_sheet.dart';
+import '../tools/measure_common.dart';
 
 /// Kayıtlı waypoint'leri listeleyen alt panel. Dokun → haritada ortala,
 /// çöp kutusu → sil. Liste drift akışından canlı güncellenir.
@@ -94,7 +95,11 @@ class _WaypointListBody extends ConsumerWidget {
                         trailing: IconButton(
                           icon: const Icon(Icons.delete_outline),
                           tooltip: 'Sil',
-                          onPressed: () {
+                          onPressed: () async {
+                            // Fotoğraflar da silinir, geri alınamaz.
+                            if (!await confirmDeleteNamed(context, wp.name)) {
+                              return;
+                            }
                             final target = ref.read(navTargetProvider);
                             if (target != null && target.position == wp.position) {
                               ref.read(navTargetProvider.notifier).clear();

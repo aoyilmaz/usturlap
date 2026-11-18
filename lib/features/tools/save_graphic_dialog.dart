@@ -58,6 +58,7 @@ Future<void> _showGraphicDialog(
   var dashed = existing?.dashed ?? false;
   var height = existing?.height;
   var geofence = existing?.geofence;
+  var saving = false; // çift dokunuş iki çizim kaydetmesin
   final closed = type != GraphicType.line;
   // Paletin dışındaki renk (ör. içe aktarılan) seçenek olarak kalsın.
   final palette = [
@@ -193,6 +194,8 @@ Future<void> _showGraphicDialog(
               ),
               FilledButton(
                 onPressed: () async {
+                  if (saving) return;
+                  saving = true;
                   final name = nameCtrl.text.trim().isEmpty
                       ? defaultName
                       : nameCtrl.text.trim();

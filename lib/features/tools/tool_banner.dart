@@ -20,7 +20,24 @@ import 'save_graphic_dialog.dart';
 /// Kaydedince ölçüm noktaları temizlenir; araç açık kalır.
 Future<void> saveRangeLine(BuildContext context, WidgetRef ref) async {
   final tool = ref.read(toolProvider);
-  if (tool.points.length != 2) return;
+  if (tool.points.length != 2 || _savingMeasure) return;
+  _savingMeasure = true;
+  try {
+    await _saveRangeLine(context, ref, tool);
+  } finally {
+    _savingMeasure = false;
+  }
+}
+
+/// Kayıt sürerken (veritabanı beklenirken) ikinci dokunuş aynı ölçümü
+/// yeniden kaydetmesin (iki "R&B-1").
+bool _savingMeasure = false;
+
+Future<void> _saveRangeLine(
+  BuildContext context,
+  WidgetRef ref,
+  ToolState tool,
+) async {
   final messenger = ScaffoldMessenger.maybeOf(context);
   final existing = ref.read(rangeLinesProvider).value ?? const <RangeLine>[];
   final name = nextSequentialName('R&B', [for (final l in existing) l.name]);
@@ -49,7 +66,20 @@ Future<void> saveRangeLine(BuildContext context, WidgetRef ref) async {
 /// Düşman / şüpheli noktası merkezliyse tehdit halkası (kırmızı).
 Future<void> saveRangeRing(BuildContext context, WidgetRef ref) async {
   final tool = ref.read(toolProvider);
-  if (tool.points.length != 2) return;
+  if (tool.points.length != 2 || _savingMeasure) return;
+  _savingMeasure = true;
+  try {
+    await _saveRangeRing(context, ref, tool);
+  } finally {
+    _savingMeasure = false;
+  }
+}
+
+Future<void> _saveRangeRing(
+  BuildContext context,
+  WidgetRef ref,
+  ToolState tool,
+) async {
   final messenger = ScaffoldMessenger.maybeOf(context);
   final existing = ref.read(rangeRingsProvider).value ?? const <RangeRing>[];
   final name = nextSequentialName('HALKA', [for (final r in existing) r.name]);

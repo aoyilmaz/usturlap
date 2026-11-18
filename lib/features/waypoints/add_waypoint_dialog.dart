@@ -27,6 +27,7 @@ Future<void> showAddWaypointDialog(
   var selected = Affiliation.waypoint;
   var echelon = Echelon.none;
   var role = SymbolRole.none;
+  var saving = false; // çift dokunuş iki nokta eklemesin
 
   await showDialog<void>(
     context: context,
@@ -78,6 +79,8 @@ Future<void> showAddWaypointDialog(
               ),
               FilledButton(
                 onPressed: () async {
+                  if (saving) return;
+                  saving = true;
                   final name = nameCtrl.text.trim().isEmpty
                       ? defaultName
                       : nameCtrl.text.trim();

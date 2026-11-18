@@ -143,4 +143,24 @@ void main() {
     await tester.pumpAndSettle();
     expect(backs, 1);
   });
+
+  testWidgets('kapanmakta olan paneldeki düğmeye ikinci dokunuş ana ekranı '
+      'kapatmaz', (tester) async {
+    await pumpHost(tester, child: const Text('HARİTA'));
+    showAdaptiveSheet<void>(
+      context: mapContext,
+      builder: (ctx) => TextButton(
+        onPressed: () => Navigator.of(ctx).pop(),
+        child: const Text('GİT'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('GİT'));
+    await tester.pump(const Duration(milliseconds: 50)); // kapanış sürüyor
+    await tester.tap(find.text('GİT'), warnIfMissed: false);
+    await tester.pumpAndSettle();
+    // Eskiden ikinci dokunuş uygulamanın tek sayfasını kapatıyordu.
+    expect(find.text('HARİTA'), findsOneWidget);
+    expect(find.byType(PanelHost), findsOneWidget);
+  });
 }

@@ -49,9 +49,19 @@ class RecordingNotifier extends Notifier<RecordingState> {
   LatLng? _lastPoint;
   Timer? _autoStop;
 
+  /// Başlatma sürerken (veritabanı beklenirken) ikinci dokunuş yeni iz açmasın.
+  bool _starting = false;
+
+  /// Açılışta bir kez: önceki oturumdan yarım kalan izleri kapat.
+  Future<void>? _recovered;
+
   @override
   RecordingState build() {
     ref.onDispose(() => _autoStop?.cancel());
+    _recovered ??= ref
+        .read(trackRepositoryProvider)
+        .closeUnfinished()
+        .then<void>((_) {}, onError: (Object _) {});
     // Konum geldikçe, kayıttaysak noktayı ekle.
     // Ham GPS: elle verilen konum ize girmez.
     ref.listen<Contact?>(gpsSelfContactProvider, (prev, next) {
@@ -74,25 +84,45 @@ class RecordingNotifier extends Notifier<RecordingState> {
       return;
     }
     _lastPoint = c.position;
-    ref.read(trackRepositoryProvider).addPoint(
-          s.trackId!,
+    final id = s.trackId!;
+    ref
+        .read(trackRepositoryProvider)
+        .addPoint(
+          id,
           c.position,
           timestamp: c.timestamp,
           altitude: c.altitudeMsl,
           speed: c.speedMps,
-        );
+        )
+        .catchError((Object e) {
+          // İz artık yok (silindi / geri yükleme değiştirdi): "kaydediliyor"
+          // görünüp nokta kaybetmek yerine kaydı durdur.
+          if (ref.mounted && state.trackId == id) stop();
+        });
   }
 
   Future<void> start() async {
-    if (state.isRecording) return;
+    if (state.isRecording || _starting) return;
+    _starting = true;
+    try {
+      await _start();
+    } finally {
+      _starting = false;
+    }
+  }
+
+  Future<void> _start() async {
+    await _recovered;
     // Sayıyı doğrudan veritabanından al. `tracksProvider` kimse dinlemezken
     // yüklenmez (Riverpod 3 dinlenmeyen sağlayıcıyı duraklatır) → eskiden
     // her iz "İZ-1" oluyordu.
     final repo = ref.read(trackRepositoryProvider);
     final n = await repo.trackCount() + 1;
+    // Ayar yüklenmeden okunursa varsayılan (kapalı) gelir: açılıştan sonraki
+    // ilk kayıtta otomatik durma kurulmuyordu.
+    final minutes = await ref.read(trackAutoStopProvider.notifier).loaded();
     final id = await repo.startTrack('${ref.read(callsignProvider)} İZ-$n');
     _lastPoint = null;
-    final minutes = ref.read(trackAutoStopProvider);
     final stopAt = minutes > 0
         ? DateTime.now().add(Duration(minutes: minutes))
         : null;

@@ -166,6 +166,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// Nokta bırakma modu (ATAK Point Dropper): haritaya her dokunuş nokta koyar.
   bool _dropMode = false;
 
+  /// Gösterilmek üzere yeni seçilen iz: noktaları gelince bir kez odaklanılır.
+  int? _fitPendingTrackId;
+
   /// Araç çubuğu gizli mi (≡'ye uzun bas).
   bool _toolbarHidden = false;
 
@@ -277,6 +280,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           );
     });
     // İz kaydı: başlarken otomatik durma süresi; süre dolunca uyarı.
+    // Son 15 dk izi build'de ref.watch ile çizilir; opak bir sayfa (taktik
+    // pusula, rapor formu) haritayı örtünce ref.watch duraklar ve iz o
+    // aralıkta nokta toplamaz. Bu dinleyici duraklamaz.
+    ref.listenManual<List<LatLng>>(recentTrailProvider, (_, _) {});
     ref.listenManual<RecordingState>(recordingProvider, (prev, next) {
       if (!mounted || prev == null) return;
       final messenger = ScaffoldMessenger.of(context);
@@ -2426,9 +2433,21 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     ref.listen<Contact?>(selfContactProvider, (prev, next) {
       if (next != null) _onSelfUpdate(next);
     });
-    // Listeden bir iz seçilince haritada ona odaklan.
+    // Listeden bir iz seçilince haritada ona odaklan: yalnız seçildiği anda.
+    // Nokta akışı başka bir ize nokta eklenince de yeniden yayın yapar;
+    // kayıt sürerken eski bir izi göstermek haritayı her yeni noktada o ize
+    // geri çekiyordu.
+    ref.listen<int?>(displayedTrackIdProvider, (prev, next) {
+      _fitPendingTrackId = next;
+    });
     ref.listen(displayedTrackPointsProvider, (prev, next) {
+      // Yükleme sırasında `value` önceki izin noktalarını taşır; bekle.
+      if (_fitPendingTrackId == null || next.isLoading || !next.hasValue) {
+        return;
+      }
       final pts = next.value ?? const <TrackPoint>[];
+      if (pts.isEmpty) return;
+      _fitPendingTrackId = null;
       _fitTrack(pts);
     });
 
@@ -3435,10 +3454,25 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       setState(() => _selected = sat);
       _ensureResolved(sat);
     }
+    // Çerçevelerken araç çubuğu ve ipuçları gizli: açık kalan bir mod
+    // (lasso, nokta bırakma, taşıma…) haritayı kaydırmayı engelliyor ya da
+    // dokunuşlarda görünmeden nokta bırakıyordu. Hepsi kapanır.
+    ref.read(toolProvider.notifier).reset();
+    if (ref.read(routePlanningProvider).active) {
+      ref.read(routePlanningProvider.notifier).cancel();
+    }
     setState(() {
       _framing = true;
       _follow = false;
       _highlightRegionId = null;
+      _radial = null;
+      _lassoMode = false;
+      _dropMode = false;
+      _moving = null;
+      _placingSelf = false;
+      _shapeEdit = null;
+      _rangeBarOpen = false;
+      _drawBarOpen = false;
     });
   }
 

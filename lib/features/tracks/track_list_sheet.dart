@@ -10,6 +10,7 @@ import '../../domain/usecases/track_search.dart';
 import '../../providers/track_providers.dart';
 import '../import/import_action.dart';
 import '../shell/adaptive_sheet.dart';
+import '../tools/measure_common.dart';
 
 /// Kayıtlı izlerin paneli: haritada göster, KML/GeoJSON paylaş, sil.
 Future<void> showTrackListSheet(BuildContext context, WidgetRef ref) {
@@ -143,15 +144,18 @@ class _TrackTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dur = _fmtDuration(track.duration);
+    // "Kaydediliyor" = şu an kayıttaki iz (bitişi boş her iz değil).
+    final rec = ref.watch(recordingProvider);
+    final recording = rec.isRecording && rec.trackId == track.id;
     return ListTile(
       leading: Icon(
-        track.isRecording ? Icons.fiber_manual_record : Icons.route,
-        color: track.isRecording ? Colors.redAccent : Colors.lightBlueAccent,
+        recording ? Icons.fiber_manual_record : Icons.route,
+        color: recording ? Colors.redAccent : Colors.lightBlueAccent,
       ),
       title: Text(track.name),
       subtitle: Text('${trackDate(track.startedAt)} · '
           '${track.pointCount} nokta · $dur'
-          '${track.isRecording ? ' · kaydediliyor' : ''}'),
+          '${recording ? ' · kaydediliyor' : ''}'),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -167,8 +171,22 @@ class _TrackTile extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.delete_outline),
             tooltip: 'Sil',
-            onPressed: () =>
-                ref.read(trackRepositoryProvider).deleteTrack(track.id!),
+            // Kayıttaki iz silinemez (kayıt "sürüyor" görünüp noktalar
+            // boşa giderdi); önce kayıt durdurulur.
+            onPressed: recording
+                ? () => ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Bu iz şu an kaydediliyor. Silmek için önce kaydı durdur.',
+                      ),
+                    ),
+                  )
+                : () async {
+                    final repo = ref.read(trackRepositoryProvider);
+                    if (await confirmDeleteNamed(context, track.name)) {
+                      await repo.deleteTrack(track.id!);
+                    }
+                  },
           ),
         ],
       ),

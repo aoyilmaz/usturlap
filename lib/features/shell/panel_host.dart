@@ -402,6 +402,10 @@ class PanelHostState extends State<PanelHost> with TickerProviderStateMixin {
       ).animate(p.curve),
       child: _surface(context, p, landscape),
     );
+    // Kapanmakta olan panel dokunuş almaz: kapanış animasyonu (220 ms)
+    // sırasında düğmeye ikinci dokunuş Navigator.pop'u yeniden çağırıp
+    // uygulamanın tek sayfasını kapatıyordu (boş ekran).
+    body = IgnorePointer(ignoring: p.closing, child: body);
     // Alttaki (gizli) panel durumunu korur ama çizilmez, dokunulmaz.
     body = TickerMode(
       enabled: visible,

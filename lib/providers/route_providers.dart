@@ -47,13 +47,20 @@ class RoutePlanningNotifier extends Notifier<RoutePlanningState> {
 
   /// Kaydet ve planlamayı kapat. En az 2 nokta gerekir; kaydedilen rota döner.
   Future<RoutePlan?> save(String name) async {
-    if (state.points.length < 2) return null;
-    final route = await ref
-        .read(routeRepositoryProvider)
-        .add(name: name, points: state.points);
-    state = const RoutePlanningState();
-    return route;
+    if (state.points.length < 2 || _saving) return null;
+    _saving = true; // çift dokunuş iki rota kaydetmesin
+    try {
+      final route = await ref
+          .read(routeRepositoryProvider)
+          .add(name: name, points: state.points);
+      state = const RoutePlanningState();
+      return route;
+    } finally {
+      _saving = false;
+    }
   }
+
+  bool _saving = false;
 }
 
 final routePlanningProvider =

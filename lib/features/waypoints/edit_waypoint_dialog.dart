@@ -20,6 +20,7 @@ Future<void> showEditWaypointDialog(
   var selected = wp.affiliation;
   var echelon = wp.echelon;
   var role = wp.role;
+  var saving = false; // çift dokunuş pencereyi iki kez kapatmasın
 
   await showDialog<void>(
     context: context,
@@ -86,6 +87,8 @@ Future<void> showEditWaypointDialog(
                         elevError = '-500 ile 9000 arasında bir sayı girin');
                     return;
                   }
+                  if (saving) return;
+                  saving = true;
                   final repo = ref.read(waypointRepositoryProvider);
                   final name = nameCtrl.text.trim().isEmpty
                       ? wp.name
