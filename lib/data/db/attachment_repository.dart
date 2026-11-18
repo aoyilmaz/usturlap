@@ -27,6 +27,19 @@ class AttachmentRepository {
     return s.isEmpty || s == '.' || s == '..' ? '_' : s;
   }
 
+  /// Kayıttaki göreli yol güvenli mi: "attachments/…" altında, ".." ya da
+  /// mutlak yol yok. Kayıt dışarıdan gelebilir (başkasının yedeği geri
+  /// yüklenince): yoksa "../pusula.sqlite" gibi bir yol, dışa aktarmada
+  /// başka bir dosyayı pakete koyar ya da silmede başka dosyayı silerdi.
+  static bool isSafePath(String p) {
+    if (!p.startsWith('$folder/')) return false;
+    if (p.contains(r'\') || p.contains(':') || p.contains('\u0000')) {
+      return false;
+    }
+    final parts = p.split('/');
+    return parts.every((s) => s.isNotEmpty && s != '.' && s != '..');
+  }
+
   /// [itemUid]'in ekleri (eskiden yeniye).
   Stream<List<Attachment>> watchFor(String itemUid) {
     final q = _db.select(_db.attachments)
@@ -34,7 +47,10 @@ class AttachmentRepository {
       ..orderBy([(t) => OrderingTerm.asc(t.id)]);
     return q.watch().asyncMap((rows) async {
       final docs = (await _documentsDir()).path;
-      return [for (final r in rows) _toDomain(r, docs)];
+      return [
+        for (final r in rows)
+          if (isSafePath(r.path)) _toDomain(r, docs),
+      ];
     });
   }
 
@@ -44,7 +60,10 @@ class AttachmentRepository {
       ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]);
     return q.watch().asyncMap((rows) async {
       final docs = (await _documentsDir()).path;
-      return [for (final r in rows) _toDomain(r, docs)];
+      return [
+        for (final r in rows)
+          if (isSafePath(r.path)) _toDomain(r, docs),
+      ];
     });
   }
 

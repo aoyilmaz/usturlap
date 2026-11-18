@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:mbtiles/mbtiles.dart';
@@ -11,12 +12,24 @@ import 'gpkg_reader.dart';
 ///
 /// Mapbox SDK bu dosyaları doğrudan okuyamaz; karoları URL'den ister. Sunucu
 /// yalnızca 127.0.0.1'e (cihazın kendisi) bağlanır — ağdan erişilemez.
-/// Adres biçimi: `http://127.0.0.1:<port>/t/<id>/{z}/{x}/{y}`.
+/// Adres biçimi: `http://127.0.0.1:<port>/<anahtar>/t/<id>/{z}/{x}/{y}`.
+///
+/// `<anahtar>`: her açılışta rastgele (128 bit). 127.0.0.1'e telefondaki başka
+/// uygulamalar da bağlanabilir; anahtarı bilmeyen kullanıcının haritalarını
+/// (bulunduğu bölgeyi ele verebilir) okuyamaz.
 class LocalTileServer {
   LocalTileServer._();
   static final LocalTileServer instance = LocalTileServer._();
 
   HttpServer? _server;
+
+  final String _key = () {
+    final r = Random.secure();
+    return [
+      for (var i = 0; i < 16; i++)
+        r.nextInt(256).toRadixString(16).padLeft(2, '0'),
+    ].join();
+  }();
   final Map<String, _TileSource> _sources = {};
 
   /// Test/teşhis için: kayıtlı kaynak kimlikleri.
@@ -32,7 +45,7 @@ class LocalTileServer {
   }
 
   String _template(int port, String id) =>
-      'http://127.0.0.1:$port/t/${Uri.encodeComponent(id)}/{z}/{x}/{y}';
+      'http://127.0.0.1:$port/$_key/t/${Uri.encodeComponent(id)}/{z}/{x}/{y}';
 
   /// MBTiles dosyasını kaydeder; Mapbox kaynağı için karo adresi şablonu döner.
   Future<LocalTileSourceInfo> registerMbtiles(String id, String path) async {
@@ -81,16 +94,16 @@ class LocalTileServer {
   Future<void> _handle(HttpRequest req) async {
     final res = req.response;
     try {
-      // /t/<id>/<z>/<x>/<y>  (uzantı varsa yok say: 5.png, 5.pbf)
+      // /<anahtar>/t/<id>/<z>/<x>/<y>  (uzantı varsa yok say: 5.png, 5.pbf)
       final seg = req.uri.pathSegments;
-      if (seg.length != 5 || seg[0] != 't') {
+      if (seg.length != 6 || seg[0] != _key || seg[1] != 't') {
         res.statusCode = HttpStatus.notFound;
         return;
       }
-      final src = _sources[seg[1]];
-      final z = int.tryParse(seg[2]);
-      final x = int.tryParse(seg[3]);
-      final y = int.tryParse(seg[4].split('.').first);
+      final src = _sources[seg[2]];
+      final z = int.tryParse(seg[3]);
+      final x = int.tryParse(seg[4]);
+      final y = int.tryParse(seg[5].split('.').first);
       if (src == null || z == null || x == null || y == null) {
         res.statusCode = HttpStatus.notFound;
         return;
@@ -162,7 +175,9 @@ class _MbtilesSource extends _TileSource {
       if (b != null) _bounds = [b.left, b.bottom, b.right, b.top];
       _minZoom = m.minZoom?.round();
       _maxZoom = m.maxZoom?.round();
-    } catch (_) {/* metadata eksik → varsayılanlar */}
+    } catch (_) {
+      /* metadata eksik → varsayılanlar */
+    }
   }
 
   @override
@@ -176,11 +191,11 @@ class _MbtilesSource extends _TileSource {
 
   @override
   ContentType get contentType => switch (_format) {
-        'jpg' || 'jpeg' => ContentType('image', 'jpeg'),
-        'webp' => ContentType('image', 'webp'),
-        'pbf' || 'mvt' => ContentType('application', 'x-protobuf'),
-        _ => ContentType('image', 'png'),
-      };
+    'jpg' || 'jpeg' => ContentType('image', 'jpeg'),
+    'webp' => ContentType('image', 'webp'),
+    'pbf' || 'mvt' => ContentType('application', 'x-protobuf'),
+    _ => ContentType('image', 'png'),
+  };
 
   @override
   Future<Uint8List?> tile(int z, int x, int y) async {
@@ -191,12 +206,12 @@ class _MbtilesSource extends _TileSource {
 
   @override
   LocalTileSourceInfo info(String urlTemplate) => LocalTileSourceInfo(
-        urlTemplate: urlTemplate,
-        isVector: _isVector,
-        minZoom: _minZoom,
-        maxZoom: _maxZoom,
-        bounds: _bounds,
-      );
+    urlTemplate: urlTemplate,
+    isVector: _isVector,
+    minZoom: _minZoom,
+    maxZoom: _maxZoom,
+    bounds: _bounds,
+  );
 
   @override
   Future<void> close() async => _db.dispose();
@@ -214,11 +229,11 @@ class _PmtilesSource extends _TileSource {
 
   @override
   ContentType get contentType => switch (_archive.tileType) {
-        TileType.mvt => ContentType('application', 'x-protobuf'),
-        TileType.jpeg => ContentType('image', 'jpeg'),
-        TileType.webp => ContentType('image', 'webp'),
-        _ => ContentType('image', 'png'),
-      };
+    TileType.mvt => ContentType('application', 'x-protobuf'),
+    TileType.jpeg => ContentType('image', 'jpeg'),
+    TileType.webp => ContentType('image', 'webp'),
+    _ => ContentType('image', 'png'),
+  };
 
   @override
   Future<Uint8List?> tile(int z, int x, int y) async {

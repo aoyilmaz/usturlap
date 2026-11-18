@@ -12,7 +12,25 @@ import UserNotifications
     // Flutter'a iletilsin.
     UNUserNotificationCenter.current().delegate = self as? UNUserNotificationCenterDelegate
     disableMapboxTelemetryByDefault()
+    excludeDataFromBackup()
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  /// Uygulama verisi iCloud / bilgisayar yedeğine girmez (Android'de
+  /// allowBackup=false ile aynı karar, 2026-11-18): noktalar, izler,
+  /// fotoğraflar (Documents) ve Mapbox çevrimdışı haritaları (Application
+  /// Support) telefonda kalır; taşıma uygulamanın şifreli .krz yedeğiyle.
+  /// Klasöre konan işaret içindekilerin hepsini kapsar; her açılışta yeniden
+  /// konur (klasör yeniden oluşturulmuş olabilir).
+  private func excludeDataFromBackup() {
+    let fm = FileManager.default
+    for dir in [FileManager.SearchPathDirectory.documentDirectory, .applicationSupportDirectory] {
+      guard var url = fm.urls(for: dir, in: .userDomainMask).first else { continue }
+      try? fm.createDirectory(at: url, withIntermediateDirectories: true)
+      var values = URLResourceValues()
+      values.isExcludedFromBackup = true
+      try? url.setResourceValues(values)
+    }
   }
 
   /// Mapbox'ın isteğe bağlı kullanım / konum telemetrisi varsayılan olarak
