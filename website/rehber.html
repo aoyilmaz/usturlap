@@ -73,6 +73,7 @@
     <p class="toc-h">Başvuru</p>
     <a href="#harita-ekrani">Harita ekranı</a>
     <a href="#araclar">Araç rehberi</a>
+    <a href="#yukseklik">Yükseklik verisi</a>
     <a href="#sozluk">Sözlük</a>
   </nav>
 
@@ -102,8 +103,13 @@
         <p>Ardından arazinin yükseklik verisini yükler; ertesi gün nereden nereyi görebileceklerini ve hangi yamacın dik olduğunu hesaplamak için buna ihtiyacı olacak.</p>
         <div class="tool">
           <h4>Yükseklik verisi</h4>
-          <p class="path"><b>≡</b> → <b>Harita</b> → <b>Yükseklik verisi</b> → <b>Dosya içe aktar</b></p>
-          <p>Bölgenin <a class="term" href="#g-dted">HGT ya da DTED</a> dosyasını seçin (Kapadokya için N38E034). Görüş alanı, eğim, eş yükselti ve yükseklik profili bu veriyle, çevrimdışı hesaplanır.</p>
+          <p class="path"><b>≡</b> → <b>Harita</b> → <b>Yükseklik verisi</b></p>
+          <ol>
+            <li>Panel, bulunduğunuz yerin <a class="term" href="#g-dted">yükseklik karesinin</a> telefonda olup olmadığını yazar. Elif'inki yok: "Bulunduğun kare (N38E034) cihazda yok."</li>
+            <li>Yanındaki <b>İndir</b>'e dokunur. Kapadokya'nın tamamını kapsayan kare (~10 MB) bir dakikadan kısa sürede iner ve listeye eklenir.</li>
+            <li>Ekip başka bir bölgeye gidecekse, haritayı oraya kaydırıp paneli yeniden açar: <em>Harita ortası</em> satırındaki <b>İndir</b> o bölgenin karesini getirir.</li>
+          </ol>
+          <p>İndirme için internet gerekir; bir kez indirildikten sonra görüş alanı, eğim, eş yükselti ve yükseklik profili çevrimdışı hesaplanır. Elinizde hazır bir dosya varsa ya da başka kaynaktan indirmek isterseniz: <a href="#yukseklik">Yükseklik verisini elle eklemek</a>.</p>
         </div>
         <p>Vadilerde telsiz de zorlanabilir. Elif en yakın <a class="term" href="#g-role">telsiz rölesini</a> bulur: Uçhisar'ın batısında, Nevşehir Kahveci Dağı'nda bir VHF rölesi var. Frekanslarını not edip telsizine girer.</p>
         <div class="tool">
@@ -139,6 +145,7 @@
       </div>
       <div class="chapter-media">
         <figure><div class="phone phone-sm"><img src="assets/shots/cevrimdisi.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Bölge indir paneli: çerçeve, harita türü, ayrıntı ve tahmini boyut."></div><figcaption>Bölge indirme</figcaption></figure>
+        <figure><div class="phone phone-sm"><img src="assets/shots/rehber-yukseklik.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Yükseklik verisi paneli: Bulunduğun kare (N38E034) cihazda yok, yanında İndir düğmesi."></div><figcaption>Yükseklik verisi</figcaption></figure>
         <figure><div class="phone phone-sm"><img src="assets/shots/role-detay.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Nevşehir Kahveci Dağı rölesinin RX, TX, shift ve CTCSS bilgileri."></div><figcaption>Röle ayrıntısı</figcaption></figure>
         <figure><div class="phone phone-sm"><img src="assets/shots/rehber-ayarlar.webp" width="800" height="1739" loading="lazy" decoding="async" alt="Ayarlar: gece modu, artı imleç, çağrı adı ve koordinat biçimi seçimi."></div><figcaption>Ayarlar</figcaption></figure>
       </div>
@@ -505,7 +512,7 @@
         <tr><th scope="row">Overlay yöneticisi</th><td>Harita</td><td>Nokta türlerini, çizimleri, R&amp;B çizgilerini, halkaları ve röleleri göster/gizle; #etiket süzgeci.</td></tr>
         <tr><th scope="row">Kayıtlı görünümler</th><td>Harita</td><td>Sık baktığınız harita görünümlerini kaydedip tek dokunuşla dönme.</td></tr>
         <tr><th scope="row">Haritayı temizle</th><td>Harita</td><td>Seçilen türleri silme ya da yalnız gizleme; geri alınabilir.</td></tr>
-        <tr><th scope="row">Yükseklik verisi</th><td>Harita</td><td>HGT / DTED dosyalarını içe aktarma ve haritada kapsamını görme.</td></tr>
+        <tr><th scope="row">Yükseklik verisi</th><td>Harita</td><td>Bulunduğunuz ya da haritanın ortasındaki karenin tek dokunuşla indirilmesi; HGT, DTED, zip ya da .gz dosyalarını içe aktarma; haritada kapsam. Ayrıntı: <a href="#yukseklik">elle eklemek</a>.</td></tr>
         <tr><th scope="row">Çevrimdışı bölgeler</th><td>Harita</td><td>Bölge indirme (harita türü ve ayrıntı seçerek), indirilenleri görme ve silme.</td></tr>
         <tr><th scope="row">Harita paketi içe aktar</th><td>Harita</td><td>Kendi MBTiles, PMTiles ya da GeoPackage harita dosyalarınızı ekleme.</td></tr>
       </tbody>
@@ -521,6 +528,39 @@
         <tr><th scope="row">Acil veri silme</th><td>Sistem</td><td>Bütün içeriği kalıcı olarak silme; isteğe bağlı olarak indirilen haritalarla birlikte.</td></tr>
       </tbody>
     </table></div>
+  </section>
+
+  <!-- =========================================================== YÜKSEKLİK -->
+  <section class="part" id="yukseklik" aria-labelledby="h-yukseklik">
+    <h2 id="h-yukseklik">Yükseklik verisini elle eklemek</h2>
+    <p class="part-intro">Çoğu zaman paneldeki <b>İndir</b> yeter. Bu bölüm, dosyayı kendiniz indirmek ya da elinizdeki bir dosyayı eklemek içindir.</p>
+    <div class="screen-map">
+      <figure><div class="phone phone-sm"><img src="assets/shots/rehber-yukseklik-indi.webp" width="800" height="1739" loading="lazy" decoding="async" alt="İndirme sonrası panel: Bulunduğun kare (N38E034) cihazda, listede N38E034, 24.7 MB."></div></figure>
+      <div>
+        <div class="tool">
+          <h4>Hangi kare gerekli?</h4>
+          <p>Her dosya 1°×1°'lik bir kareyi kaplar (yaklaşık 110 × 85 km). Adı karenin güneybatı köşesidir: <b>N38E034</b> = 38–39° kuzey, 34–35° doğu (Kapadokya). Türkiye 36–42° kuzey, 26–45° doğu arasındadır. Bulunduğunuz karenin adını panel zaten yazar; başka bir yer için haritayı oraya kaydırıp paneli açın.</p>
+        </div>
+        <div class="tool">
+          <h4>Nereden indirilir?</h4>
+          <ul>
+            <li><b>Terrain Tiles (AWS açık verisi)</b>: Uygulamanın <b>İndir</b> düğmesinin kullandığı kaynak. Hesap gerekmez. Adres kalıbı: <code>https://s3.amazonaws.com/elevation-tiles-prod/skadi/N38/N38E034.hgt.gz</code> (iki yerde karenin adını yazın). 1″ çözünürlük (~30 m), ~10 MB.</li>
+            <li><b>viewfinderpanoramas.org</b>: Bölge bölge zip dosyaları; bir zip içinde birçok kare vardır. 3″ çözünürlük (~90 m), kare başına ~3 MB. Hesap gerekmez.</li>
+            <li><b>USGS EarthExplorer</b>: SRTM ya da DTED dosyaları; ücretsiz hesap gerekir.</li>
+          </ul>
+        </div>
+        <div class="tool">
+          <h4>Telefona eklemek</h4>
+          <p class="path"><b>≡</b> → <b>Harita</b> → <b>Yükseklik verisi</b> → <b>Dosya içe aktar</b></p>
+          <ol>
+            <li>Dosyayı telefonun tarayıcısıyla indirin. Android'de <em>İndirilenler</em> klasörüne, iPhone'da Safari ile <em>Dosyalar → İndirilenler</em>'e iner.</li>
+            <li><b>Dosya içe aktar</b>'a dokunup dosyayı seçin; birden çok dosya birlikte seçilebilir.</li>
+            <li><code>.hgt</code>, <code>.dt0</code>–<code>.dt2</code>, <code>.hgt.gz</code> ve birçok kare içeren <code>.zip</code> dosyaları olduğu gibi kabul edilir; açmanız gerekmez.</li>
+          </ol>
+          <p>Aynı kareyi yeniden eklerseniz eskisinin yerini alır. Kareler yedeğe girmez; telefon değiştirince yeniden indirin.</p>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- =========================================================== SÖZLÜK -->
@@ -580,7 +620,7 @@
       <dt id="g-profil">Yükseklik profili</dt>
       <dd>Bir çizgi ya da rota boyunca iniş-çıkışların grafiği.</dd>
       <dt id="g-dted">HGT / DTED / SRTM</dt>
-      <dd>Sayısal yükseklik verisi dosyaları. HGT, uzaydan ölçülmüş SRTM verisinin dosya biçimi; DTED askerî standart biçim. Her dosya 1°×1°'lik bir kareyi kaplar (ör. N38E034).</dd>
+      <dd>Sayısal yükseklik verisi dosyaları. HGT, uzaydan ölçülmüş SRTM verisinin dosya biçimi; DTED askerî standart biçim. Her dosya 1°×1°'lik bir kareyi kaplar; adı karenin güneybatı köşesidir (ör. N38E034 = 38° kuzey, 34° doğu). 1″ (bir yay saniyesi) yaklaşık 30 m, 3″ yaklaşık 90 m nokta aralığıdır.</dd>
       <dt id="g-3b">3B arazi</dt>
       <dd>Haritayı eğerek dağları ve vadileri üç boyutlu gösterir; pusula okuna uzun basınca açılır.</dd>
     </dl>

@@ -1184,13 +1184,21 @@ p {
 }
 
 .tool p,
-.tool ol {
+.tool ol,
+.tool ul {
   margin: 8px 0 0;
   color: var(--muted);
 }
 
-.tool ol {
+.tool ol,
+.tool ul {
   padding-left: 20px;
+}
+
+/* Uzun adres satırları dar ekranda taşmasın. */
+.tool code {
+  font: 500 13px/1.5 var(--f-mono);
+  overflow-wrap: anywhere;
 }
 
 .tool li + li {
