@@ -2322,8 +2322,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         return ToolbarItem(
             icon: t.icon,
             label: t.label,
-            onTap: () =>
-                showElevationDataPanel(context, onCenter: _centerOn));
+            onTap: () => showElevationDataPanel(
+                  context,
+                  onCenter: _centerOn,
+                  mapCenter: () => _map.camera.center,
+                ));
       case ToolbarTool.clearMap:
         return ToolbarItem(
             icon: t.icon,

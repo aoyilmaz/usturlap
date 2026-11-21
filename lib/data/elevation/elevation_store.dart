@@ -1,13 +1,17 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'package:archive/archive.dart';
+import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 
 import 'dem_tile.dart';
 
-/// Yükseklik dosyalarının klasörü: Belgeler/tiles_external (iOS; Dosyalar
-/// uygulamasından da görünür). Bulunamazsa null (testte path_provider yok).
+/// Yükseklik dosyalarının klasörü: Belgeler/tiles_external (iOS), uygulamanın
+/// dış depolama klasörü (Android). Bulunamazsa null (testte path_provider yok).
 Future<Directory?> defaultElevationDirectory() async {
   try {
     final Directory? base;
@@ -65,13 +69,40 @@ class ElevationTileInfo {
 /// ([HgtParser]) aynı klasörü kullanır; değişiklikten sonra onun
 /// önbelleği yenilenmeli.
 class ElevationStore {
-  ElevationStore({Future<Directory?> Function()? directory})
-    : _directory = directory ?? defaultElevationDirectory;
+  ElevationStore({
+    Future<Directory?> Function()? directory,
+    Future<bool> Function(String key)? bundledExists,
+    http.Client Function()? httpClient,
+  }) : _directory = directory ?? defaultElevationDirectory,
+       _bundledExists = bundledExists ?? _assetExists,
+       _httpClient = httpClient ?? http.Client.new;
 
   final Future<Directory?> Function() _directory;
+  final Future<bool> Function(String key) _bundledExists;
+  final http.Client Function() _httpClient;
 
-  /// Uygulamayla gelen örnek kareler (`assets/tiles/<key>.hgt`, SRTM 3″).
+  /// Uygulamayla gelebilecek örnek kareler (`assets/tiles/<key>.hgt`, SRTM
+  /// 3″). Listede yalnız uygulamada gerçekten varsa görünür: dosya depoda
+  /// olmadığı için GitHub'da derlenen APK'da yoktu ama listede çıkıyordu.
   static const bundledKeys = {'N37E037'};
+
+  static Future<bool> _assetExists(String key) async {
+    try {
+      final m = await AssetManifest.loadFromAssetBundle(rootBundle);
+      return m.listAssets().contains('assets/tiles/$key.hgt');
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Tek bir karenin en büyük boyutu: SRTM 1″ HGT 25,9 MB, DTED 2 ~26 MB.
+  static const maxTileBytes = 32 * 1024 * 1024;
+
+  /// İçe aktarılabilecek en büyük dosya (birçok kare içeren zip).
+  static const maxFileBytes = 400 * 1024 * 1024;
+
+  /// Zip içinde en çok kaç kare.
+  static const maxZipTiles = 400;
 
   static const _exts = ['hgt', 'dt2', 'dt1', 'dt0'];
 
@@ -94,6 +125,7 @@ class ElevationStore {
     }
     for (final key in bundledKeys) {
       if (out.any((t) => t.key == key)) continue;
+      if (!await _bundledExists(key)) continue;
       final (s, w) = DemTile.parseKey(key)!;
       out.add(
         ElevationTileInfo(
@@ -202,10 +234,171 @@ class ElevationStore {
     );
   }
 
+  /// Seçilen dosyayı içe aktarır: açılmış kare (.hgt / .dtN), gzip ile
+  /// sıkıştırılmış kare (.hgt.gz; AWS Terrain Tiles böyle verir) ya da
+  /// birçok kare içeren zip (viewfinderpanoramas, USGS). İçeriğe bakılır,
+  /// uzantıya değil. Eklenen kareler; zip'te karesi olmayan dosyalar
+  /// yok sayılır. Hiç kare bulunamazsa [FormatException].
+  Future<List<ElevationTileInfo>> importFile(
+    Uint8List bytes,
+    String originalName,
+  ) async {
+    if (bytes.length > maxFileBytes) {
+      throw const FormatException('Dosya çok büyük (en çok 400 MB).');
+    }
+    if (_isGzip(bytes)) {
+      final name = originalName.replaceFirst(
+        RegExp(r'\.gz$', caseSensitive: false),
+        '',
+      );
+      return [await importBytes(gunzipCapped(bytes), name)];
+    }
+    if (_isZip(bytes)) return _importZip(bytes);
+    return [await importBytes(bytes, originalName)];
+  }
+
+  static bool _isGzip(Uint8List b) =>
+      b.length > 2 && b[0] == 0x1F && b[1] == 0x8B;
+
+  static bool _isZip(Uint8List b) =>
+      b.length > 4 && b[0] == 0x50 && b[1] == 0x4B && b[2] == 3 && b[3] == 4;
+
+  /// gzip'i açar; çıktı [max]'ı aşarsa durur (kötü niyetli küçük dosya
+  /// belleği şişirmesin).
+  static Uint8List gunzipCapped(Uint8List data, {int max = maxTileBytes}) {
+    final out = BytesBuilder(copy: false);
+    final sink = gzip.decoder.startChunkedConversion(_CappedSink(out, max));
+    try {
+      const step = 4096;
+      for (var i = 0; i < data.length; i += step) {
+        sink.add(data.sublist(i, math.min(i + step, data.length)));
+      }
+      sink.close();
+    } on FormatException {
+      rethrow;
+    } catch (_) {
+      throw const FormatException('Sıkıştırılmış dosya bozuk.');
+    }
+    return out.takeBytes();
+  }
+
+  Future<List<ElevationTileInfo>> _importZip(Uint8List bytes) async {
+    final Archive archive;
+    try {
+      archive = ZipDecoder().decodeBytes(bytes, throwOnError: true);
+    } catch (_) {
+      throw const FormatException('Zip dosyası bozuk.');
+    }
+    final out = <ElevationTileInfo>[];
+    var seen = 0;
+    for (final f in archive.files) {
+      if (!f.isFile) continue;
+      final base = f.name.split('/').last;
+      final gz = base.toLowerCase().endsWith('.gz');
+      final name = gz ? base.substring(0, base.length - 3) : base;
+      if (!_name.hasMatch(name)) continue;
+      if (++seen > maxZipTiles) {
+        throw const FormatException('Zip içinde çok fazla kare var.');
+      }
+      if (f.size > maxTileBytes) continue;
+      final Uint8List data;
+      try {
+        final raw = f.readBytes();
+        if (raw == null) continue;
+        data = gz
+            ? gunzipCapped(Uint8List.fromList(raw))
+            : Uint8List.fromList(raw);
+      } on FormatException {
+        continue;
+      } catch (_) {
+        continue;
+      }
+      try {
+        out.add(await importBytes(data, name));
+      } on FormatException {
+        continue; // bozuk kare: ötekiler eklensin
+      }
+    }
+    if (out.isEmpty) {
+      throw const FormatException(
+        'Zip içinde yükseklik karesi (.hgt / .dt0–.dt2) bulunamadı.',
+      );
+    }
+    return out;
+  }
+
+  /// İndirme kaynağı: AWS Açık Veri Kaydı'ndaki Terrain Tiles (Mapzen /
+  /// Tilezen), "skadi" biçimi: kare başına gzip'li SRTM HGT, 1″ (~30 m).
+  /// Türkiye için kaynak NASA/USGS SRTM (kamu malı). Hesap gerekmez.
+  static Uri downloadUri(String key) => Uri.https(
+    's3.amazonaws.com',
+    '/elevation-tiles-prod/skadi/${key.substring(0, 3)}/$key.hgt.gz',
+  );
+
+  /// [key] karesini internetten indirip ekler. [onProgress]: 0–1 (boyut
+  /// biliniyorsa). Veri olmayan kare (deniz, kapsam dışı) [FormatException].
+  Future<ElevationTileInfo> download(
+    String key, {
+    void Function(double progress)? onProgress,
+  }) async {
+    if (DemTile.parseKey(key) == null) {
+      throw FormatException('Geçersiz kare adı: $key');
+    }
+    final client = _httpClient();
+    try {
+      final res = await client
+          .send(http.Request('GET', downloadUri(key)))
+          .timeout(const Duration(seconds: 30));
+      if (res.statusCode == 403 || res.statusCode == 404) {
+        throw FormatException(
+          '$key için yükseklik verisi yok (deniz ya da kapsam dışı).',
+        );
+      }
+      if (res.statusCode != 200) {
+        throw FormatException('İndirilemedi (sunucu: ${res.statusCode}).');
+      }
+      final total = res.contentLength;
+      if (total != null && total > maxTileBytes) {
+        throw const FormatException('Dosya beklenenden büyük.');
+      }
+      final buf = BytesBuilder(copy: false);
+      await for (final chunk in res.stream.timeout(
+        const Duration(seconds: 30),
+      )) {
+        buf.add(chunk);
+        if (buf.length > maxTileBytes) {
+          throw const FormatException('Dosya beklenenden büyük.');
+        }
+        if (total != null && total > 0) onProgress?.call(buf.length / total);
+      }
+      return await importBytes(gunzipCapped(buf.takeBytes()), '$key.hgt');
+    } finally {
+      client.close();
+    }
+  }
+
   Future<void> delete(String fileName) async {
     final dir = await _directory();
     if (dir == null || !_name.hasMatch(fileName)) return;
     final f = File('${dir.path}/$fileName');
     if (await f.exists()) await f.delete();
   }
+}
+
+/// Çıktıyı biriktirir; sınırı aşınca durdurur.
+class _CappedSink implements Sink<List<int>> {
+  _CappedSink(this._out, this._max);
+  final BytesBuilder _out;
+  final int _max;
+
+  @override
+  void add(List<int> chunk) {
+    _out.add(chunk);
+    if (_out.length > _max) {
+      throw const FormatException('Açılan dosya bir kare için çok büyük.');
+    }
+  }
+
+  @override
+  void close() {}
 }
