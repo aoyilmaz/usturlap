@@ -49,7 +49,12 @@ class GeofenceNotifier extends Notifier<GeofenceState> {
     if (acc != null && acc > maxAccuracyMeters) return;
     final graphics = ref.read(mapGraphicsProvider).value;
     if (graphics == null) return;
-    final events = _monitor.update(c.position, graphics, c.timestamp);
+    final events = _monitor.update(
+      c.position,
+      graphics,
+      c.timestamp,
+      accuracy: acc,
+    );
     final history = [...state.history, ...events];
     state = GeofenceState(
       latest: events,

@@ -42,42 +42,64 @@ class RouteProgress {
 ///
 /// - Sıradaki noktanın [arriveRadius] içine girilince bir sonrakine geçer.
 /// - Nokta yarıçapa girilmeden **geçilirse** (ayak boyunca ilerleme ayak
-///   uzunluğunu aştıysa) de geçer — "noktayı ıskaladım" durumu.
-/// - Etkin ayaktan [offRouteThreshold]'dan fazla sapınca [RouteProgress.offRoute].
+///   uzunluğunu aştıysa) de geçer — "noktayı ıskaladım" durumu. Bu kural
+///   iki ardışık konumda tutmalı ve bir konumda en çok bir nokta geçilir:
+///   tek bir kötü konum ilerlemeyi birkaç nokta ileri atlatıyordu.
+/// - Etkin ayaktan [offRouteThreshold]'dan fazla sapınca [RouteProgress.offRoute];
+///   rotaya dönüş eşiğin [returnRatio] katı içine girince sayılır (sınırda
+///   gidip gelip uyarı tekrarlamasın).
 class RouteNavigator {
   RouteNavigator(
     this.points, {
     this.arriveRadius = 30,
     this.offRouteThreshold = 50,
+    this.returnRatio = 0.6,
   }) : assert(points.length >= 2, 'rota en az 2 nokta');
 
   final List<LatLng> points;
   final double arriveRadius;
   final double offRouteThreshold;
+  final double returnRatio;
 
   int _target = 0;
   int get targetIndex => _target;
 
+  /// "Yanından geçti" koşulunun görüldüğü hedef (bir sonraki konumda da
+  /// tutarsa geçilir).
+  int? _passSeen;
+  bool _offRoute = false;
+
   RouteProgress update(LatLng pos) {
+    final startTarget = _target;
+    var passedBeside = false;
     while (_target < points.length) {
       final next = points[_target];
       if (NavMath.distance(pos, next) <= arriveRadius) {
         _target++;
+        _passSeen = null;
         continue;
       }
-      if (_target > 0) {
+      if (_target > 0 && !passedBeside) {
         final prev = points[_target - 1];
         final legLen = NavMath.distance(prev, next);
         final along = NavMath.alongTrack(prev, next, pos);
         final xt = NavMath.crossTrack(prev, next, pos).abs();
         // Noktayı yanından geçti (rotaya yakınken ayak sonunu aştı).
         if (along > legLen && xt <= offRouteThreshold * 2) {
-          _target++;
-          continue;
+          if (_passSeen == _target) {
+            _target++;
+            _passSeen = null;
+            passedBeside = true;
+            continue;
+          }
+          _passSeen = _target;
+          break;
         }
       }
+      _passSeen = null;
       break;
     }
+    if (_target != startTarget) _offRoute = false;
 
     if (_target >= points.length) {
       return RouteProgress(
@@ -98,8 +120,12 @@ class RouteNavigator {
     for (var i = _target; i < points.length - 1; i++) {
       remaining += NavMath.distance(points[i], points[i + 1]);
     }
-    final xt =
-        _target == 0 ? 0.0 : NavMath.crossTrack(points[_target - 1], next, pos);
+    final xt = _target == 0
+        ? 0.0
+        : NavMath.crossTrack(points[_target - 1], next, pos);
+    _offRoute = _offRoute
+        ? xt.abs() > offRouteThreshold * returnRatio
+        : xt.abs() > offRouteThreshold;
     return RouteProgress(
       targetIndex: _target,
       pointCount: points.length,
@@ -107,7 +133,7 @@ class RouteNavigator {
       bearingToNext: NavMath.bearing(pos, next),
       remaining: remaining,
       crossTrack: xt,
-      offRoute: xt.abs() > offRouteThreshold,
+      offRoute: _offRoute,
       finished: false,
     );
   }
@@ -115,9 +141,13 @@ class RouteNavigator {
   /// Elle sonraki/önceki noktaya geç (ör. kullanıcı bir noktayı atlamak ister).
   void skip() {
     if (_target < points.length) _target++;
+    _passSeen = null;
+    _offRoute = false;
   }
 
   void back() {
     if (_target > 0) _target--;
+    _passSeen = null;
+    _offRoute = false;
   }
 }

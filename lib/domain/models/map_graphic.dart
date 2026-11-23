@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:latlong2/latlong.dart';
 
 import '../../core/geo_math.dart';
@@ -109,9 +111,54 @@ class MapGraphic implements MapItem {
     return pointInPolygon(p, points);
   }
 
+  /// Noktanın şeklin kenarına uzaklığı (m; içeride de dışarıda da pozitif).
+  /// Geofence'in sınırda GPS titremesiyle gidip gelmemesi için.
+  double distanceToEdge(LatLng p) {
+    if (type == GraphicType.circle) {
+      return (GeoMath.distance(points[0], p) - radiusMeters).abs();
+    }
+    final pts = points;
+    if (pts.length < 2) return double.infinity;
+    // Kısa mesafelerde yeterli: noktanın çevresinde düzlem yaklaşımı (m).
+    const mPerDeg = 111320.0;
+    final kx = mPerDeg * math.cos(p.latitude * math.pi / 180);
+    (double, double) xy(LatLng q) =>
+        ((q.longitude - p.longitude) * kx, (q.latitude - p.latitude) * mPerDeg);
+    var best = double.infinity;
+    for (var i = 0; i < pts.length; i++) {
+      final (ax, ay) = xy(pts[i]);
+      final (bx, by) = xy(pts[(i + 1) % pts.length]);
+      final dx = bx - ax, dy = by - ay;
+      final len2 = dx * dx + dy * dy;
+      var t = len2 == 0 ? 0.0 : -(ax * dx + ay * dy) / len2;
+      t = t.clamp(0.0, 1.0);
+      final cx = ax + t * dx, cy = ay + t * dy;
+      best = math.min(best, math.sqrt(cx * cx + cy * cy));
+    }
+    return best;
+  }
+
+  /// Şeklin kabaca en küçük boyutu (m): sınır tamponu küçük şekillerde
+  /// şeklin kendisini yutmasın.
+  double get minSpanMeters {
+    if (type == GraphicType.circle) return 2 * radiusMeters;
+    if (points.isEmpty) return 0;
+    var minLat = points.first.latitude, maxLat = minLat;
+    var minLon = points.first.longitude, maxLon = minLon;
+    for (final q in points) {
+      minLat = math.min(minLat, q.latitude);
+      maxLat = math.max(maxLat, q.latitude);
+      minLon = math.min(minLon, q.longitude);
+      maxLon = math.max(maxLon, q.longitude);
+    }
+    final midLat = (minLat + maxLat) / 2;
+    final h = (maxLat - minLat) * 111320.0;
+    final w = (maxLon - minLon) * 111320.0 * math.cos(midLat * math.pi / 180);
+    return math.min(h, w);
+  }
+
   /// Daire yarıçapı (m); daire değilse 0.
-  double get radiusMeters =>
-      type == GraphicType.circle && points.length >= 2
+  double get radiusMeters => type == GraphicType.circle && points.length >= 2
       ? GeoMath.distance(points[0], points[1])
       : 0;
 

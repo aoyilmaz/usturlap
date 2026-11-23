@@ -18,10 +18,10 @@ import '../../core/nav_math.dart';
 import '../../core/sequential_name.dart';
 import '../../domain/models/contact.dart';
 import '../../domain/models/imported_layer.dart';
-import '../../domain/models/bloodhound.dart';
 import '../../domain/models/bullseye.dart';
 import '../../domain/models/clear_item.dart';
 import '../../domain/ports/alert_output.dart';
+import '../../domain/usecases/eta_alarm.dart';
 import '../../domain/usecases/graphic_hit.dart';
 import '../../domain/usecases/shape_edit.dart';
 import '../../domain/usecases/viewshed.dart';
@@ -168,6 +168,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   /// Gösterilmek üzere yeni seçilen iz: noktaları gelince bir kez odaklanılır.
   int? _fitPendingTrackId;
+
+  /// Takip "varışa az kaldı" uyarısının durumu.
+  final _etaAlarm = EtaAlarm();
 
   /// Araç çubuğu gizli mi (≡'ye uzun bas).
   bool _toolbarHidden = false;
@@ -2570,14 +2573,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     // (ATAK'ta çizgi yanıp söner). Duruyorken (tahmini ETA) uyarmaz.
     ref.listen<List<ResolvedBloodhound>>(resolvedBloodhoundsProvider,
         (prev, next) {
-      final before = {
-        for (final r in prev ?? const <ResolvedBloodhound>[])
-          r.bloodhound.id: r.reading.level,
-      };
+      // Bir kez uyar; yeniden uzaklaşınca kur (bkz. EtaAlarm).
+      final fire = _etaAlarm
+          .update([
+            for (final r in next)
+              (
+                id: r.bloodhound.id,
+                level: r.reading.level,
+                estimated: r.reading.estimated,
+              ),
+          ])
+          .toSet();
       for (final r in next) {
-        if (r.reading.level == EtaLevel.close &&
-            !r.reading.estimated &&
-            before[r.bloodhound.id] != EtaLevel.close) {
+        if (fire.contains(r.bloodhound.id)) {
           HapticFeedback.heavyImpact();
           final eta = r.reading.eta!;
           ref.read(alertDispatcherProvider).alert(

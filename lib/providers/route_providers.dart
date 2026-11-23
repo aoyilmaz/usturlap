@@ -10,11 +10,13 @@ import 'nav_providers.dart';
 import 'waypoint_providers.dart';
 
 final routeRepositoryProvider = Provider<RouteRepository>(
-    (ref) => RouteRepository(ref.watch(appDatabaseProvider)));
+  (ref) => RouteRepository(ref.watch(appDatabaseProvider)),
+);
 
 /// Kayıtlı rotalar (en yeni üstte).
 final routesProvider = StreamProvider<List<RoutePlan>>(
-    (ref) => ref.watch(routeRepositoryProvider).watchAll());
+  (ref) => ref.watch(routeRepositoryProvider).watchAll(),
+);
 
 // ---------------------------------------------------------------- planlama
 
@@ -33,13 +35,14 @@ class RoutePlanningNotifier extends Notifier<RoutePlanningState> {
   RoutePlanningState build() => const RoutePlanningState();
 
   void start() => state = const RoutePlanningState(active: true);
-  void addPoint(LatLng p) => state =
-      RoutePlanningState(active: true, points: [...state.points, p]);
+  void addPoint(LatLng p) =>
+      state = RoutePlanningState(active: true, points: [...state.points, p]);
   void undo() {
     if (state.points.isEmpty) return;
     state = RoutePlanningState(
-        active: true,
-        points: state.points.sublist(0, state.points.length - 1));
+      active: true,
+      points: state.points.sublist(0, state.points.length - 1),
+    );
   }
 
   void clear() => state = const RoutePlanningState(active: true);
@@ -65,7 +68,8 @@ class RoutePlanningNotifier extends Notifier<RoutePlanningState> {
 
 final routePlanningProvider =
     NotifierProvider<RoutePlanningNotifier, RoutePlanningState>(
-        RoutePlanningNotifier.new);
+      RoutePlanningNotifier.new,
+    );
 
 // ------------------------------------------------------------- takip etme
 
@@ -79,11 +83,19 @@ class ActiveRouteState {
 class ActiveRouteNotifier extends Notifier<ActiveRouteState?> {
   RouteNavigator? _nav;
 
+  /// Bundan kötü doğruluklu konumlar rota ilerlemesine katılmaz.
+  static const maxAccuracyMeters = 50.0;
+
   @override
   ActiveRouteState? build() {
-    // Konum geldikçe ilerlemeyi güncelle.
+    // Konum geldikçe ilerlemeyi güncelle. Kötü doğruluklu konum (ör. vadi
+    // dibinde ±200 m) yok sayılır: ilerlemeyi atlatır, boşuna "saptınız"
+    // der (geofence'teki sınırla aynı).
     ref.listen<Contact?>(selfContactProvider, (_, self) {
-      if (self != null) _update(self.position);
+      if (self == null) return;
+      final acc = self.accuracyMeters;
+      if (acc != null && acc > maxAccuracyMeters) return;
+      _update(self.position);
     });
     return null;
   }
@@ -124,4 +136,5 @@ class ActiveRouteNotifier extends Notifier<ActiveRouteState?> {
 
 final activeRouteProvider =
     NotifierProvider<ActiveRouteNotifier, ActiveRouteState?>(
-        ActiveRouteNotifier.new);
+      ActiveRouteNotifier.new,
+    );
